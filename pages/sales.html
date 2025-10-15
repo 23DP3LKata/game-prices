@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales • Game Prices</title>
+  <link rel="stylesheet" href="..\src\css\style.css">
+  <script defer src="..\src\js\script.js"></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="branding">
+            <a href="..\index.html">
+                <svg width="30" height="30" viewBox="0 0 128 128" aria-hidden="true"><path fill="currentColor" d="M64 24A40 40 0 1 0 64 104A40 40 0 1 0 64 24ZM44 52L84 52A12 12 0 0 1 84 76L44 76A12 12 0 0 1 44 52ZM52 60A4 4 0 1 0 52 68A4 4 0 1 0 52 60ZM76 60A4 4 0 1 0 76 68A4 4 0 1 0 76 60Z"/></svg>
+                <span>Game Prices</span>
+            </a>
+        </div>
+        <button class="hamburger" aria-label="Toggle navigation" aria-expanded="false">
+            <span></span>
+            <span></span>
+        </button>
+        <nav class="main-nav" aria-label="Galvenā navigācija">
+            <ul>
+                <li><a href="sales.html">Sales</a></li>
+                <li><a href="#charts">Charts</a></li>
+                <li><a href="#calculator">Calculator</a></li>
+                <li><a href="#calendar">Calendar</a></li>
+                <li class="has-dropdown">
+                    <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false">Services</button>
+                    <ul class="dropdown-menu">
+                        <li><a href="#dlc">DLC</a></li>
+                        <li><a href="#tags">Tags</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+        <button class="mode-toggle" aria-pressed="false">Dark Mode</button>
+    </header>
+
+  <main class="site-main" style="padding: 2rem 1rem; max-width: 1200px; margin: 0 auto;">
+    <h1 style="text-align:center; margin-bottom:2rem;">Steam Game Sales Overview</h1>
+
+    <div class="container container-products">
+      <div class="row" style="display: grid; gap: 2rem;">
+        <div>
+          <table class="table-products">
+            <colgroup>
+              <col style="width: 0;">
+              <col style="width: 70px;">
+              <col>
+              <col style="width: 120px">
+              <col style="width: 100px;">
+            </colgroup>
+            <thead>
+              <tr>
+                <th></th>
+                <th class="table-title" colspan="2"><a href="#">Top Games</a></th>
+                <th class="text-center">Players Now</th>
+                <th class="text-center">24h Peak</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td></td>
+                <td class="applogo">
+                  <a href="games/730.html" title="Counter-Strike 2">
+                    <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/730/header.jpg" alt="Counter-Strike 2">
+                  </a>
+                </td>
+                <td><a href="games/730.html">Counter-Strike 2</a></td>
+                <td class="text-center green">856,421</td>
+                <td class="text-center">1,203,456</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td class="applogo">
+                  <a href="games/570.html" title="Dota 2">
+                    <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/570/header.jpg" alt="Dota 2">
+                  </a>
+                </td>
+                <td><a href="games/570.html">Dota 2</a></td>
+                <td class="text-center green">654,321</td>
+                <td class="text-center">789,123</td>
+              </tr>
+              <tr>
+                <td></td>
+                <td class="applogo">
+                  <a href="games/578080.html" title="PUBG: BATTLEGROUNDS">
+                    <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/578080/header.jpg" alt="PUBG: BATTLEGROUNDS">
+                  </a>
+                </td>
+                <td><a href="games/578080.html">PUBG: BATTLEGROUNDS</a></td>
+                <td class="text-center green">234,567</td>
+                <td class="text-center">345,678</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div>
+          <table class="table-products">
+            <colgroup>
+              <col style="width: 0;">
+              <col style="width: 119px;">
+              <col>
+              <col style="width: 120px">
+              <col style="width: 100px;">
+            </colgroup>
+            <thead>
+              <tr>
+                <th></th>
+                <th class="table-title" colspan="2"><a href="#">Trending Games</a></th>
+                <th class="text-center">Last 7 Days</th>
+                <th class="text-center">Players Now</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td></td>
+                <td class="applogo">
+                  <a href="games/252490.html" title="Rust">
+                    <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/252490/header.jpg" alt="Rust">
+                  </a>
+                </td>
+                <td><a href="games/252490.html">Rust</a></td>
+                <td class="app-chart">
+                  <svg width="120" height="40" viewBox="0 0 120 40" preserveAspectRatio="none"></svg>
+                </td>
+                <td class="text-center green">123,456</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer id="contact" class="site-footer">
+    <p>&copy; <span id="year"></span> Games Prices is not affiliated with Valve or Steam. All times are UTC.</p>
+    <ul class="social-links">
+        <li><a href="https://www.facebook.com" target="_blank" rel="noopener">Facebook</a></li>
+        <li><a href="https://www.instagram.com" target="_blank" rel="noopener">Instagram</a></li>
+    </ul>
+</footer
+</body>
+</html>
