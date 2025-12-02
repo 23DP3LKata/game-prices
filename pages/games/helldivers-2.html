@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HELLDIVERS 2 • Game Prices</title>
+    <link rel="stylesheet" href="../../src/css/style.css">
+    <script defer src="../../src/js/script.js"></script>
+</head>
+<body>
+    <header class="site-header">
+        <button class="hamburger" aria-label="Toggle navigation" aria-expanded="false">
+            <span></span>
+            <span></span>
+        </button>
+        <nav class="main-nav" aria-label="Galvenā navigācija">
+            <ul>
+                <li class="branding">
+                    <a href="../../index.html">
+                        <svg width="30" height="30" viewBox="0 0 128 128" aria-hidden="true"><path fill="currentColor" d="M64 24A40 40 0 1 0 64 104A40 40 0 1 0 64 24ZM44 52L84 52A12 12 0 0 1 84 76L44 76A12 12 0 0 1 44 52ZM52 60A4 4 0 1 0 52 68A4 4 0 1 0 52 60ZM76 60A4 4 0 1 0 76 68A4 4 0 1 0 76 60Z"/></svg>
+                        <span data-i18n="nav.brand">Game Prices</span>
+                    </a>
+                </li>
+                <li><a href="../sales.html" aria-current="page" data-i18n="nav.games">Games</a></li>
+                <li><a href="../aboutus.html" data-i18n="nav.about">About us</a></li>
+                <li class="has-dropdown">
+                    <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false" data-i18n="nav.services">Services</button>
+                    <ul class="dropdown-menu">
+                        <li><a href="../weather.html" data-i18n="nav.weather">Weather</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="content-layout">
+        <main class="site-main game-page">
+            <article class="game-hero">
+                <img class="game-cover" src="https://cdn.cloudflare.steamstatic.com/steam/apps/553850/header.jpg" alt="HELLDIVERS 2 squad deploying into a hostile biome" loading="lazy">
+                <div class="game-hero-content">
+                    <h1>HELLDIVERS 2</h1>
+                    <p class="game-tagline">A satirical, high-intensity co-op shooter where democracy is dropped from orbit onto hostile worlds.</p>
+                    <dl class="game-meta">
+                        <div>
+                            <dt>Publisher</dt>
+                            <dd>Sony Interactive Entertainment</dd>
+                        </div>
+                        <div>
+                            <dt>Release Year</dt>
+                            <dd>2024</dd>
+                        </div>
+                        <div>
+                            <dt>Developer</dt>
+                            <dd>Arrowhead Game Studios</dd>
+                        </div>
+                        <div>
+                            <dt>Platforms</dt>
+                            <dd>PC, PlayStation 5</dd>
+                        </div>
+                        <div>
+                            <dt>Genre</dt>
+                            <dd>Co-op Third-person Shooter</dd>
+                        </div>
+                    </dl>
+                    <div class="game-activity">
+                        <div class="metric">
+                            <span class="metric-label">Players Online</span>
+                            <span class="metric-value">152,400</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">24h Peak</span>
+                            <span class="metric-value">312,800</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Avg. Session</span>
+                            <span class="metric-value">68 min</span>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <section class="game-description" aria-labelledby="about-helldivers">
+                <h2 id="about-helldivers">About HELLDIVERS 2</h2>
+                <p>HELLDIVERS 2 expands the top-down original into a fully third-person cooperative shooter with an emphasis on team fire discipline. Planetary campaigns evolve hourly, and community-driven major orders reshape the galaxy each weekend.</p>
+                <p>Cross-play squads unlock stratagems that summon orbital strikes, deploy mechs, and reinforce fallen troopers. Arrowhead continues to add enemy factions, experimental weaponry, and seasonal battle passes that never expire, keeping super earth's war effort sustainable for newcomers.</p>
+            </section>
+
+            <section class="store-prices" aria-labelledby="helldivers-prices">
+                <h2 id="helldivers-prices">Current Store Prices</h2>
+                <div class="price-grid">
+                    <article class="price-card">
+                        <h3>Steam</h3>
+                        <p class="price" data-price-base="39.99" data-price-currency="USD" data-price-role="steam">$39.99</p>
+                        <p class="price-note">Standard Edition</p>
+                    </article>
+                    <article class="price-card">
+                        <h3>PlayStation Store</h3>
+                        <p class="price" data-price-base="39.99" data-price-currency="USD">$39.99</p>
+                        <p class="price-note">Includes DualSense adaptive trigger support</p>
+                    </article>
+                    <article class="price-card">
+                        <h3>PC Game Pass</h3>
+                        <p class="price" data-price-base="14.99" data-price-currency="USD">$14.99</p>
+                        <p class="price-note">Recurring monthly subscription</p>
+                    </article>
+                    <article class="price-card">
+                        <h3>AppGames</h3>
+                        <p class="price" data-price-base="37.49" data-price-currency="USD">$37.49</p>
+                        <p class="price-note">Verified PC key, regional restrictions apply</p>
+                    </article>
+                    <article class="price-card unavailable">
+                        <h3>Epic Games Store</h3>
+                        <p class="price">Not available</p>
+                        <p class="price-note">No Epic Games release announced</p>
+                    </article>
+                </div>
+            </section>
+
+            <section class="price-history" aria-labelledby="helldivers-history">
+                <h2 id="helldivers-history">Price History</h2>
+                <canvas class="price-chart" role="img" aria-label="HELLDIVERS 2 price history chart" data-price-history="" data-price-currency="USD" data-chart-title="HELLDIVERS 2"></canvas>
+                <p class="chart-note">Trend sourced from SteamDB seasonal sales, AppGames offers, and IsThereAnyDeal archives.</p>
+            </section>
+        </main>
+    </div>
+
+    <footer id="contact" class="site-footer">
+        <p data-i18n="footer.notice">&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
+        <div class="footer-controls">
+            <label class="footer-control" for="footer-currency">
+                <select id="footer-currency" name="footer-currency" data-control="currency">
+                    <option value="USD">USD - $</option>
+                    <option value="EUR">EUR - €</option>
+                    <option value="GBP">GBP - £</option>
+                </select>
+            </label>
+            <label class="footer-control" for="footer-language">
+                <select id="footer-language" name="footer-language" data-control="language">
+                    <option value="en">English</option>
+                    <option value="lv">Latviešu</option>
+                </select>
+            </label>
+        </div>
+        <button class="mode-toggle" aria-pressed="false" data-i18n="mode.dark">Dark Mode</button>
+    </footer>
+</body>
+</html>

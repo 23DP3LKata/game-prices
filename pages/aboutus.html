@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>About • Game Prices</title>
+	<link rel="stylesheet" href="../src/css/style.css">
+	<script defer src="../src/js/script.js"></script>
+</head>
+<body>
+	<header class="site-header">
+		<button class="hamburger" aria-label="Toggle navigation" aria-expanded="false">
+			<span></span>
+			<span></span>
+		</button>
+		<nav class="main-nav" aria-label="Galvenā navigācija">
+			<ul>
+				<li class="branding">
+					<a href="../index.html">
+						<svg width="30" height="30" viewBox="0 0 128 128" aria-hidden="true"><path fill="currentColor" d="M64 24A40 40 0 1 0 64 104A40 40 0 1 0 64 24ZM44 52L84 52A12 12 0 0 1 84 76L44 76A12 12 0 0 1 44 52ZM52 60A4 4 0 1 0 52 68A4 4 0 1 0 52 60ZM76 60A4 4 0 1 0 76 68A4 4 0 1 0 76 60Z"/></svg>
+						<span data-i18n="nav.brand">Game Prices</span>
+					</a>
+				</li>
+				<li><a href="sales.html" data-i18n="nav.games">Games</a></li>
+				<li><a href="aboutus.html" aria-current="page" data-i18n="nav.about">About us</a></li>
+				<li class="has-dropdown">
+					<button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false" data-i18n="nav.services">Services</button>
+					<ul class="dropdown-menu">
+						<li><a href="weather.html" data-i18n="nav.weather">Weather</a></li>
+					</ul>
+				</li>
+			</ul>
+		</nav>
+	</header>
+
+	<div class="content-layout with-sidebar">
+		<main class="site-main about-main" id="about">
+			<header class="section-header">
+				<h1>What is GamePrices?</h1>
+				<p>Discover how the platform works behind the scenes and who it is built for.</p>
+			</header>
+
+			<article class="about-article">
+				<h3 id="what-is">What is GamePrices?</h3>
+				<p>GamePrices is a data-driven platform that compares game prices across multiple digital stores, providing real-time information, historical analytics, and automated deal tracking.</p>
+				<h3 id="why">Why was GamePrices created?</h3>
+				<p>The platform was built to solve a common problem: players waste time checking different stores manually, comparing prices, and searching for real discounts.</p>
+				<h3 id="data">How does GamePrices collect pricing data?</h3>
+				<p>GamePrices integrates with public APIs from Steam, Epic Games, GG.deals, IsThereAnyDeal, and other sources to automatically gather and update accurate pricing information.</p>
+				<h3 id="reliability">What makes GamePrices reliable?</h3>
+				<p>The system uses a structured ER data model, automated synchronization services, and detailed validation to ensure price accuracy, data consistency, and stable performance.</p>
+				<h3 id="audience">Who is GamePrices for?</h3>
+				<p>GamePrices is designed for all types of users - guests who want quick price checks, registered users who track wishlists and receive alerts, and administrators who maintain data quality.</p>
+				<h3 id="features">What features do registered users get?</h3>
+				<p>Registered users can save games to a wishlist, receive automatic notifications about price drops, customize their profile, and report issues directly to administrators.</p>
+				<h3 id="history">Does GamePrices show price history?</h3>
+				<p>Yes. The platform provides clear visual graphs showing historical price changes, helping users analyze trends and buy at the best moment.</p>
+				<h3 id="sync">How does GamePrices ensure data stays up to date?</h3>
+				<p>A built-in DataSyncService regularly pulls fresh data from external APIs, updates local records, and logs errors to maintain system accuracy and reliability.</p>
+				<h3 id="mission">What is your mission?</h3>
+				<p>Our mission is to make the game market transparent, efficient, and easy to understand, helping every player save time, save money, and make smarter purchasing decisions.</p>
+			</article>
+		</main>
+
+		<aside class="sidebar" aria-label="About navigation">
+			<h2>On this page</h2>
+			<ul>
+				<li><a href="#what-is">What is GamePrices?</a></li>
+				<li><a href="#why">Why was it created?</a></li>
+				<li><a href="#data">Data collection</a></li>
+				<li><a href="#reliability">Reliability</a></li>
+				<li><a href="#audience">Audience</a></li>
+				<li><a href="#features">Registered features</a></li>
+				<li><a href="#history">Price history</a></li>
+				<li><a href="#sync">Data freshness</a></li>
+				<li><a href="#ecosystem">Beyond comparison</a></li>
+				<li><a href="#mission">Mission</a></li>
+			</ul>
+		</aside>
+	</div>
+
+	<footer id="contact" class="site-footer">
+		<p data-i18n="footer.notice">&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
+		<div class="footer-controls">
+			<label class="footer-control" for="footer-currency">
+				<select id="footer-currency" name="footer-currency" data-control="currency">
+                    <option value="USD">USD - $</option>
+                    <option value="EUR">EUR - €</option>
+                    <option value="GBP">GBP - £</option>
+				</select>
+			</label>
+			<label class="footer-control" for="footer-language">
+				<select id="footer-language" name="footer-language" data-control="language">
+					<option value="en">English</option>
+					<option value="lv">Latviešu</option>
+				</select>
+			</label>
+		</div>
+		<button class="mode-toggle" aria-pressed="false" data-i18n="mode.dark">Dark Mode</button>
+	</footer>
+</body>
+</html>

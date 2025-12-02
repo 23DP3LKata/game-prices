@@ -9,41 +9,36 @@
 </head>
 <body>
     <header class="site-header">
-        <div class="branding">
-            <a href="index.html">
-                <svg width="30" height="30" viewBox="0 0 128 128" aria-hidden="true"><path fill="currentColor" d="M64 24A40 40 0 1 0 64 104A40 40 0 1 0 64 24ZM44 52L84 52A12 12 0 0 1 84 76L44 76A12 12 0 0 1 44 52ZM52 60A4 4 0 1 0 52 68A4 4 0 1 0 52 60ZM76 60A4 4 0 1 0 76 68A4 4 0 1 0 76 60Z"/></svg>
-                <span>Game Prices</span>
-            </a>
-        </div>
         <button class="hamburger" aria-label="Toggle navigation" aria-expanded="false">
             <span></span>
             <span></span>
         </button>
         <nav class="main-nav" aria-label="Galvenā navigācija">
             <ul>
-                <li><a href="pages/sales.html">Sales</a></li>
-                <li><a href="#charts">Charts</a></li>
-                <li><a href="#calculator">Calculator</a></li>
-                <li><a href="#calendar">Calendar</a></li>
+                <li class="branding">
+                    <a href="index.html">
+                        <svg width="30" height="30" viewBox="0 0 128 128" aria-hidden="true"><path fill="currentColor" d="M64 24A40 40 0 1 0 64 104A40 40 0 1 0 64 24ZM44 52L84 52A12 12 0 0 1 84 76L44 76A12 12 0 0 1 44 52ZM52 60A4 4 0 1 0 52 68A4 4 0 1 0 52 60ZM76 60A4 4 0 1 0 76 68A4 4 0 1 0 76 60Z"/></svg>
+                        <span data-i18n="nav.brand">Game Prices</span>
+                    </a>
+                </li>
+                <li><a href="pages/sales.html" data-i18n="nav.games">Games</a></li>
+                <li><a href="pages/aboutus.html" data-i18n="nav.about">About us</a></li>
                 <li class="has-dropdown">
-                    <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false">Services</button>
+                    <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false" data-i18n="nav.services">Services</button>
                     <ul class="dropdown-menu">
-                        <li><a href="#dlc">DLC</a></li>
-                        <li><a href="#tags">Tags</a></li>
+                        <li><a href="pages/weather.html" data-i18n="nav.weather">Weather</a></li>
                     </ul>
                 </li>
             </ul>
         </nav>
-        <button class="mode-toggle" aria-pressed="false">Dark Mode</button>
     </header>
 
     <div class="content-layout">
     <main id="home" class="site-main">
         <section class="hero" id="overview">
             <div class="hero-text">
-                <h1>Track Steam Game Price Changes</h1>
-                <h2>Find the Best Moment to Buy Your Next Game</h2>
-                <p>Game Prices collects historical data, alerts you about discounts, and helps compare prices across different regions. Follow your favorite games and save when the price drops.</p>
+                <h1>Find the Best Game Deals in One Place</h1>
+                <p>GamePrices automatically collects prices from leading digital stores, compares them, visualizes price history, and helps you find the best deals without wasting time.</p>
                 </div>
             <div class="hero-media">
                 <img src="https://store.cloudflare.steamstatic.com/public/shared/images/header/logo_steam.svg" alt="Steam logotips" loading="lazy">
@@ -53,53 +48,52 @@
         <section class="cards" aria-labelledby="features">
             <header class="section-header">
                 <h2 id="features">What Game Prices Offers</h2>
-                <p>Learn more about our price history tools and discount tracking features.</p>
             </header>
             <div class="card-grid">
                 <article class="card" data-id="alerts">
-                    <img src="https://i.pinimg.com/564x/0c/bb/aa/0cbbaab0deff7f188a7762d9569bf1b3.jpg" alt="Smartphone showing price drop alerts" loading="lazy">
+                    <img src="https://www.svgrepo.com/show/425581/discount-promo-ecommerce.svg" alt="" loading="lazy">
                     <div class="card-body">
-                        <h3>Price Alerts</h3>
-                        <p>Set personalized thresholds and get notified as soon as the price reaches your desired level.</p>
-                        <button class="learn-more" data-card="alerts">Learn More</button>
+                        <h3>Price Comparison</h3>
+                        <p>We provide real-time price comparison from major stores so you always know where the best deal is.</p>
                     </div>
                 </article>
                 <article class="card" data-id="history">
-                    <img src="https://i.pinimg.com/564x/0c/bb/aa/0cbbaab0deff7f188a7762d9569bf1b3.jpg" alt="Computer screen with price trend graphs" loading="lazy">
+                    <img src="https://www.svgrepo.com/show/446700/graphic.svg" alt="" loading="lazy">
                     <div class="card-body">
-                        <h3>Price History Charts</h3>
-                        <p>View each game’s historical price curve to make more informed purchase decisions.</p>
-                        <button class="learn-more" data-card="history">Learn More</button>
+                        <h3>Price History & Analytics</h3>
+                        <p>Track detailed price history to understand trends and choose the perfect moment to buy.</p>
                     </div>
                 </article>
                 <article class="card" data-id="bundles">
-                    <img src="https://i.pinimg.com/564x/0c/bb/aa/0cbbaab0deff7f188a7762d9569bf1b3.jpg" alt="Game controllers and disc collection on a table" loading="lazy">
+                    <img src="https://www.svgrepo.com/show/408746/save-wishlist-like-favorite.svg" alt="" loading="lazy">
                     <div class="card-body">
-                        <h3>Bundles and Deals</h3>
-                        <p>Discover the best bundle discounts and compare prices between different Steam regions.</p>
-                        <button class="learn-more" data-card="bundles">Learn More</button>
+                        <h3>Wishlist & Notifications</h3>
+                        <p>Save your favorite games to a wishlist and get instant notifications when prices drop.</p>
                     </div>
                 </article>
             </div>
         </section>
     </main>
-
-    <aside class="sidebar">
-        <h2>Popular Guides</h2>
-        <ul>
-            <li><a href="#">Top 10 Price Drops This Week</a></li>
-            <li><a href="#">How to Make the Most of Steam Regions</a></li>
-            <li><a href="#">Smart Tips for Managing Your Wishlist</a></li>
-        </ul>
-    </aside>
     </div>
 
     <footer id="contact" class="site-footer">
-        <p>&copy; <span id="year"></span> Games Prices is not affiliated with Valve or Steam. All times are UTC.</p>
-        <ul class="social-links">
-            <li><a href="https://www.facebook.com" target="_blank" rel="noopener">Facebook</a></li>
-            <li><a href="https://www.instagram.com" target="_blank" rel="noopener">Instagram</a></li>
-        </ul>
+        <p data-i18n="footer.notice">&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
+        <div class="footer-controls">
+            <label class="footer-control" for="footer-currency">
+                <select id="footer-currency" name="footer-currency" data-control="currency">
+                    <option value="USD">USD - $</option>
+                    <option value="EUR">EUR - €</option>
+                    <option value="GBP">GBP - £</option>
+                </select>
+            </label>
+            <label class="footer-control" for="footer-language">
+                <select id="footer-language" name="footer-language" data-control="language">
+                    <option value="en">English</option>
+                    <option value="lv">Latviešu</option>
+                </select>
+            </label>
+        </div>
+        <button class="mode-toggle" aria-pressed="false" data-i18n="mode.dark">Dark Mode</button>
     </footer>
 </body>
 </html>
