@@ -18,15 +18,15 @@
                 <li class="branding">
                     <a href="../index.html">
                         <svg width="30" height="30" viewBox="0 0 128 128" aria-hidden="true"><path fill="currentColor" d="M64 24A40 40 0 1 0 64 104A40 40 0 1 0 64 24ZM44 52L84 52A12 12 0 0 1 84 76L44 76A12 12 0 0 1 44 52ZM52 60A4 4 0 1 0 52 68A4 4 0 1 0 52 60ZM76 60A4 4 0 1 0 76 68A4 4 0 1 0 76 60Z"/></svg>
-                        <span data-i18n="nav.brand">Game Prices</span>
+                        <span>Game Prices</span>
                     </a>
                 </li>
-                <li><a href="sales.html" data-i18n="nav.games">Games</a></li>
-                <li><a href="aboutus.html" data-i18n="nav.about">About us</a></li>
+                <li><a href="sales.html">Games</a></li>
+                <li><a href="aboutus.html">About us</a></li>
                 <li class="has-dropdown">
-                    <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false" data-i18n="nav.services">Services</button>
+                    <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false">Services</button>
                     <ul class="dropdown-menu">
-                        <li><a href="weather.html" aria-current="page" data-i18n="nav.weather">Weather</a></li>
+                        <li><a href="weather.html" aria-current="page">Weather</a></li>
                     </ul>
                 </li>
             </ul>
@@ -37,46 +37,16 @@
         <main class="site-main weather-wrapper">
             <section class="weather-card" aria-labelledby="weather-heading">
                 <header>
-                    <h1 id="weather-heading" data-i18n="weather.heading">Check the weather before you play</h1>
-                    <p data-i18n="weather.subheading">Enter a city to pull live conditions from Open-Meteo so you know whether it is a couch day or an outdoor break.</p>
+                    <h1 id="weather-heading">Weather Service Retired</h1>
+                    <p>The live weather lookup has been removed. We're keeping the focus on tracking the best game prices.</p>
                 </header>
-                <form class="weather-form" data-weather-form novalidate>
-                    <label for="weather-city">
-                        <input type="search" id="weather-city" name="weather-city" required data-weather-input data-i18n-placeholder="weather.inputPlaceholder" placeholder="Search city" autocomplete="off">
-                    </label>
-                    <button type="submit" data-i18n="weather.submit">Get weather</button>
-                </form>
-                <p class="weather-status" id="weather-status" data-weather-status></p>
-                <section class="weather-result" data-weather-result aria-hidden="true" aria-live="polite">
-                    <div class="weather-summary">
-                        <h2 data-weather-city>—</h2>
-                        <p class="weather-meta" data-weather-meta></p>
-                    </div>
-                    <dl class="weather-metrics">
-                        <div class="weather-metric">
-                            <dt data-i18n="weather.metrics.temperature">Temperature</dt>
-                            <dd data-weather-temperature>—</dd>
-                        </div>
-                        <div class="weather-metric">
-                            <dt data-i18n="weather.metrics.feelsLike">Feels like</dt>
-                            <dd data-weather-feels-like>—</dd>
-                        </div>
-                        <div class="weather-metric">
-                            <dt data-i18n="weather.metrics.humidity">Humidity</dt>
-                            <dd data-weather-humidity>—</dd>
-                        </div>
-                        <div class="weather-metric">
-                            <dt data-i18n="weather.metrics.wind">Wind</dt>
-                            <dd data-weather-wind>—</dd>
-                        </div>
-                    </dl>
-                </section>
+                <p class="weather-status">Grab your controller or step outside - whatever the forecast, play on.</p>
             </section>
         </main>
     </div>
 
     <footer id="contact" class="site-footer">
-        <p data-i18n="footer.notice">&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
+        <p>&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
         <div class="footer-controls">
             <label class="footer-control" for="footer-currency">
                 <select id="footer-currency" name="footer-currency" data-control="currency">
@@ -92,7 +62,7 @@
                 </select>
             </label>
         </div>
-        <button class="mode-toggle" aria-pressed="false" data-i18n="mode.dark">Dark Mode</button>
+        <button class="mode-toggle" aria-pressed="false">Dark Mode</button>
     </footer>
 </body>
 </html>

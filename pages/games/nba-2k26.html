@@ -18,15 +18,15 @@
                 <li class="branding">
                     <a href="../../index.html">
                         <svg width="30" height="30" viewBox="0 0 128 128" aria-hidden="true"><path fill="currentColor" d="M64 24A40 40 0 1 0 64 104A40 40 0 1 0 64 24ZM44 52L84 52A12 12 0 0 1 84 76L44 76A12 12 0 0 1 44 52ZM52 60A4 4 0 1 0 52 68A4 4 0 1 0 52 60ZM76 60A4 4 0 1 0 76 68A4 4 0 1 0 76 60Z"/></svg>
-                        <span data-i18n="nav.brand">Game Prices</span>
+                        <span>Game Prices</span>
                     </a>
                 </li>
-                <li><a href="../sales.html" aria-current="page" data-i18n="nav.games">Games</a></li>
-                <li><a href="../aboutus.html" data-i18n="nav.about">About us</a></li>
+                <li><a href="../sales.html" aria-current="page">Games</a></li>
+                <li><a href="../aboutus.html">About us</a></li>
                 <li class="has-dropdown">
-                    <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false" data-i18n="nav.services">Services</button>
+                    <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false">Services</button>
                     <ul class="dropdown-menu">
-                        <li><a href="../weather.html" data-i18n="nav.weather">Weather</a></li>
+                        <li><a href="../weather.html">Weather</a></li>
                     </ul>
                 </li>
             </ul>
@@ -34,98 +34,120 @@
     </header>
 
     <div class="content-layout">
-        <main class="site-main game-page">
-            <article class="game-hero">
-                <img class="game-cover" src="https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=1200&q=80" alt="Basketball hoop under arena lights" loading="lazy">
-                <div class="game-hero-content">
-                    <h1>NBA 2K26</h1>
-                    <p class="game-tagline">Visual Concepts' annual basketball sim featuring ProPLAY 2.0 animations and revamped MyCAREER story paths.</p>
-                    <dl class="game-meta">
-                        <div>
-                            <dt>Publisher</dt>
-                            <dd>2K Sports</dd>
-                        </div>
-                        <div>
-                            <dt>Release Year</dt>
-                            <dd>2025</dd>
-                        </div>
-                        <div>
-                            <dt>Developer</dt>
-                            <dd>Visual Concepts</dd>
-                        </div>
-                        <div>
-                            <dt>Platforms</dt>
-                            <dd>PC, PlayStation 5, Xbox Series X|S</dd>
-                        </div>
-                        <div>
-                            <dt>Genre</dt>
-                            <dd>Sports Simulation</dd>
-                        </div>
-                    </dl>
-                    <div class="game-activity">
-                        <div class="metric">
-                            <span class="metric-label">Players Online</span>
-                            <span class="metric-value">18,600</span>
-                        </div>
-                        <div class="metric">
-                            <span class="metric-label">24h Peak</span>
-                            <span class="metric-value">47,300</span>
-                        </div>
-                        <div class="metric">
-                            <span class="metric-label">Avg. Session</span>
-                            <span class="metric-value">38 min</span>
-                        </div>
+        <main class="site-main game-landing">
+            <figure class="game-hero-poster">
+                <img src="https://cdn.prgloo.com/media/1480c67b54724a8789cc9310726766a9.png?width=1200&height=1800" alt="nba logo" loading="lazy">
+            </figure>
+
+            <header class="game-header">
+                <h1>NBA 2K26</h1>
+                <p class="game-subtitle">ProPLAY 2.0 powers every signature move while MyCAREER and The City keep the league fantasy thriving.</p>
+                <div class="game-stats" aria-label="Current player statistics">
+                    <div class="stat">
+                        <span class="stat-label">Players Online</span>
+                        <span class="stat-value">18,600</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">24h Peak</span>
+                        <span class="stat-value">47,300</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Avg. Session</span>
+                        <span class="stat-value">38 min</span>
                     </div>
                 </div>
-            </article>
+            </header>
 
-            <section class="game-description" aria-labelledby="about-nba2k26">
-                <h2 id="about-nba2k26">About NBA 2K26</h2>
-                <p>NBA 2K26 builds on ProPLAY 2.0 motion capture to deliver ultra-realistic footwork, contact physics, and signature celebrations. MyCAREER expands with branching contract negotiations, while The City social hub now supports crossplay matchmaking.</p>
-                <p>MyTEAM introduces salary cap seasons, anti-duplication pack odds, and an offline salary challenge ladder for solo players. Visual Concepts has promised quarterly gameplay tuners rather than abrupt balance swings.</p>
+            <section class="game-overview" aria-labelledby="nba2k26-overview">
+                <h2 id="nba2k26-overview">Game Overview</h2>
+                <p>NBA 2K26 leans on refreshed ProPLAY motion capture so every jab step, post spin, and celebration mirrors televised basketball. MyCAREER weaves in agents, endorsements, and open-world quests while crossplay matchmaking keeps The City buzzing with pro-am rivalries.</p>
+                <p>MyTEAM introduces salary cap seasons, transparent pack odds, and a tuned auction house to stabilize the meta. Weekly gameplay tuners and live balance notes aim to protect favorite builds without erasing hard-earned progress.</p>
+                <div class="game-metadata" aria-label="Game metadata">
+                    <p><span class="meta-key">PUBLISHER:</span> 2K Sports</p>
+                    <p><span class="meta-key">DEVELOPER:</span> Visual Concepts</p>
+                    <p><span class="meta-key">RELEASE YEAR:</span> 2025</p>
+                    <p><span class="meta-key">PLATFORMS:</span> PC, PlayStation 5, Xbox Series X|S</p>
+                    <p><span class="meta-key">GENRE:</span> Sports Simulation</p>
+                    <p><span class="meta-key">MONETIZATION:</span> Premium release with seasonal passes</p>
+                </div>
+                <div class="game-features" aria-label="Key features">
+                    <p>Crossplay-enabled The City hub with new affiliation districts and ranked Pro-Am ladder.</p>
+                    <p>ProPLAY 2.0 animation suite replicates signature packages for every 2025-26 roster.</p>
+                    <p>MyTEAM salary cap seasons, co-op challenge ladders, and customizable courtside audio.</p>
+                </div>
             </section>
 
             <section class="store-prices" aria-labelledby="nba2k26-prices">
-                <h2 id="nba2k26-prices">Current Store Prices</h2>
-                <div class="price-grid">
-                    <article class="price-card">
-                        <h3>Steam</h3>
-                        <p class="price" data-price-base="69.99" data-price-currency="USD" data-price-role="steam">$69.99</p>
-                        <p class="price-note">Standard Edition with dual-gen entitlement</p>
-                    </article>
-                    <article class="price-card">
-                        <h3>Epic Games Store</h3>
-                        <p class="price" data-price-base="69.99" data-price-currency="USD">$69.99</p>
-                        <p class="price-note">Eligible for Epic coupons during seasonal sales</p>
-                    </article>
-                    <article class="price-card">
-                        <h3>PlayStation Store</h3>
-                        <p class="price" data-price-base="69.99" data-price-currency="USD">$69.99</p>
-                        <p class="price-note">Cross-gen bundle, includes PS4 version</p>
-                    </article>
-                    <article class="price-card">
-                        <h3>Xbox Store</h3>
-                        <p class="price" data-price-base="69.99" data-price-currency="USD">$69.99</p>
-                        <p class="price-note">Dual entitlement across Xbox One and Series</p>
-                    </article>
-                    <article class="price-card">
-                        <h3>AppGames</h3>
-                        <p class="price" data-price-base="64.99" data-price-currency="USD">$64.99</p>
-                        <p class="price-note">Pre-order key, limited supply</p>
-                    </article>
-                </div>
+                <h2 id="nba2k26-prices">Storefront Pricing</h2>
+                <table class="store-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Store</th>
+                            <th scope="col">Edition</th>
+                            <th scope="col">Price</th>
+                            <th scope="col">Platforms</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://store.steampowered.com/app/2878980/NBA_2K25/" target="_blank" rel="noopener">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/452107/steam.svg" alt="Steam logo" loading="lazy">
+                                        <span>Steam</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Standard Edition</td>
+                            <td>
+                                <span class="price" data-price-base="69.99" data-price-currency="USD" data-price-role="steam">$69.99</span>
+                            </td>
+                            <td>Windows</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://store.playstation.com/en-us/product/UP1001-PPSA28420_00-NBA2K26000000000" target="_blank" rel="noopener">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/473754/playstation.svg" alt="PlayStation logo" loading="lazy">
+                                        <span>PlayStation Store</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Cross-Gen Digital Deluxe</td>
+                            <td>
+                                <span class="price" data-price-base="69.99" data-price-currency="USD">$69.99</span>
+                            </td>
+                            <td>PS4, PS5</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://www.xbox.com/en-us/games/store/nba-2k26-standard-edition/9pj2rvrc0l1x" target="_blank" rel="noopener">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/306993/xbox.svg" alt="Xbox logo" loading="lazy">
+                                        <span>Xbox Store</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Cross-Gen Bundle</td>
+                            <td>
+                                <span class="price" data-price-base="69.99" data-price-currency="USD">$69.99</span>
+                            </td>
+                            <td>Xbox One, Xbox Series X|S</td>
+                        </tr>
+                    </tbody>
+                </table>
             </section>
 
             <section class="price-history" aria-labelledby="nba2k26-history">
                 <h2 id="nba2k26-history">Price History</h2>
-                <canvas class="price-chart" role="img" aria-label="NBA 2K26 price history chart" data-price-history="" data-price-currency="USD" data-chart-title="NBA 2K26"></canvas>
-                <p class="chart-note">Launch pricing compiled from Steam listings, PlayStation Store promos, Xbox Store sales, and AppGames pre-order adjustments.</p>
+                <div class="chart-placeholder" role="img" aria-label="NBA 2K26 price history placeholder graphic">
+                </div>
             </section>
         </main>
     </div>
 
     <footer id="contact" class="site-footer">
-        <p data-i18n="footer.notice">&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
+        <p>&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
         <div class="footer-controls">
             <label class="footer-control" for="footer-currency">
                 <select id="footer-currency" name="footer-currency" data-control="currency">
@@ -141,7 +163,7 @@
                 </select>
             </label>
         </div>
-        <button class="mode-toggle" aria-pressed="false" data-i18n="mode.dark">Dark Mode</button>
+        <button class="mode-toggle" aria-pressed="false">Dark Mode</button>
     </footer>
 </body>
 </html>

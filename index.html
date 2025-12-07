@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game Prices</title>
     <link rel="stylesheet" href="src/css/style.css">
-    <script defer src="src/js/script.js"></script>
 </head>
 <body>
     <header class="site-header">
@@ -18,15 +17,15 @@
                 <li class="branding">
                     <a href="index.html">
                         <svg width="30" height="30" viewBox="0 0 128 128" aria-hidden="true"><path fill="currentColor" d="M64 24A40 40 0 1 0 64 104A40 40 0 1 0 64 24ZM44 52L84 52A12 12 0 0 1 84 76L44 76A12 12 0 0 1 44 52ZM52 60A4 4 0 1 0 52 68A4 4 0 1 0 52 60ZM76 60A4 4 0 1 0 76 68A4 4 0 1 0 76 60Z"/></svg>
-                        <span data-i18n="nav.brand">Game Prices</span>
+                        <span>Game Prices</span>
                     </a>
                 </li>
-                <li><a href="pages/sales.html" data-i18n="nav.games">Games</a></li>
-                <li><a href="pages/aboutus.html" data-i18n="nav.about">About us</a></li>
+                <li><a href="pages/sales.html">Games</a></li>
+                <li><a href="pages/aboutus.html">About us</a></li>
                 <li class="has-dropdown">
-                    <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false" data-i18n="nav.services">Services</button>
+                    <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false">Services</button>
                     <ul class="dropdown-menu">
-                        <li><a href="pages/weather.html" data-i18n="nav.weather">Weather</a></li>
+                        <li><a href="pages/weather.html">Weather</a></li>
                     </ul>
                 </li>
             </ul>
@@ -36,12 +35,14 @@
     <div class="content-layout">
     <main id="home" class="site-main">
         <section class="hero" id="overview">
-            <div class="hero-text">
-                <h1>Find the Best Game Deals in One Place</h1>
+            <div class="hero-competitors">
+                <img src="src/images/steamdb.png" alt="steamdb">
+                <img src="src/images/ggdeals.png" alt="ggdeals">
+                <img src="src/images/isthereantdael.png" alt="isthereantdael">
+            </div>
+            <div class="hero-content">
+                <h1>Find the best game deals in une place</h1>
                 <p>GamePrices automatically collects prices from leading digital stores, compares them, visualizes price history, and helps you find the best deals without wasting time.</p>
-                </div>
-            <div class="hero-media">
-                <img src="https://store.cloudflare.steamstatic.com/public/shared/images/header/logo_steam.svg" alt="Steam logotips" loading="lazy">
             </div>
         </section>
 
@@ -51,7 +52,7 @@
             </header>
             <div class="card-grid">
                 <article class="card" data-id="alerts">
-                    <img src="https://www.svgrepo.com/show/425581/discount-promo-ecommerce.svg" alt="" loading="lazy">
+                    <img src="https://www.svgrepo.com/show/379567/price-tag.svg" alt="" loading="lazy">
                     <div class="card-body">
                         <h3>Price Comparison</h3>
                         <p>We provide real-time price comparison from major stores so you always know where the best deal is.</p>
@@ -65,7 +66,7 @@
                     </div>
                 </article>
                 <article class="card" data-id="bundles">
-                    <img src="https://www.svgrepo.com/show/408746/save-wishlist-like-favorite.svg" alt="" loading="lazy">
+                    <img src="https://www.svgrepo.com/show/348014/add-to-list.svg" alt="" loading="lazy">
                     <div class="card-body">
                         <h3>Wishlist & Notifications</h3>
                         <p>Save your favorite games to a wishlist and get instant notifications when prices drop.</p>
@@ -77,7 +78,7 @@
     </div>
 
     <footer id="contact" class="site-footer">
-        <p data-i18n="footer.notice">&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
+        <p>&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
         <div class="footer-controls">
             <label class="footer-control" for="footer-currency">
                 <select id="footer-currency" name="footer-currency" data-control="currency">
@@ -93,7 +94,8 @@
                 </select>
             </label>
         </div>
-        <button class="mode-toggle" aria-pressed="false" data-i18n="mode.dark">Dark Mode</button>
+        <button class="mode-toggle" aria-pressed="false">Dark Mode</button>
     </footer>
 </body>
+<script defer src="src/js/script.js"></script>
 </html>

@@ -18,15 +18,15 @@
                 <li class="branding">
                     <a href="../../index.html">
                         <svg width="30" height="30" viewBox="0 0 128 128" aria-hidden="true"><path fill="currentColor" d="M64 24A40 40 0 1 0 64 104A40 40 0 1 0 64 24ZM44 52L84 52A12 12 0 0 1 84 76L44 76A12 12 0 0 1 44 52ZM52 60A4 4 0 1 0 52 68A4 4 0 1 0 52 60ZM76 60A4 4 0 1 0 76 68A4 4 0 1 0 76 60Z"/></svg>
-                        <span data-i18n="nav.brand">Game Prices</span>
+                        <span>Game Prices</span>
                     </a>
                 </li>
-                <li><a href="../sales.html" aria-current="page" data-i18n="nav.games">Games</a></li>
-                <li><a href="../aboutus.html" data-i18n="nav.about">About us</a></li>
+                <li><a href="../sales.html" aria-current="page">Games</a></li>
+                <li><a href="../aboutus.html">About us</a></li>
                 <li class="has-dropdown">
-                    <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false" data-i18n="nav.services">Services</button>
+                    <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false">Services</button>
                     <ul class="dropdown-menu">
-                        <li><a href="../weather.html" data-i18n="nav.weather">Weather</a></li>
+                        <li><a href="../weather.html">Weather</a></li>
                     </ul>
                 </li>
             </ul>
@@ -34,98 +34,135 @@
     </header>
 
     <div class="content-layout">
-        <main class="site-main game-page">
-            <article class="game-hero">
-                <img class="game-cover" src="https://cdn.cloudflare.steamstatic.com/steam/apps/1086940/header.jpg" alt="Baldur's Gate 3 party confronting a dragon" loading="lazy">
-                <div class="game-hero-content">
-                    <h1>Baldur's Gate 3</h1>
-                    <p class="game-tagline">Larian Studios' award-winning CRPG with cinematic storytelling, deep turn-based combat, and meaningful choices.</p>
-                    <dl class="game-meta">
-                        <div>
-                            <dt>Publisher</dt>
-                            <dd>Larian Studios</dd>
-                        </div>
-                        <div>
-                            <dt>Release Year</dt>
-                            <dd>2023</dd>
-                        </div>
-                        <div>
-                            <dt>Developer</dt>
-                            <dd>Larian Studios</dd>
-                        </div>
-                        <div>
-                            <dt>Platforms</dt>
-                            <dd>PC, PlayStation 5, Xbox Series X|S</dd>
-                        </div>
-                        <div>
-                            <dt>Genre</dt>
-                            <dd>CRPG</dd>
-                        </div>
-                    </dl>
-                        <div class="game-activity">
-                            <div class="metric">
-                                <span class="metric-label">Players Online</span>
-                                <span class="metric-value">98,200</span>
-                            </div>
-                            <div class="metric">
-                                <span class="metric-label">24h Peak</span>
-                                <span class="metric-value">201,500</span>
-                            </div>
-                            <div class="metric">
-                                <span class="metric-label">Avg. Session</span>
-                                <span class="metric-value">120 min</span>
-                            </div>
-                        </div>
+        <main class="site-main game-landing">
+            <figure class="game-hero-poster">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/1086940/header.jpg" alt="Baldur's Gate 3 party confronting a dragon" loading="lazy">
+            </figure>
+
+            <header class="game-header">
+                <h1>Baldur's Gate 3</h1>
+                <p class="game-subtitle">Larian Studios' award-winning CRPG that marries cinematic storytelling with deep D&amp;D 5e combat.</p>
+                <div class="game-stats" aria-label="Current player statistics">
+                    <div class="stat">
+                        <span class="stat-label">Players Online</span>
+                        <span class="stat-value">98,200</span>
                     </div>
-                </article>
-
-                <section class="game-description" aria-labelledby="about-bg3">
-                    <h2 id="about-bg3">About Baldur's Gate 3</h2>
-                    <p>Baldur's Gate 3 adapts the Dungeons &amp; Dragons 5e ruleset into a lavish narrative adventure where party composition, dice rolls, and exploration all matter. Origin characters, co-op multiplayer, and near total system reactivity fuel high replay value.</p>
-                    <p>Larian continues to refine performance, add epilogue content, and experiment with mod support via their community workshop. Split-screen co-op recently launched on Xbox Series consoles after optimizations.</p>
-                </section>
-
-                <section class="store-prices" aria-labelledby="bg3-prices">
-                    <h2 id="bg3-prices">Current Store Prices</h2>
-                    <div class="price-grid">
-                        <article class="price-card">
-                            <h3>Steam</h3>
-                            <p class="price" data-price-base="59.99" data-price-currency="USD" data-price-role="steam">$59.99</p>
-                            <p class="price-note">Standard Edition</p>
-                        </article>
-                        <article class="price-card">
-                            <h3>GOG</h3>
-                            <p class="price" data-price-base="59.99" data-price-currency="USD">$59.99</p>
-                            <p class="price-note">DRM-free with collector extras</p>
-                        </article>
-                        <article class="price-card">
-                            <h3>PlayStation Store</h3>
-                            <p class="price" data-price-base="69.99" data-price-currency="USD">$69.99</p>
-                            <p class="price-note">Digital Deluxe upgrade available</p>
-                        </article>
-                        <article class="price-card">
-                            <h3>Xbox Store</h3>
-                            <p class="price" data-price-base="69.99" data-price-currency="USD">$69.99</p>
-                            <p class="price-note">Includes split-screen co-op patch</p>
-                        </article>
-                        <article class="price-card">
-                            <h3>AppGames</h3>
-                            <p class="price" data-price-base="57.49" data-price-currency="USD">$57.49</p>
-                            <p class="price-note">Lowest verified Steam key</p>
-                        </article>
+                    <div class="stat">
+                        <span class="stat-label">24h Peak</span>
+                        <span class="stat-value">201,500</span>
                     </div>
-                </section>
+                    <div class="stat">
+                        <span class="stat-label">Avg. Session</span>
+                        <span class="stat-value">120 min</span>
+                    </div>
+                </div>
+            </header>
 
-                <section class="price-history" aria-labelledby="bg3-history">
-                    <h2 id="bg3-history">Price History</h2>
-                    <canvas class="price-chart" role="img" aria-label="Baldur's Gate 3 price history chart" data-price-history="" data-price-currency="USD" data-chart-title="Baldur's Gate 3"></canvas>
-                    <p class="chart-note">Sourced from SteamDB, GOG archives, AppGames offers, and IsThereAnyDeal alerts.</p>
-                </section>
-            </main>
-        </div>
+            <section class="game-overview" aria-labelledby="bg3-overview">
+                <h2 id="bg3-overview">Game Overview</h2>
+                <p>Baldur's Gate 3 adapts the Dungeons &amp; Dragons 5e ruleset into a reactive narrative epic. Origin companions, branching romances, and cooperative story beats make each long campaign feel personal, whether solo or in four-player online co-op.</p>
+                <p>Constant Larian patches add new epilogues, honor mode variants, and performance boosts. Mod support is expanding via the official toolkit, while split-screen now runs across Series X|S after extensive optimization.</p>
+                <div class="game-metadata" aria-label="Game metadata">
+                    <p><span class="meta-key">PUBLISHER:</span> Larian Studios</p>
+                    <p><span class="meta-key">DEVELOPER:</span> Larian Studios</p>
+                    <p><span class="meta-key">RELEASE YEAR:</span> 2023</p>
+                    <p><span class="meta-key">PLATFORMS:</span> PC, PlayStation 5, Xbox Series X|S</p>
+                    <p><span class="meta-key">GENRE:</span> Cinematic CRPG</p>
+                    <p><span class="meta-key">AVERAGE PLAYTHROUGH:</span> 90-120 hours</p>
+                </div>
+                <div class="game-features" aria-label="Key features">
+                    <p>Turn-based combat layered with verticality, environmental combos, and dice-driven skill checks.</p>
+                    <p>Co-op across PC, PS5, and Xbox with cross-save support via Larian account.</p>
+                    <p>Origin stories and custom characters react uniquely to the mind flayer narrative.</p>
+                </div>
+            </section>
+
+            <section class="store-prices" aria-labelledby="bg3-prices">
+                <h2 id="bg3-prices">Storefront Pricing</h2>
+                <table class="store-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Store</th>
+                            <th scope="col">Edition</th>
+                            <th scope="col">Price</th>
+                            <th scope="col">Platforms</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://store.steampowered.com/app/1086940/" target="_blank" rel="noopener">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/452107/steam.svg" alt="Steam logo" loading="lazy">
+                                        <span>Steam</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Standard Edition</td>
+                            <td>
+                                <span class="price" data-price-base="59.99" data-price-currency="USD" data-price-role="steam">$59.99</span>
+                            </td>
+                            <td>Windows, macOS</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://www.gog.com/en/game/baldurs_gate_iii" target="_blank" rel="noopener">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/341859/gog-com.svg" alt="GOG logo" loading="lazy">
+                                        <span>GOG</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Standard Edition</td>
+                            <td>
+                                <span class="price" data-price-base="59.99" data-price-currency="USD">$59.99</span>
+                            </td>
+                            <td>Windows, macOS</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://www.playstation.com/en-us/games/baldurs-gate-3/" target="_blank" rel="noopener">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/473754/playstation.svg" alt="PlayStation logo" loading="lazy">
+                                        <span>PlayStation Store</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Digital Deluxe</td>
+                            <td>
+                                <span class="price" data-price-base="69.99" data-price-currency="USD">$69.99</span>
+                            </td>
+                            <td>PS5</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://www.xbox.com/en-US/games/store/baldurs-gate-3/9ND58LQTG09T/0010" target="_blank" rel="noopener">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/306993/xbox.svg" alt="Xbox logo" loading="lazy">
+                                        <span>Xbox Store</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Digital Deluxe</td>
+                            <td>
+                                <span class="price" data-price-base="69.99" data-price-currency="USD">$69.99</span>
+                            </td>
+                            <td>Xbox Series X|S</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="price-history" aria-labelledby="bg3-history">
+                <h2 id="bg3-history">Price History</h2>
+                <div class="chart-placeholder" role="img" aria-label="Baldur's Gate 3 price history placeholder graphic">
+                </div>
+            </section>
+        </main>
+    </div>
 
         <footer id="contact" class="site-footer">
-            <p data-i18n="footer.notice">&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
+            <p>&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
             <div class="footer-controls">
                 <label class="footer-control" for="footer-currency">
                     <select id="footer-currency" name="footer-currency" data-control="currency">
@@ -141,7 +178,7 @@
                     </select>
                 </label>
             </div>
-            <button class="mode-toggle" aria-pressed="false" data-i18n="mode.dark">Dark Mode</button>
+            <button class="mode-toggle" aria-pressed="false">Dark Mode</button>
         </footer>
 </body>
 </html>

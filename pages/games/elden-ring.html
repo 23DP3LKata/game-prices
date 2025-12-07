@@ -18,15 +18,15 @@
                 <li class="branding">
                     <a href="../../index.html">
                         <svg width="30" height="30" viewBox="0 0 128 128" aria-hidden="true"><path fill="currentColor" d="M64 24A40 40 0 1 0 64 104A40 40 0 1 0 64 24ZM44 52L84 52A12 12 0 0 1 84 76L44 76A12 12 0 0 1 44 52ZM52 60A4 4 0 1 0 52 68A4 4 0 1 0 52 60ZM76 60A4 4 0 1 0 76 68A4 4 0 1 0 76 60Z"/></svg>
-                        <span data-i18n="nav.brand">Game Prices</span>
+                        <span>Game Prices</span>
                     </a>
                 </li>
-                <li><a href="../sales.html" aria-current="page" data-i18n="nav.games">Games</a></li>
-                <li><a href="../aboutus.html" data-i18n="nav.about">About us</a></li>
+                <li><a href="../sales.html" aria-current="page">Games</a></li>
+                <li><a href="../aboutus.html">About us</a></li>
                 <li class="has-dropdown">
-                    <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false" data-i18n="nav.services">Services</button>
+                    <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false">Services</button>
                     <ul class="dropdown-menu">
-                        <li><a href="../weather.html" data-i18n="nav.weather">Weather</a></li>
+                        <li><a href="../weather.html">Weather</a></li>
                     </ul>
                 </li>
             </ul>
@@ -34,93 +34,120 @@
     </header>
 
     <div class="content-layout">
-        <main class="site-main game-page">
-            <article class="game-hero">
-                <img class="game-cover" src="https://cdn.cloudflare.steamstatic.com/steam/apps/1245620/header.jpg" alt="Elden Ring Tarnished gazing at the Erdtree" loading="lazy">
-                <div class="game-hero-content">
-                    <h1>Elden Ring</h1>
-                    <p class="game-tagline">FromSoftware's open-world action RPG, co-created with George R. R. Martin, featuring challenging combat and expansive lore.</p>
-                    <dl class="game-meta">
-                        <div>
-                            <dt>Publisher</dt>
-                            <dd>Bandai Namco Entertainment</dd>
-                        </div>
-                        <div>
-                            <dt>Release Year</dt>
-                            <dd>2022</dd>
-                        </div>
-                        <div>
-                            <dt>Developer</dt>
-                            <dd>FromSoftware</dd>
-                        </div>
-                        <div>
-                            <dt>Platforms</dt>
-                            <dd>PC, PlayStation 4/5, Xbox One, Xbox Series X|S</dd>
-                        </div>
-                        <div>
-                            <dt>Genre</dt>
-                            <dd>Action RPG</dd>
-                        </div>
-                    </dl>
-                    <div class="game-activity">
-                        <div class="metric">
-                            <span class="metric-label">Players Online</span>
-                            <span class="metric-value">87,500</span>
-                        </div>
-                        <div class="metric">
-                            <span class="metric-label">24h Peak</span>
-                            <span class="metric-value">161,400</span>
-                        </div>
-                        <div class="metric">
-                            <span class="metric-label">Avg. Session</span>
-                            <span class="metric-value">104 min</span>
-                        </div>
+        <main class="site-main game-landing">
+            <figure class="game-hero-poster">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/1245620/header.jpg" alt="Elden Ring Tarnished gazing at the Erdtree" loading="lazy">
+            </figure>
+
+            <header class="game-header">
+                <h1>Elden Ring</h1>
+                <p class="game-subtitle">FromSoftware's genre-defining open-world action RPG crafted with George R. R. Martin's lore.</p>
+                <div class="game-stats" aria-label="Current player statistics">
+                    <div class="stat">
+                        <span class="stat-label">Players Online</span>
+                        <span class="stat-value">87,500</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">24h Peak</span>
+                        <span class="stat-value">161,400</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Avg. Session</span>
+                        <span class="stat-value">104 min</span>
                     </div>
                 </div>
-            </article>
+            </header>
 
-            <section class="game-description" aria-labelledby="about-elden-ring">
-                <h2 id="about-elden-ring">About Elden Ring</h2>
-                <p>Elden Ring combines Souls-like combat with a vast, interconnected world filled with dungeons, legacy castles, and hidden storylines. The Shadow of the Erdtree expansion extends the narrative into the Land of Shadow with new bosses and build options.</p>
-                <p>Summon co-op allies, invade as a red phantom, or experiment with hundreds of weapon skills. Ongoing balance updates from FromSoftware keep PVP metas shifting while preserving the challenge.</p>
+            <section class="game-overview" aria-labelledby="elden-ring-overview">
+                <h2 id="elden-ring-overview">Game Overview</h2>
+                <p>Elden Ring blends Soulsborne combat with a sprawling Lands Between to explore at your pace. Legacy dungeons, field bosses, and layered questlines encourage experimentation with hundreds of weapons, Ashes of War, and spirit summons.</p>
+                <p>The Shadow of the Erdtree expansion opens the Land of Shadow with new legacy dungeons, incantations, and talismans, providing late-game build options. Balance patches continue to refresh PvP metas and co-op strategies.</p>
+                <div class="game-metadata" aria-label="Game metadata">
+                    <p><span class="meta-key">PUBLISHER:</span> Bandai Namco Entertainment</p>
+                    <p><span class="meta-key">DEVELOPER:</span> FromSoftware</p>
+                    <p><span class="meta-key">RELEASE YEAR:</span> 2022</p>
+                    <p><span class="meta-key">PLATFORMS:</span> PC, PlayStation, Xbox</p>
+                    <p><span class="meta-key">GENRE:</span> Action RPG</p>
+                    <p><span class="meta-key">LATEST EXPANSION:</span> Shadow of the Erdtree</p>
+                </div>
+                <div class="game-features" aria-label="Key features">
+                    <p>Freedom to tackle legacy dungeons, field zones, and twin boss gauntlets in any order.</p>
+                    <p>Seamless co-op summons, invasion-based PvP, and Arena duels for structured matches.</p>
+                    <p>Robust buildcrafting via Ashes of War, Great Runes, and new DLC-specific upgrade paths.</p>
+                </div>
             </section>
 
             <section class="store-prices" aria-labelledby="elden-ring-prices">
-                <h2 id="elden-ring-prices">Current Store Prices</h2>
-                <div class="price-grid">
-                    <article class="price-card">
-                        <h3>Steam</h3>
-                        <p class="price" data-price-base="59.99" data-price-currency="USD" data-price-role="steam">$59.99</p>
-                        <p class="price-note">Standard Edition</p>
-                    </article>
-                    <article class="price-card">
-                        <h3>PlayStation Store</h3>
-                        <p class="price" data-price-base="59.99" data-price-currency="USD">$59.99</p>
-                        <p class="price-note">PS5 performance and quality modes</p>
-                    </article>
-                    <article class="price-card">
-                        <h3>Xbox Store</h3>
-                        <p class="price" data-price-base="59.99" data-price-currency="USD">$59.99</p>
-                        <p class="price-note">Smart Delivery with Series enhancements</p>
-                    </article>
-                    <article class="price-card">
-                        <h3>AppGames</h3>
-                        <p class="price" data-price-base="51.49" data-price-currency="USD">$51.49</p>
-                        <p class="price-note">Discounted global Steam key</p>
-                    </article>
-                </div>
+                <h2 id="elden-ring-prices">Storefront Pricing</h2>
+                <table class="store-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Store</th>
+                            <th scope="col">Edition</th>
+                            <th scope="col">Price</th>
+                            <th scope="col">Platforms</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://store.steampowered.com/app/1245620/" target="_blank" rel="noopener">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/452107/steam.svg" alt="Steam logo" loading="lazy">
+                                        <span>Steam</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Standard Edition</td>
+                            <td>
+                                <span class="price" data-price-base="59.99" data-price-currency="USD" data-price-role="steam">$59.99</span>
+                            </td>
+                            <td>Windows</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://www.playstation.com/en-us/games/elden-ring/" target="_blank" rel="noopener">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/473754/playstation.svg" alt="PlayStation logo" loading="lazy">
+                                        <span>PlayStation Store</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Shadow of the Erdtree Bundle</td>
+                            <td>
+                                <span class="price" data-price-base="79.99" data-price-currency="USD">$79.99</span>
+                            </td>
+                            <td>PS4, PS5</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://www.xbox.com/en-US/games/store/elden-ring/9P3J32CTXLRZ/0010" target="_blank" rel="noopener">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/306993/xbox.svg" alt="Xbox logo" loading="lazy">
+                                        <span>Xbox Store</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Shadow of the Erdtree Bundle</td>
+                            <td>
+                                <span class="price" data-price-base="79.99" data-price-currency="USD">$79.99</span>
+                            </td>
+                            <td>Xbox One, Xbox Series X|S</td>
+                        </tr>
+                    </tbody>
+                </table>
             </section>
 
             <section class="price-history" aria-labelledby="elden-ring-history">
                 <h2 id="elden-ring-history">Price History</h2>
-                <canvas class="price-chart" role="img" aria-label="Elden Ring price history chart" data-price-history="" data-price-currency="USD" data-chart-title="Elden Ring"></canvas>
-                <p class="chart-note">Pulled from SteamDB discount archives, console storefront promotions, and AppGames historical pricing.</p>
+                <div class="chart-placeholder" role="img" aria-label="Elden Ring price history placeholder graphic">
+                </div>
             </section>
         </main>
     </div>
 
     <footer id="contact" class="site-footer">
-        <p data-i18n="footer.notice">&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
+        <p>&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
         <div class="footer-controls">
             <label class="footer-control" for="footer-currency">
                 <select id="footer-currency" name="footer-currency" data-control="currency">
@@ -136,7 +163,7 @@
                 </select>
             </label>
         </div>
-        <button class="mode-toggle" aria-pressed="false" data-i18n="mode.dark">Dark Mode</button>
+        <button class="mode-toggle" aria-pressed="false">Dark Mode</button>
     </footer>
 </body>
 </html>

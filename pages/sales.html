@@ -18,15 +18,15 @@
                 <li class="branding">
                     <a href="../index.html">
                         <svg width="30" height="30" viewBox="0 0 128 128" aria-hidden="true"><path fill="currentColor" d="M64 24A40 40 0 1 0 64 104A40 40 0 1 0 64 24ZM44 52L84 52A12 12 0 0 1 84 76L44 76A12 12 0 0 1 44 52ZM52 60A4 4 0 1 0 52 68A4 4 0 1 0 52 60ZM76 60A4 4 0 1 0 76 68A4 4 0 1 0 76 60Z"/></svg>
-                        <span data-i18n="nav.brand">Game Prices</span>
+                        <span>Game Prices</span>
                     </a>
                 </li>
-                <li><a href="sales.html" aria-current="page" data-i18n="nav.games">Games</a></li>
-                <li><a href="aboutus.html" data-i18n="nav.about">About us</a></li>
+                <li><a href="sales.html" aria-current="page">Games</a></li>
+                <li><a href="aboutus.html">About us</a></li>
                 <li class="has-dropdown">
-                    <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false" data-i18n="nav.services">Services</button>
+                    <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false">Services</button>
                     <ul class="dropdown-menu">
-                        <li><a href="weather.html" data-i18n="nav.weather">Weather</a></li>
+                        <li><a href="weather.html">Weather</a></li>
                     </ul>
                 </li>
             </ul>
@@ -36,58 +36,16 @@
     <div class="content-layout">
         <main class="site-main game-list">
             <section class="section-header">
-                <h1 data-i18n="games.heading">Games We Track</h1>
-                <p data-i18n="games.subheading">We monitor paid releases across Steam, console storefronts, SteamDB, AppGames, and IsThereAnyDeal to surface the best live prices.</p>
+                <h1>Games We Track</h1>
             </section>
 
             <section class="games-table-wrapper">
-                <div class="games-controls" role="region" aria-label="Game filters">
-                    <label for="games-search">
-                        <span data-i18n="games.searchLabel">Search</span>
-                        <input type="search" id="games-search" name="games-search" data-action="games-search" placeholder="Search games" data-i18n-placeholder="games.searchPlaceholder" autocomplete="off">
-                    </label>
-                    <label for="games-genre">
-                        <span data-i18n="games.genreLabel">Genre</span>
-                        <select id="games-genre" name="games-genre" data-action="games-genre">
-                            <option value="all" data-i18n="games.genre.all">All genres</option>
-                            <option value="action" data-i18n="games.genre.action">Action</option>
-                            <option value="rpg" data-i18n="games.genre.rpg">RPG</option>
-                            <option value="shooter" data-i18n="games.genre.shooter">Shooter</option>
-                            <option value="adventure" data-i18n="games.genre.adventure">Adventure</option>
-                            <option value="strategy" data-i18n="games.genre.strategy">Strategy</option>
-                            <option value="sports" data-i18n="games.genre.sports">Sports</option>
-                            <option value="horror" data-i18n="games.genre.horror">Horror</option>
-                            <option value="metroidvania" data-i18n="games.genre.metroidvania">Metroidvania</option>
-                        </select>
-                    </label>
-                    <label for="games-platform">
-                        <span data-i18n="games.platformLabel">Platform</span>
-                        <select id="games-platform" name="games-platform" data-action="games-platform">
-                            <option value="all" data-i18n="games.platform.all">All platforms</option>
-                            <option value="pc" data-i18n="games.platform.pc">PC</option>
-                            <option value="playstation" data-i18n="games.platform.playstation">PlayStation</option>
-                            <option value="xbox" data-i18n="games.platform.xbox">Xbox</option>
-                        </select>
-                    </label>
-                    <label for="games-sort">
-                        <span data-i18n="games.sortLabel">Sort by</span>
-                        <select id="games-sort" name="games-sort" data-action="games-sort">
-                            <option value="featured" data-i18n="games.sort.featured">Featured order</option>
-                            <option value="price-asc" data-i18n="games.sort.priceAsc">Price: Low to High</option>
-                            <option value="price-desc" data-i18n="games.sort.priceDesc">Price: High to Low</option>
-                            <option value="players" data-i18n="games.sort.players">Players Online</option>
-                            <option value="peak" data-i18n="games.sort.peak">24h Peak</option>
-                        </select>
-                    </label>
-                </div>
-                <p class="games-results" data-results>Showing 10 of 10 games</p>
-                <div class="games-empty" hidden data-i18n="games.empty">No games match your filters yet. Try adjusting the search or filters.</div>
                 <table class="table-products games-table" aria-describedby="games-disclaimer" data-games-table>
-                    <caption class="visually-hidden" data-i18n="games.caption">Current prices across Steam, PlayStation, Xbox, and AppGames</caption>
+                    <caption class="visually-hidden">Current prices across Steam, PlayStation, Xbox, and AppGames</caption>
                     <thead>
                         <tr>
                             <th scope="col">Game</th>
-                            <th scope="col" data-i18n="games.genreLabel">Genre</th>
+                            <th scope="col">Genre</th>
                             <th scope="col">Steam</th>
                             <th scope="col">PlayStation</th>
                             <th scope="col">Xbox</th>
@@ -100,12 +58,12 @@
                         <tr data-title="ARC Raiders" data-genres="shooter" data-platforms="pc,playstation,xbox" data-steam-price="49.99" data-players="34200" data-peak="82300" data-order="0">
                             <th scope="row">
                                 <div class="game-cell">
-                                    <img src="https://cdn.akamai.steamstatic.com/steam/apps/1535570/header.jpg" alt="ARC Raiders cover" loading="lazy">
+                                    <img src="https://external-preview.redd.it/i-made-a-high-quality-animated-logo-for-arc-raiders-v0-03u728o_yZYnnHf7ddguXcAypOOw-fjNiVXCaDojrVI.png?auto=webp&s=16bdc70d29355480cdb94cae16b759c272092f3d" alt="ARC Raiders cover" loading="lazy">
                                     <a href="games/arc-raiders.html">ARC Raiders</a>
                                 </div>
                             </th>
                             <td class="genre-cell">
-                                <span class="genre-tag" data-i18n="games.genre.shooter">Shooter</span>
+                                <span class="genre-tag">Shooter</span>
                             </td>
                             <td><span class="price" data-price-base="49.99" data-price-currency="USD" data-price-role="steam">$49.99</span></td>
                             <td><span class="price" data-price-base="59.99" data-price-currency="USD">$59.99</span></td>
@@ -122,7 +80,7 @@
                                 </div>
                             </th>
                             <td class="genre-cell">
-                                <span class="genre-tag" data-i18n="games.genre.shooter">Shooter</span>
+                                <span class="genre-tag">Shooter</span>
                             </td>
                             <td><span class="price" data-price-base="39.99" data-price-currency="USD" data-price-role="steam">$39.99</span></td>
                             <td><span class="price" data-price-base="39.99" data-price-currency="USD">$39.99</span></td>
@@ -139,8 +97,8 @@
                                 </div>
                             </th>
                             <td class="genre-cell">
-                                <span class="genre-tag" data-i18n="games.genre.rpg">RPG</span>
-                                <span class="genre-tag" data-i18n="games.genre.action">Action</span>
+                                <span class="genre-tag">RPG</span>
+                                <span class="genre-tag">Action</span>
                             </td>
                             <td><span class="price" data-price-base="29.99" data-price-currency="USD" data-price-role="steam">$29.99</span></td>
                             <td><span class="price" data-price-base="39.99" data-price-currency="USD">$39.99</span></td>
@@ -157,8 +115,8 @@
                                 </div>
                             </th>
                             <td class="genre-cell">
-                                <span class="genre-tag" data-i18n="games.genre.strategy">Strategy</span>
-                                <span class="genre-tag" data-i18n="games.genre.rpg">RPG</span>
+                                <span class="genre-tag">Strategy</span>
+                                <span class="genre-tag">RPG</span>
                             </td>
                             <td><span class="price" data-price-base="49.99" data-price-currency="USD" data-price-role="steam">$49.99</span></td>
                             <td><span class="price" data-price-base="49.99" data-price-currency="USD">$49.99</span></td>
@@ -175,8 +133,8 @@
                                 </div>
                             </th>
                             <td class="genre-cell">
-                                <span class="genre-tag" data-i18n="games.genre.action">Action</span>
-                                <span class="genre-tag" data-i18n="games.genre.adventure">Adventure</span>
+                                <span class="genre-tag">Action</span>
+                                <span class="genre-tag">Adventure</span>
                             </td>
                             <td><span class="price" data-price-base="59.99" data-price-currency="USD" data-price-role="steam">$59.99</span></td>
                             <td><span class="price" data-price-base="59.99" data-price-currency="USD">$59.99</span></td>
@@ -188,12 +146,12 @@
                         <tr data-title="NBA 2K26" data-genres="sports" data-platforms="pc,playstation,xbox" data-steam-price="69.99" data-players="18600" data-peak="47300" data-order="5">
                             <th scope="row">
                                 <div class="game-cell">
-                                    <img src="https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=400&q=80" alt="Basketball hoop under arena lights" loading="lazy">
+                                    <img src="https://cdn.prgloo.com/media/1480c67b54724a8789cc9310726766a9.png?width=1200&height=1800" alt="Basketball hoop under arena lights" loading="lazy">
                                     <a href="games/nba-2k26.html">NBA 2K26</a>
                                 </div>
                             </th>
                             <td class="genre-cell">
-                                <span class="genre-tag" data-i18n="games.genre.sports">Sports</span>
+                                <span class="genre-tag">Sports</span>
                             </td>
                             <td><span class="price" data-price-base="69.99" data-price-currency="USD" data-price-role="steam">$69.99</span></td>
                             <td><span class="price" data-price-base="69.99" data-price-currency="USD">$69.99</span></td>
@@ -210,8 +168,8 @@
                                 </div>
                             </th>
                             <td class="genre-cell">
-                                <span class="genre-tag" data-i18n="games.genre.rpg">RPG</span>
-                                <span class="genre-tag" data-i18n="games.genre.action">Action</span>
+                                <span class="genre-tag">RPG</span>
+                                <span class="genre-tag">Action</span>
                             </td>
                             <td><span class="price" data-price-base="59.99" data-price-currency="USD" data-price-role="steam">$59.99</span></td>
                             <td><span class="price" data-price-base="59.99" data-price-currency="USD">$59.99</span></td>
@@ -228,8 +186,8 @@
                                 </div>
                             </th>
                             <td class="genre-cell">
-                                <span class="genre-tag" data-i18n="games.genre.rpg">RPG</span>
-                                <span class="genre-tag" data-i18n="games.genre.adventure">Adventure</span>
+                                <span class="genre-tag">RPG</span>
+                                <span class="genre-tag">Adventure</span>
                             </td>
                             <td><span class="price" data-price-base="59.99" data-price-currency="USD" data-price-role="steam">$59.99</span></td>
                             <td><span class="price" data-price-base="69.99" data-price-currency="USD">$69.99</span></td>
@@ -246,8 +204,8 @@
                                 </div>
                             </th>
                             <td class="genre-cell">
-                                <span class="genre-tag" data-i18n="games.genre.horror">Horror</span>
-                                <span class="genre-tag" data-i18n="games.genre.action">Action</span>
+                                <span class="genre-tag">Horror</span>
+                                <span class="genre-tag">Action</span>
                             </td>
                             <td><span class="price" data-price-base="59.99" data-price-currency="USD" data-price-role="steam">$59.99</span></td>
                             <td><span class="price" data-price-base="59.99" data-price-currency="USD">$59.99</span></td>
@@ -264,8 +222,8 @@
                                 </div>
                             </th>
                             <td class="genre-cell">
-                                <span class="genre-tag" data-i18n="games.genre.metroidvania">Metroidvania</span>
-                                <span class="genre-tag" data-i18n="games.genre.adventure">Adventure</span>
+                                <span class="genre-tag">Metroidvania</span>
+                                <span class="genre-tag">Adventure</span>
                             </td>
                             <td><span class="price" data-price-base="14.99" data-price-currency="USD" data-price-role="steam">$14.99</span></td>
                             <td><span class="price" data-price-base="14.99" data-price-currency="USD">$14.99</span></td>
@@ -276,13 +234,12 @@
                         </tr>
                     </tbody>
                 </table>
-                <p class="price-disclaimer" id="games-disclaimer" data-i18n="games.disclaimer">Data refreshed on 2 December 2025. Prices reflect your selected currency and may fluctuate with platform promotions and regional taxes.</p>
             </section>
         </main>
     </div>
 
     <footer id="contact" class="site-footer">
-        <p data-i18n="footer.notice">&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
+        <p>&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
         <div class="footer-controls">
             <label class="footer-control" for="footer-currency">
                 <select id="footer-currency" name="footer-currency" data-control="currency">
@@ -298,7 +255,7 @@
                 </select>
             </label>
         </div>
-        <button class="mode-toggle" aria-pressed="false" data-i18n="mode.dark">Dark Mode</button>
+        <button class="mode-toggle" aria-pressed="false">Dark Mode</button>
     </footer>
 </body>
 </html>

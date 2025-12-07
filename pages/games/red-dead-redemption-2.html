@@ -18,15 +18,15 @@
                 <li class="branding">
                     <a href="../../index.html">
                         <svg width="30" height="30" viewBox="0 0 128 128" aria-hidden="true"><path fill="currentColor" d="M64 24A40 40 0 1 0 64 104A40 40 0 1 0 64 24ZM44 52L84 52A12 12 0 0 1 84 76L44 76A12 12 0 0 1 44 52ZM52 60A4 4 0 1 0 52 68A4 4 0 1 0 52 60ZM76 60A4 4 0 1 0 76 68A4 4 0 1 0 76 60Z"/></svg>
-                        <span data-i18n="nav.brand">Game Prices</span>
+                        <span>Game Prices</span>
                     </a>
                 </li>
-                <li><a href="../sales.html" aria-current="page" data-i18n="nav.games">Games</a></li>
-                <li><a href="../aboutus.html" data-i18n="nav.about">About us</a></li>
+                <li><a href="../sales.html" aria-current="page">Games</a></li>
+                <li><a href="../aboutus.html">About us</a></li>
                 <li class="has-dropdown">
-                    <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false" data-i18n="nav.services">Services</button>
+                    <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false">Services</button>
                     <ul class="dropdown-menu">
-                        <li><a href="../weather.html" data-i18n="nav.weather">Weather</a></li>
+                        <li><a href="../weather.html">Weather</a></li>
                     </ul>
                 </li>
             </ul>
@@ -34,98 +34,135 @@
     </header>
 
     <div class="content-layout">
-        <main class="site-main game-page">
-            <article class="game-hero">
-                <img class="game-cover" src="https://cdn.cloudflare.steamstatic.com/steam/apps/1174180/header.jpg" alt="Red Dead Redemption 2 key art with Van der Linde gang" loading="lazy">
-                <div class="game-hero-content">
-                    <h1>Red Dead Redemption 2</h1>
-                    <p class="game-tagline">Rockstar's sprawling Western saga featuring a living frontier, cinematic storytelling, and Red Dead Online adventures.</p>
-                    <dl class="game-meta">
-                        <div>
-                            <dt>Publisher</dt>
-                            <dd>Rockstar Games</dd>
-                        </div>
-                        <div>
-                            <dt>Release Year</dt>
-                            <dd>2019</dd>
-                        </div>
-                        <div>
-                            <dt>Developer</dt>
-                            <dd>Rockstar Studios</dd>
-                        </div>
-                        <div>
-                            <dt>Platforms</dt>
-                            <dd>PC, PlayStation 4/5, Xbox One, Xbox Series X|S</dd>
-                        </div>
-                        <div>
-                            <dt>Genre</dt>
-                            <dd>Open-world Action Adventure</dd>
-                        </div>
-                    </dl>
-                    <div class="game-activity">
-                        <div class="metric">
-                            <span class="metric-label">Players Online</span>
-                            <span class="metric-value">63,200</span>
-                        </div>
-                        <div class="metric">
-                            <span class="metric-label">24h Peak</span>
-                            <span class="metric-value">125,900</span>
-                        </div>
-                        <div class="metric">
-                            <span class="metric-label">Avg. Session</span>
-                            <span class="metric-value">110 min</span>
-                        </div>
+        <main class="site-main game-landing">
+            <figure class="game-hero-poster">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/1174180/header.jpg" alt="Red Dead Redemption 2 logo" loading="lazy">
+            </figure>
+
+            <header class="game-header">
+                <h1>Red Dead Redemption 2</h1>
+                <p class="game-subtitle">Rockstar's tale of fading outlaws blends cinematic storytelling with a vast, reactive frontier.</p>
+                <div class="game-stats" aria-label="Current player statistics">
+                    <div class="stat">
+                        <span class="stat-label">Players Online</span>
+                        <span class="stat-value">63,200</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">24h Peak</span>
+                        <span class="stat-value">125,900</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Avg. Session</span>
+                        <span class="stat-value">110 min</span>
                     </div>
                 </div>
-            </article>
+            </header>
 
-            <section class="game-description" aria-labelledby="about-rdr2">
-                <h2 id="about-rdr2">About Red Dead Redemption 2</h2>
-                <p>Red Dead Redemption 2 chronicles Arthur Morgan's struggle as the Van der Linde gang faces the end of the outlaw era. The campaign transitions seamlessly into Red Dead Online, where players form posses, run moonshine operations, and take on legendary bounty hunts.</p>
-                <p>The PC release adds higher fidelity textures, enhanced draw distances, photo mode, and support for ultra-wide monitors. Rockstar's regular events rotate bonuses across roles, keeping the frontier economy active.</p>
+            <section class="game-overview" aria-labelledby="rdr2-overview">
+                <h2 id="rdr2-overview">Game Overview</h2>
+                <p>Red Dead Redemption 2 follows Arthur Morgan and the Van der Linde gang as they race ahead of encroaching modernity. Story missions bleed seamlessly into an open world of dynamic encounters, simulated wildlife, and emergent side stories that react to your honor and choices.</p>
+                <p>The PC release adds higher draw distances, richer textures, HDR support, and Rockstar Editor tools, while Red Dead Online evolves with new frontier pursuits and rotating weekly events. Seasonal bonuses, treasure maps, and limited-time clothing drops keep the multiplayer frontier fresh.</p>
+                <div class="game-metadata" aria-label="Game metadata">
+                    <p><span class="meta-key">PUBLISHER:</span> Rockstar Games</p>
+                    <p><span class="meta-key">DEVELOPER:</span> Rockstar Studios</p>
+                    <p><span class="meta-key">RELEASE YEAR:</span> 2019 (PC)</p>
+                    <p><span class="meta-key">PLATFORMS:</span> PC, PlayStation 4/5, Xbox One/Series X|S</p>
+                    <p><span class="meta-key">GENRE:</span> Open-world Action Adventure</p>
+                    <p><span class="meta-key">MONETIZATION:</span> Premium release with optional Gold Bars</p>
+                </div>
+                <div class="game-features" aria-label="Key features">
+                    <p>Interwoven single-player and Red Dead Online progression that shares camp upgrades and cosmetics.</p>
+                    <p>Simulation-driven ecosystem where hunting, weather, and honor influence NPC reactions and mission outcomes.</p>
+                    <p>Rockstar Editor and photo mode empower cinematic captures with HDR and ultra-wide support on PC.</p>
+                </div>
             </section>
 
             <section class="store-prices" aria-labelledby="rdr2-prices">
-                <h2 id="rdr2-prices">Current Store Prices</h2>
-                <div class="price-grid">
-                    <article class="price-card">
-                        <h3>Steam</h3>
-                        <p class="price" data-price-base="59.99" data-price-currency="USD" data-price-role="steam">$59.99</p>
-                        <p class="price-note">Ultimate Edition bundles Online perks</p>
-                    </article>
-                    <article class="price-card">
-                        <h3>Rockstar Launcher</h3>
-                        <p class="price" data-price-base="59.99" data-price-currency="USD">$59.99</p>
-                        <p class="price-note">Includes exclusive story mission pack</p>
-                    </article>
-                    <article class="price-card">
-                        <h3>PlayStation Store</h3>
-                        <p class="price" data-price-base="59.99" data-price-currency="USD">$59.99</p>
-                        <p class="price-note">PS4 version with PS5 boost mode</p>
-                    </article>
-                    <article class="price-card">
-                        <h3>Xbox Store</h3>
-                        <p class="price" data-price-base="59.99" data-price-currency="USD">$59.99</p>
-                        <p class="price-note">Supports FPS Boost on Series X|S</p>
-                    </article>
-                    <article class="price-card">
-                        <h3>AppGames</h3>
-                        <p class="price" data-price-base="41.79" data-price-currency="USD">$41.79</p>
-                        <p class="price-note">Limited-time key discount</p>
-                    </article>
-                </div>
+                <h2 id="rdr2-prices">Storefront Pricing</h2>
+                <table class="store-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Store</th>
+                            <th scope="col">Edition</th>
+                            <th scope="col">Price</th>
+                            <th scope="col">Platforms</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://store.steampowered.com/app/1174180/Red_Dead_Redemption_2/" target="_blank" rel="noopener">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/452107/steam.svg" alt="Steam logo" loading="lazy">
+                                        <span>Steam</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Ultimate Edition</td>
+                            <td>
+                                <span class="price" data-price-base="59.99" data-price-currency="USD" data-price-role="steam">$59.99</span>
+                            </td>
+                            <td>Windows</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://store.rockstargames.com/game/buy-red-dead-redemption-2" target="_blank" rel="noopener">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/331565/rockstar-games.svg" alt="Rockstar Games logo" loading="lazy">
+                                        <span>Rockstar Launcher</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Special Edition</td>
+                            <td>
+                                <span class="price" data-price-base="59.99" data-price-currency="USD">$59.99</span>
+                            </td>
+                            <td>Windows</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://store.playstation.com/en-us/product/UP1004-CUSA03041_00-REDEMPTION000002" target="_blank" rel="noopener">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/473754/playstation.svg" alt="PlayStation logo" loading="lazy">
+                                        <span>PlayStation Store</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Ultimate Edition</td>
+                            <td>
+                                <span class="price" data-price-base="59.99" data-price-currency="USD">$59.99</span>
+                            </td>
+                            <td>PS4, PS5</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://www.xbox.com/en-US/games/store/red-dead-redemption-2/BPSWGQBW7R3G/0001" target="_blank" rel="noopener">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/306993/xbox.svg" alt="Xbox logo" loading="lazy">
+                                        <span>Xbox Store</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Ultimate Edition</td>
+                            <td>
+                                <span class="price" data-price-base="59.99" data-price-currency="USD">$59.99</span>
+                            </td>
+                            <td>Xbox One, Xbox Series X|S</td>
+                        </tr>
+                    </tbody>
+                </table>
             </section>
 
             <section class="price-history" aria-labelledby="rdr2-history">
                 <h2 id="rdr2-history">Price History</h2>
-                <canvas class="price-chart" role="img" aria-label="Red Dead Redemption 2 price history chart" data-price-history="" data-price-currency="USD" data-chart-title="Red Dead Redemption 2"></canvas>
-                <p class="chart-note">Prices gathered from SteamDB trackers, Rockstar Store archives, AppGames listings, and IsThereAnyDeal alerts.</p>
+                <div class="chart-placeholder" role="img" aria-label="Red Dead Redemption 2 price history placeholder graphic">
+                </div>
             </section>
         </main>
     </div>
 
     <footer id="contact" class="site-footer">
-        <p data-i18n="footer.notice">&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
+        <p>&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
         <div class="footer-controls">
             <label class="footer-control" for="footer-currency">
                 <select id="footer-currency" name="footer-currency" data-control="currency">
@@ -141,7 +178,7 @@
                 </select>
             </label>
         </div>
-        <button class="mode-toggle" aria-pressed="false" data-i18n="mode.dark">Dark Mode</button>
+        <button class="mode-toggle" aria-pressed="false">Dark Mode</button>
     </footer>
 </body>
 </html>

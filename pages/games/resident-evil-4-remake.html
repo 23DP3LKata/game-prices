@@ -18,15 +18,15 @@
                 <li class="branding">
                     <a href="../../index.html">
                         <svg width="30" height="30" viewBox="0 0 128 128" aria-hidden="true"><path fill="currentColor" d="M64 24A40 40 0 1 0 64 104A40 40 0 1 0 64 24ZM44 52L84 52A12 12 0 0 1 84 76L44 76A12 12 0 0 1 44 52ZM52 60A4 4 0 1 0 52 68A4 4 0 1 0 52 60ZM76 60A4 4 0 1 0 76 68A4 4 0 1 0 76 60Z"/></svg>
-                        <span data-i18n="nav.brand">Game Prices</span>
+                        <span>Game Prices</span>
                     </a>
                 </li>
-                <li><a href="../sales.html" aria-current="page" data-i18n="nav.games">Games</a></li>
-                <li><a href="../aboutus.html" data-i18n="nav.about">About us</a></li>
+                <li><a href="../sales.html" aria-current="page">Games</a></li>
+                <li><a href="../aboutus.html">About us</a></li>
                 <li class="has-dropdown">
-                    <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false" data-i18n="nav.services">Services</button>
+                    <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false">Services</button>
                     <ul class="dropdown-menu">
-                        <li><a href="../weather.html" data-i18n="nav.weather">Weather</a></li>
+                        <li><a href="../weather.html">Weather</a></li>
                     </ul>
                 </li>
             </ul>
@@ -34,93 +34,121 @@
     </header>
 
     <div class="content-layout">
-        <main class="site-main game-page">
-            <article class="game-hero">
-                <img class="game-cover" src="https://cdn.cloudflare.steamstatic.com/steam/apps/2050650/header.jpg" alt="Resident Evil 4 remake key art featuring Leon S. Kennedy" loading="lazy">
-                <div class="game-hero-content">
-                    <h1>Resident Evil 4 (Remake)</h1>
-                    <p class="game-tagline">Capcom's modern reimagining of the survival horror classic with refined combat, atmosphere, and extra modes.</p>
-                    <dl class="game-meta">
-                        <div>
-                            <dt>Publisher</dt>
-                            <dd>Capcom</dd>
-                        </div>
-                        <div>
-                            <dt>Release Year</dt>
-                            <dd>2023</dd>
-                        </div>
-                        <div>
-                            <dt>Developer</dt>
-                            <dd>Capcom</dd>
-                        </div>
-                        <div>
-                            <dt>Platforms</dt>
-                            <dd>PC, PlayStation 4/5, Xbox Series X|S</dd>
-                        </div>
-                        <div>
-                            <dt>Genre</dt>
-                            <dd>Survival Horror</dd>
-                        </div>
-                    </dl>
-                        <div class="game-activity">
-                            <div class="metric">
-                                <span class="metric-label">Players Online</span>
-                                <span class="metric-value">24,900</span>
-                            </div>
-                            <div class="metric">
-                                <span class="metric-label">24h Peak</span>
-                                <span class="metric-value">61,800</span>
-                            </div>
-                            <div class="metric">
-                                <span class="metric-label">Avg. Session</span>
-                                <span class="metric-value">62 min</span>
-                            </div>
-                        </div>
+        <main class="site-main game-landing">
+            <figure class="game-hero-poster">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/2050650/header.jpg" alt="Resident Evil 4 remake key art featuring Leon S. Kennedy" loading="lazy">
+            </figure>
+
+            <header class="game-header">
+                <h1>Resident Evil 4 (Remake)</h1>
+                <p class="game-subtitle">Capcom's survival horror classic reborn with sharper tension, cinematic pacing, and modern combat finesse.</p>
+                <div class="game-stats" aria-label="Current player statistics">
+                    <div class="stat">
+                        <span class="stat-label">Players Online</span>
+                        <span class="stat-value">24,900</span>
                     </div>
-                </article>
-
-                <section class="game-description" aria-labelledby="about-re4">
-                    <h2 id="about-re4">About Resident Evil 4 Remake</h2>
-                    <p>The remake of Resident Evil 4 keeps the original's pacing while enhancing mechanics with parries, stealth, and expanded companion AI. The Separate Ways DLC, Mercenaries mode, and weekly challenge rotations provide strong replay value.</p>
-                    <p>Capcom's RE Engine delivers ray-traced lighting on PC and next-gen consoles. Accessibility presets, gyro aiming on PlayStation, and optional aim assist help new players acclimate without diluting the tension.</p>
-                </section>
-
-                <section class="store-prices" aria-labelledby="re4-prices">
-                    <h2 id="re4-prices">Current Store Prices</h2>
-                    <div class="price-grid">
-                        <article class="price-card">
-                            <h3>Steam</h3>
-                            <p class="price" data-price-base="59.99" data-price-currency="USD" data-price-role="steam">$59.99</p>
-                            <p class="price-note">Standard Edition</p>
-                        </article>
-                        <article class="price-card">
-                            <h3>PlayStation Store</h3>
-                            <p class="price" data-price-base="59.99" data-price-currency="USD">$59.99</p>
-                            <p class="price-note">Supports PS VR2 mode</p>
-                        </article>
-                        <article class="price-card">
-                            <h3>Xbox Store</h3>
-                            <p class="price" data-price-base="59.99" data-price-currency="USD">$59.99</p>
-                            <p class="price-note">Series X|S optimizations included</p>
-                        </article>
-                        <article class="price-card">
-                            <h3>AppGames</h3>
-                            <p class="price" data-price-base="49.99" data-price-currency="USD">$49.99</p>
-                            <p class="price-note">Discounted Steam key, instant delivery</p>
-                        </article>
+                    <div class="stat">
+                        <span class="stat-label">24h Peak</span>
+                        <span class="stat-value">61,800</span>
                     </div>
-                </section>
+                    <div class="stat">
+                        <span class="stat-label">Avg. Session</span>
+                        <span class="stat-value">62 min</span>
+                    </div>
+                </div>
+            </header>
 
-                <section class="price-history" aria-labelledby="re4-history">
-                    <h2 id="re4-history">Price History</h2>
-                    <canvas class="price-chart" role="img" aria-label="Resident Evil 4 remake price history chart" data-price-history="" data-price-currency="USD" data-chart-title="Resident Evil 4 Remake"></canvas>
-                    <p class="chart-note">Price timeline built from SteamDB discounts, console storefront sales, AppGames promotions, and IsThereAnyDeal feeds.</p>
-                </section>
-            </main>
-        </div>
+            <section class="game-overview" aria-labelledby="re4-overview">
+                <h2 id="re4-overview">Game Overview</h2>
+                <p>Leon S. Kennedy's mission to rescue the president's daughter leads deep into a haunted corner of rural Spain, where cult rituals, improvised barricades, and relentless villagers demand poise under pressure. Every encounter leans on deliberate combat rhythms, from perfectly timed knife parries to crowd-control decisions that keep ammo and nerves intact.</p>
+                <p>The remake relies on the RE Engine for dynamic weather, ray-traced lighting, and expressive character performances. Accessibility presets, gyro aiming, and PS VR2 support round out a package that respects the original while reshaping it for modern platforms.</p>
+                <div class="game-metadata" aria-label="Game metadata">
+                    <p><span class="meta-key">PUBLISHER:</span> Capcom</p>
+                    <p><span class="meta-key">DEVELOPER:</span> Capcom R&amp;D Division 1</p>
+                    <p><span class="meta-key">RELEASE YEAR:</span> 2023</p>
+                    <p><span class="meta-key">PLATFORMS:</span> PC, PlayStation 4/5, Xbox Series X|S</p>
+                    <p><span class="meta-key">GENRE:</span> Survival Horror</p>
+                    <p><span class="meta-key">MONETIZATION:</span> Premium release with optional DLC</p>
+                </div>
+                <div class="game-features" aria-label="Key features">
+                    <p>Single-player campaign with Mercenaries score-attack mode and Separate Ways expansion.</p>
+                    <p>Knife parry system, dynamic crowd control, and adaptive AI companions.</p>
+                    <p>Seasonal title updates bring weapon balance tweaks, cosmetics, and VR support.</p>
+                    <p>Cross-platform visual modes including ray tracing, 120 Hz performance, and HDR.</p>
+                </div>
+            </section>
+
+            <section class="store-prices" aria-labelledby="re4-prices">
+                <h2 id="re4-prices">Storefront Pricing</h2>
+                <table class="store-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Store</th>
+                            <th scope="col">Edition</th>
+                            <th scope="col">Price</th>
+                            <th scope="col">Platforms</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://store.steampowered.com/app/2050650/Resident_Evil_4/" target="_blank" rel="noopener">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/452107/steam.svg" alt="Steam logo" loading="lazy">
+                                        <span>Steam</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Standard Edition</td>
+                            <td>
+                                <span class="price" data-price-base="59.99" data-price-currency="USD" data-price-role="steam">$59.99</span>
+                            </td>
+                            <td>Windows</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://www.xbox.com/en-us/games/store/resident-evil-4/9n7jcppcpn37" target="_blank">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/306993/xbox.svg" alt="xbox logo" loading="lazy">
+                                        <span>Xbox Store</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Standard Edition</td>
+                            <td>
+                                <span class="price" data-price-base="59.99" data-price-currency="USD">$59.99</span>
+                            </td>
+                            <td>Windows</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://store.playstation.com/en-us/product/UP0102-PPSA07411_00-RE4RMAINGAME0000" target="_blank">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/473754/playstation.svg" alt="PlayStation logo" loading="lazy">
+                                        <span>PlayStation Store</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Deluxe Edition</td>
+                            <td>
+                                <span class="price" data-price-base="69.99" data-price-currency="USD">$69.99</span>
+                            </td>
+                            <td>PS4, PS5</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="price-history" aria-labelledby="re4-history">
+                <h2 id="re4-history">Price History</h2>
+                <div class="chart-placeholder" role="img" aria-label="Resident Evil 4 Remake historical pricing placeholder graphic">
+                </div>
+            </section>
+        </main>
+    </div>
 
         <footer id="contact" class="site-footer">
-            <p data-i18n="footer.notice">&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
+            <p>&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
             <div class="footer-controls">
                 <label class="footer-control" for="footer-currency">
                     <select id="footer-currency" name="footer-currency" data-control="currency">
@@ -136,7 +164,7 @@
                     </select>
                 </label>
             </div>
-            <button class="mode-toggle" aria-pressed="false" data-i18n="mode.dark">Dark Mode</button>
+            <button class="mode-toggle" aria-pressed="false">Dark Mode</button>
         </footer>
 </body>
 </html>

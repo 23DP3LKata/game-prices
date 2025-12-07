@@ -18,15 +18,15 @@
                 <li class="branding">
                     <a href="../../index.html">
                         <svg width="30" height="30" viewBox="0 0 128 128" aria-hidden="true"><path fill="currentColor" d="M64 24A40 40 0 1 0 64 104A40 40 0 1 0 64 24ZM44 52L84 52A12 12 0 0 1 84 76L44 76A12 12 0 0 1 44 52ZM52 60A4 4 0 1 0 52 68A4 4 0 1 0 52 60ZM76 60A4 4 0 1 0 76 68A4 4 0 1 0 76 60Z"/></svg>
-                        <span data-i18n="nav.brand">Game Prices</span>
+                        <span>Game Prices</span>
                     </a>
                 </li>
-                <li><a href="../sales.html" aria-current="page" data-i18n="nav.games">Games</a></li>
-                <li><a href="../aboutus.html" data-i18n="nav.about">About us</a></li>
+                <li><a href="../sales.html" aria-current="page">Games</a></li>
+                <li><a href="../aboutus.html">About us</a></li>
                 <li class="has-dropdown">
-                    <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false" data-i18n="nav.services">Services</button>
+                    <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false">Services</button>
                     <ul class="dropdown-menu">
-                        <li><a href="../weather.html" data-i18n="nav.weather">Weather</a></li>
+                        <li><a href="../weather.html">Weather</a></li>
                     </ul>
                 </li>
             </ul>
@@ -34,98 +34,135 @@
     </header>
 
     <div class="content-layout">
-        <main class="site-main game-page">
-            <article class="game-hero">
-                <img class="game-cover" src="https://cdn.akamai.steamstatic.com/steam/apps/261550/header.jpg" alt="Mount &amp; Blade II: Bannerlord cavalry charging into battle" loading="lazy">
-                <div class="game-hero-content">
-                    <h1>Mount &amp; Blade II: Bannerlord</h1>
-                    <p class="game-tagline">Command warbands, manage kingdoms, and carve a dynastic legacy in TaleWorlds' sandbox strategy epic.</p>
-                    <dl class="game-meta">
-                        <div>
-                            <dt>Publisher</dt>
-                            <dd>TaleWorlds Entertainment</dd>
-                        </div>
-                        <div>
-                            <dt>Release Year</dt>
-                            <dd>2022</dd>
-                        </div>
-                        <div>
-                            <dt>Developer</dt>
-                            <dd>TaleWorlds Entertainment</dd>
-                        </div>
-                        <div>
-                            <dt>Platforms</dt>
-                            <dd>PC, PlayStation 4/5, Xbox One, Xbox Series X|S</dd>
-                        </div>
-                        <div>
-                            <dt>Genre</dt>
-                            <dd>Sandbox Strategy RPG</dd>
-                        </div>
-                    </dl>
-                    <div class="game-activity">
-                        <div class="metric">
-                            <span class="metric-label">Players Online</span>
-                            <span class="metric-value">21,100</span>
-                        </div>
-                        <div class="metric">
-                            <span class="metric-label">24h Peak</span>
-                            <span class="metric-value">55,400</span>
-                        </div>
-                        <div class="metric">
-                            <span class="metric-label">Avg. Session</span>
-                            <span class="metric-value">72 min</span>
-                        </div>
+        <main class="site-main game-landing">
+            <figure class="game-hero-poster">
+                <img src="https://cdn.akamai.steamstatic.com/steam/apps/261550/header.jpg" alt="Mount &amp; Blade II: Bannerlord cavalry charging into battle" loading="lazy">
+            </figure>
+
+            <header class="game-header">
+                <h1>Mount &amp; Blade II: Bannerlord</h1>
+                <p class="game-subtitle">Rally warbands, negotiate alliances, and forge a Calradian dynasty in TaleWorlds' living sandbox.</p>
+                <div class="game-stats" aria-label="Current player statistics">
+                    <div class="stat">
+                        <span class="stat-label">Players Online</span>
+                        <span class="stat-value">21,100</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">24h Peak</span>
+                        <span class="stat-value">55,400</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Avg. Session</span>
+                        <span class="stat-value">72 min</span>
                     </div>
                 </div>
-            </article>
+            </header>
 
-            <section class="game-description" aria-labelledby="about-bannerlord">
-                <h2 id="about-bannerlord">About Bannerlord</h2>
-                <p>Bannerlord deepens the Mount &amp; Blade formula with multi-layered siege tactics, diplomacy, and clan management across the continent of Calradia. Players recruit and train companions, broker alliances, and develop towns through layered economic systems.</p>
-                <p>Seasonal patches add new cultures, modding hooks, console parity updates, and the long-requested battle terrain system. An active mod scene provides overhauls, total conversions, and quality-of-life tweaks that keep sandbox runs fresh.</p>
+            <section class="game-overview" aria-labelledby="bannerlord-overview">
+                <h2 id="bannerlord-overview">Game Overview</h2>
+                <p>Bannerlord evolves the Mount &amp; Blade formula with layered siege systems, large-scale cavalry skirmishes, and kingdom stewardship ripe for emergent storytelling. Recruit companions, assemble war parties, and leverage smithing, trade, and diplomacy to expand your clan.</p>
+                <p>Frequent patches and a thriving mod ecosystem add balance tweaks, troop trees, and total conversion experiences. Whether you're building a mercenary empire or scripting a roleplay dynasty, Calradia is designed to feel reactive and persistent.</p>
+                <div class="game-metadata" aria-label="Game metadata">
+                    <p><span class="meta-key">PUBLISHER:</span> TaleWorlds Entertainment</p>
+                    <p><span class="meta-key">DEVELOPER:</span> TaleWorlds Entertainment</p>
+                    <p><span class="meta-key">RELEASE YEAR:</span> 2022</p>
+                    <p><span class="meta-key">PLATFORMS:</span> PC, PlayStation, Xbox</p>
+                    <p><span class="meta-key">GENRE:</span> Sandbox Strategy RPG</p>
+                    <p><span class="meta-key">CAMPAIGN LENGTH:</span> 60+ hours</p>
+                </div>
+                <div class="game-features" aria-label="Key features">
+                    <p>Hundreds of troops per battle with directional melee combat and command formations.</p>
+                    <p>Dynamic economy where caravans, workshops, and sieges reshape regional stability.</p>
+                    <p>Clan progression system with perks, politics, and companion story events.</p>
+                </div>
             </section>
 
             <section class="store-prices" aria-labelledby="bannerlord-prices">
-                <h2 id="bannerlord-prices">Current Store Prices</h2>
-                <div class="price-grid">
-                    <article class="price-card">
-                        <h3>Steam</h3>
-                        <p class="price" data-price-base="49.99" data-price-currency="USD" data-price-role="steam">$49.99</p>
-                        <p class="price-note">Standard Edition</p>
-                    </article>
-                    <article class="price-card">
-                        <h3>Epic Games Store</h3>
-                        <p class="price" data-price-base="49.99" data-price-currency="USD">$49.99</p>
-                        <p class="price-note">Coupon eligible during Epic Mega Sales</p>
-                    </article>
-                    <article class="price-card">
-                        <h3>PlayStation Store</h3>
-                        <p class="price" data-price-base="49.99" data-price-currency="USD">$49.99</p>
-                        <p class="price-note">PS5 performance mode included</p>
-                    </article>
-                    <article class="price-card">
-                        <h3>Xbox Store</h3>
-                        <p class="price" data-price-base="49.99" data-price-currency="USD">$49.99</p>
-                        <p class="price-note">Supports Smart Delivery</p>
-                    </article>
-                    <article class="price-card">
-                        <h3>AppGames</h3>
-                        <p class="price" data-price-base="44.99" data-price-currency="USD">$44.99</p>
-                        <p class="price-note">Lowest verified PC key price</p>
-                    </article>
-                </div>
+                <h2 id="bannerlord-prices">Storefront Pricing</h2>
+                <table class="store-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Store</th>
+                            <th scope="col">Edition</th>
+                            <th scope="col">Price</th>
+                            <th scope="col">Platforms</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://store.steampowered.com/app/261550/" target="_blank" rel="noopener">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/452107/steam.svg" alt="Steam logo" loading="lazy">
+                                        <span>Steam</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Standard Edition</td>
+                            <td>
+                                <span class="price" data-price-base="49.99" data-price-currency="USD" data-price-role="steam">$49.99</span>
+                            </td>
+                            <td>Windows</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://store.epicgames.com/en-US/p/mount-and-blade-2" target="_blank" rel="noopener">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/341792/epic-games.svg" alt="Epic Games Store logo" loading="lazy">
+                                        <span>Epic Games Store</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Standard Edition</td>
+                            <td>
+                                <span class="price" data-price-base="49.99" data-price-currency="USD">$49.99</span>
+                            </td>
+                            <td>Windows</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://www.playstation.com/en-us/games/mount-and-blade-ii-bannerlord/" target="_blank" rel="noopener">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/473754/playstation.svg" alt="PlayStation logo" loading="lazy">
+                                        <span>PlayStation Store</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Console Edition</td>
+                            <td>
+                                <span class="price" data-price-base="49.99" data-price-currency="USD">$49.99</span>
+                            </td>
+                            <td>PS4, PS5</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://www.xbox.com/en-US/games/store/mount-blade-ii-bannerlord/9PDHWZ7X3P03/0010" target="_blank" rel="noopener">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/306993/xbox.svg" alt="Xbox logo" loading="lazy">
+                                        <span>Xbox Store</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Console Edition</td>
+                            <td>
+                                <span class="price" data-price-base="49.99" data-price-currency="USD">$49.99</span>
+                            </td>
+                            <td>Xbox One, Xbox Series X|S</td>
+                        </tr>
+                    </tbody>
+                </table>
             </section>
 
             <section class="price-history" aria-labelledby="bannerlord-history">
                 <h2 id="bannerlord-history">Price History</h2>
-                <canvas class="price-chart" role="img" aria-label="Mount &amp; Blade II: Bannerlord price history chart" data-price-history="" data-price-currency="USD" data-chart-title="Mount &amp; Blade II: Bannerlord"></canvas>
-                <p class="chart-note">Historical data derived from SteamDB, Xbox price tracker, AppGames feeds, and IsThereAnyDeal alerts.</p>
+                <div class="chart-placeholder" role="img" aria-label="Mount &amp; Blade II: Bannerlord price history placeholder graphic">
+                </div>
             </section>
         </main>
     </div>
 
     <footer id="contact" class="site-footer">
-        <p data-i18n="footer.notice">&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
+        <p>&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
         <div class="footer-controls">
             <label class="footer-control" for="footer-currency">
                 <select id="footer-currency" name="footer-currency" data-control="currency">
@@ -141,7 +178,7 @@
                 </select>
             </label>
         </div>
-        <button class="mode-toggle" aria-pressed="false" data-i18n="mode.dark">Dark Mode</button>
+        <button class="mode-toggle" aria-pressed="false">Dark Mode</button>
     </footer>
 </body>
 </html>

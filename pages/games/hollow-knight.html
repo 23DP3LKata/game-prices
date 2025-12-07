@@ -18,15 +18,15 @@
                 <li class="branding">
                     <a href="../../index.html">
                         <svg width="30" height="30" viewBox="0 0 128 128" aria-hidden="true"><path fill="currentColor" d="M64 24A40 40 0 1 0 64 104A40 40 0 1 0 64 24ZM44 52L84 52A12 12 0 0 1 84 76L44 76A12 12 0 0 1 44 52ZM52 60A4 4 0 1 0 52 68A4 4 0 1 0 52 60ZM76 60A4 4 0 1 0 76 68A4 4 0 1 0 76 60Z"/></svg>
-                        <span data-i18n="nav.brand">Game Prices</span>
+                        <span>Game Prices</span>
                     </a>
                 </li>
-                <li><a href="../sales.html" aria-current="page" data-i18n="nav.games">Games</a></li>
-                <li><a href="../aboutus.html" data-i18n="nav.about">About us</a></li>
+                <li><a href="../sales.html" aria-current="page">Games</a></li>
+                <li><a href="../aboutus.html">About us</a></li>
                 <li class="has-dropdown">
-                    <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false" data-i18n="nav.services">Services</button>
+                    <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false">Services</button>
                     <ul class="dropdown-menu">
-                        <li><a href="../weather.html" data-i18n="nav.weather">Weather</a></li>
+                        <li><a href="../weather.html">Weather</a></li>
                     </ul>
                 </li>
             </ul>
@@ -34,98 +34,135 @@
     </header>
 
     <div class="content-layout">
-        <main class="site-main game-page">
-            <article class="game-hero">
-                <img class="game-cover" src="https://cdn.cloudflare.steamstatic.com/steam/apps/367520/header.jpg" alt="Hollow Knight hero exploring Hallownest" loading="lazy">
-                <div class="game-hero-content">
-                    <h1>Hollow Knight</h1>
-                    <p class="game-tagline">Team Cherry's hand-drawn metroidvania featuring tight combat, expansive exploration, and atmospheric storytelling.</p>
-                    <dl class="game-meta">
-                        <div>
-                            <dt>Publisher</dt>
-                            <dd>Team Cherry</dd>
-                        </div>
-                        <div>
-                            <dt>Release Year</dt>
-                            <dd>2017</dd>
-                        </div>
-                        <div>
-                            <dt>Developer</dt>
-                            <dd>Team Cherry</dd>
-                        </div>
-                        <div>
-                            <dt>Platforms</dt>
-                            <dd>PC, Nintendo Switch, PlayStation 4, Xbox One</dd>
-                        </div>
-                        <div>
-                            <dt>Genre</dt>
-                            <dd>Metroidvania</dd>
-                        </div>
-                    </dl>
-                        <div class="game-activity">
-                            <div class="metric">
-                                <span class="metric-label">Players Online</span>
-                                <span class="metric-value">8,400</span>
-                            </div>
-                            <div class="metric">
-                                <span class="metric-label">24h Peak</span>
-                                <span class="metric-value">19,200</span>
-                            </div>
-                            <div class="metric">
-                                <span class="metric-label">Avg. Session</span>
-                                <span class="metric-value">88 min</span>
-                            </div>
-                        </div>
+        <main class="site-main game-landing">
+            <figure class="game-hero-poster">
+                <img src="https://cdn.cloudflare.steamstatic.com/steam/apps/367520/header.jpg" alt="Hollow Knight hero exploring Hallownest" loading="lazy">
+            </figure>
+
+            <header class="game-header">
+                <h1>Hollow Knight</h1>
+                <p class="game-subtitle">Team Cherry's handcrafted metroidvania packed with precision combat, exploration, and lore.</p>
+                <div class="game-stats" aria-label="Current player statistics">
+                    <div class="stat">
+                        <span class="stat-label">Players Online</span>
+                        <span class="stat-value">8,400</span>
                     </div>
-                </article>
-
-                <section class="game-description" aria-labelledby="about-hollow-knight">
-                    <h2 id="about-hollow-knight">About Hollow Knight</h2>
-                    <p>Hollow Knight's labyrinthine kingdom of Hallownest offers layered platforming challenges, hidden bosses, and rich environmental storytelling. Charms allow deep build customization, supporting everything from spell-focused runs to nail-only mastery.</p>
-                    <p>The Lifeblood, Hidden Dreams, and Godmaster updates added new bosses, music, and challenge gauntlets for free. Community mod tools extend replay value with custom areas and quality-of-life enhancements.</p>
-                </section>
-
-                <section class="store-prices" aria-labelledby="hollow-knight-prices">
-                    <h2 id="hollow-knight-prices">Current Store Prices</h2>
-                    <div class="price-grid">
-                        <article class="price-card">
-                            <h3>Steam</h3>
-                            <p class="price" data-price-base="14.99" data-price-currency="USD" data-price-role="steam">$14.99</p>
-                            <p class="price-note">Standard Edition</p>
-                        </article>
-                        <article class="price-card">
-                            <h3>GOG</h3>
-                            <p class="price" data-price-base="14.99" data-price-currency="USD">$14.99</p>
-                            <p class="price-note">DRM-free, includes soundtrack</p>
-                        </article>
-                        <article class="price-card">
-                            <h3>Nintendo eShop</h3>
-                            <p class="price" data-price-base="15.00" data-price-currency="USD">$15.00</p>
-                            <p class="price-note">Nintendo Switch digital download</p>
-                        </article>
-                        <article class="price-card">
-                            <h3>PlayStation Store</h3>
-                            <p class="price" data-price-base="14.99" data-price-currency="USD">$14.99</p>
-                            <p class="price-note">Cross-buy across PS4 and PS5</p>
-                        </article>
-                        <article class="price-card">
-                            <h3>AppGames</h3>
-                            <p class="price" data-price-base="12.49" data-price-currency="USD">$12.49</p>
-                            <p class="price-note">Lowest Steam key price</p>
-                        </article>
+                    <div class="stat">
+                        <span class="stat-label">24h Peak</span>
+                        <span class="stat-value">19,200</span>
                     </div>
-                </section>
+                    <div class="stat">
+                        <span class="stat-label">Avg. Session</span>
+                        <span class="stat-value">88 min</span>
+                    </div>
+                </div>
+            </header>
 
-                <section class="price-history" aria-labelledby="hollow-knight-history">
-                    <h2 id="hollow-knight-history">Price History</h2>
-                    <canvas class="price-chart" role="img" aria-label="Hollow Knight price history chart" data-price-history="" data-price-currency="USD" data-chart-title="Hollow Knight"></canvas>
-                    <p class="chart-note">History sourced from Steam seasonal sales, Nintendo eShop promotions, AppGames records, and IsThereAnyDeal data.</p>
-                </section>
-            </main>
-        </div>
+            <section class="game-overview" aria-labelledby="hollow-knight-overview">
+                <h2 id="hollow-knight-overview">Game Overview</h2>
+                <p>Descend into the decaying kingdom of Hallownest, where labyrinthine tunnels, hidden bosses, and haunting characters reward careful exploration. Charms encourage experimentation with nail arts, spellcasting, and mobility builds.</p>
+                <p>Team Cherry's free content packs—Hidden Dreams, Grimm Troupe, Lifeblood, and Godmaster—add challenge pantheons, new music, and bosses. Community-made mods and randomizers continue to expand the postgame.</p>
+                <div class="game-metadata" aria-label="Game metadata">
+                    <p><span class="meta-key">PUBLISHER:</span> Team Cherry</p>
+                    <p><span class="meta-key">DEVELOPER:</span> Team Cherry</p>
+                    <p><span class="meta-key">RELEASE YEAR:</span> 2017</p>
+                    <p><span class="meta-key">PLATFORMS:</span> PC, Nintendo Switch, PlayStation, Xbox</p>
+                    <p><span class="meta-key">GENRE:</span> Metroidvania</p>
+                    <p><span class="meta-key">AVERAGE COMPLETION:</span> 35-40 hours</p>
+                </div>
+                <div class="game-features" aria-label="Key features">
+                    <p>Interconnected world design with fast-travel stag stations and breakable walls.</p>
+                    <p>Over 40 bosses, each with bespoke attack patterns and optional dream rematches.</p>
+                    <p>Metroidvania mechanics refined with charms, nail upgrades, and platforming trials.</p>
+                </div>
+            </section>
+
+            <section class="store-prices" aria-labelledby="hollow-knight-prices">
+                <h2 id="hollow-knight-prices">Storefront Pricing</h2>
+                <table class="store-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Store</th>
+                            <th scope="col">Edition</th>
+                            <th scope="col">Price</th>
+                            <th scope="col">Platforms</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://store.steampowered.com/app/367520/" target="_blank" rel="noopener">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/452107/steam.svg" alt="Steam logo" loading="lazy">
+                                        <span>Steam</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Standard Edition</td>
+                            <td>
+                                <span class="price" data-price-base="14.99" data-price-currency="USD" data-price-role="steam">$14.99</span>
+                            </td>
+                            <td>Windows, macOS, Linux</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://www.gog.com/en/game/hollow_knight" target="_blank" rel="noopener">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/341859/gog-com.svg" alt="GOG logo" loading="lazy">
+                                        <span>GOG</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Standard Edition</td>
+                            <td>
+                                <span class="price" data-price-base="14.99" data-price-currency="USD">$14.99</span>
+                            </td>
+                            <td>Windows, macOS, Linux</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://www.nintendo.com/store/products/hollow-knight-switch/" target="_blank" rel="noopener">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/331503/nintendo.svg" alt="Nintendo Switch logo" loading="lazy">
+                                        <span>Nintendo eShop</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Standard Edition</td>
+                            <td>
+                                <span class="price" data-price-base="15.00" data-price-currency="USD">$15.00</span>
+                            </td>
+                            <td>Nintendo Switch</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <a class="store-link" href="https://www.playstation.com/en-us/games/hollow-knight-voidheart-edition/" target="_blank" rel="noopener">
+                                    <div class="store-cell">
+                                        <img class="store-logo" src="https://www.svgrepo.com/show/473754/playstation.svg" alt="PlayStation logo" loading="lazy">
+                                        <span>PlayStation Store</span>
+                                    </div>
+                                </a>
+                            </th>
+                            <td>Voidheart Edition</td>
+                            <td>
+                                <span class="price" data-price-base="14.99" data-price-currency="USD">$14.99</span>
+                            </td>
+                            <td>PS4, PS5</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="price-history" aria-labelledby="hollow-knight-history">
+                <h2 id="hollow-knight-history">Price History</h2>
+                <div class="chart-placeholder" role="img" aria-label="Hollow Knight price history placeholder graphic">
+                </div>
+            </section>
+        </main>
+    </div>
 
         <footer id="contact" class="site-footer">
-            <p data-i18n="footer.notice">&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
+            <p>&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
             <div class="footer-controls">
                 <label class="footer-control" for="footer-currency">
                     <select id="footer-currency" name="footer-currency" data-control="currency">
@@ -141,7 +178,7 @@
                     </select>
                 </label>
             </div>
-            <button class="mode-toggle" aria-pressed="false" data-i18n="mode.dark">Dark Mode</button>
+            <button class="mode-toggle" aria-pressed="false">Dark Mode</button>
         </footer>
 </body>
 </html>
