@@ -1,67 +1,80 @@
-initNavigation();
-initDropdowns();
-initModeToggle();
-initFooterYear();
+FooterYear();
+GameSearch();
+CurrencyConverter();
 
-function initNavigation() {
-    const hamburger = document.querySelector('.hamburger');
-    const mainNav = document.querySelector('.main-nav');
 
-    if (!hamburger || !mainNav) {
-        return;
-    }
-
-    hamburger.addEventListener('click', () => {
-        const expanded = hamburger.getAttribute('aria-expanded') === 'true';
-        hamburger.classList.toggle('active');
-        mainNav.classList.toggle('open');
-        hamburger.setAttribute('aria-expanded', String(!expanded));
-    });
-
-    document.addEventListener('click', (event) => {
-        if (!hamburger.contains(event.target) && !mainNav.contains(event.target)) {
-            hamburger.classList.remove('active');
-            mainNav.classList.remove('open');
-            hamburger.setAttribute('aria-expanded', 'false');
-        }
-    });
-}
-
-function initDropdowns() {
-    const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
-    if (!dropdownToggles.length) {
-        return;
-    }
-
-    dropdownToggles.forEach((toggle) => {
-        toggle.addEventListener('click', (event) => {
-            event.stopPropagation();
-            const dropdown = toggle.closest('.has-dropdown');
-            if (!dropdown) {
-                return;
-            }
-            const isOpen = dropdown.classList.toggle('open');
-            toggle.setAttribute('aria-expanded', String(isOpen));
-        });
-    });
-
-    document.addEventListener('click', (event) => {
-        dropdownToggles.forEach((toggle) => {
-            const dropdown = toggle.closest('.has-dropdown');
-            if (!dropdown) {
-                return;
-            }
-            if (!dropdown.contains(event.target)) {
-                dropdown.classList.remove('open');
-                toggle.setAttribute('aria-expanded', 'false');
-            }
-        });
-    });
-}
-
-function initFooterYear() {
+function FooterYear() {
     const yearElement = document.getElementById('year');
     if (yearElement) {
         yearElement.textContent = String(new Date().getFullYear());
     }
+}
+
+function GameSearch() {
+    const searchInput = document.getElementById('games-search');
+    const gamesTable = document.querySelector('[data-games-table]');
+    if (!searchInput || !gamesTable) {
+        return;
+    }
+    const tableRows = gamesTable.querySelectorAll('tbody tr');
+    if (tableRows.length === 0) {
+        return;
+    }
+    searchInput.addEventListener('input', () => {
+        const userText = searchInput.value.trim().toLowerCase();
+        tableRows.forEach((row) => {
+            const titleLink = row.querySelector('.game-cell a');
+            const titleText = titleLink ? titleLink.textContent.toLowerCase() : '';
+            const shouldShow = userText === '' || titleText.includes(userText);
+            row.style.display = shouldShow ? '' : 'none';
+        });
+    });
+}
+
+function CurrencyConverter() {
+    const form = document.querySelector('[data-currency-form]');
+    const resultBlock = document.querySelector('[data-currency-result]');
+
+    if (!form || !resultBlock) {
+        return;
+    }
+
+    const rates = {
+        EUR: 1, USD: 1.16, GBP: 0.86
+    };
+
+    const renderResult = (text) => {
+        if (resultBlock instanceof HTMLInputElement || resultBlock instanceof HTMLTextAreaElement) {
+            resultBlock.value = text;
+        } else {
+            resultBlock.textContent = text;
+        }
+    };
+
+    const convert = () => {
+        const formData = new FormData(form);
+        const rawAmount = formData.get('amount');
+        const rawFrom = String(formData.get('from') || 'EUR').toUpperCase();
+        const rawTo = String(formData.get('to') || 'USD').toUpperCase();
+
+        const amount = Number(rawAmount);
+        const fromCurrency = rates[rawFrom] ? rawFrom : 'EUR';
+        const toCurrency = rates[rawTo] ? rawTo : 'EUR';
+
+        if (Number.isNaN(amount) || amount < 0) {
+            renderResult('Amount must be positive.');
+            return;
+        }
+
+        const fromRate = rates[fromCurrency];
+        const toRate = rates[toCurrency];
+
+        const amountInEur = fromCurrency === 'EUR' ? amount : amount / fromRate;
+        const result = Number((amountInEur * toRate).toFixed(2));
+
+        renderResult(`${amount} ${fromCurrency} = ${result} ${toCurrency}`);
+    };
+    form.addEventListener('input', convert);
+    form.addEventListener('change', convert);
+    convert();
 }

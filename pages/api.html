@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weather • Game Prices</title>
+    <title>Currency API • Game Prices</title>
     <link rel="stylesheet" href="../src/css/style.css">
     <script defer src="../src/js/script.js"></script>
 </head>
@@ -21,32 +21,55 @@
                         <span>Game Prices</span>
                     </a>
                 </li>
-                <li><a href="sales.html">Games</a></li>
+                <li><a href="games.html">Games</a></li>
                 <li><a href="aboutus.html">About us</a></li>
                 <li class="has-dropdown">
                     <button class="dropdown-toggle" aria-haspopup="true" aria-expanded="false">Services</button>
                     <ul class="dropdown-menu">
-                        <li><a href="weather.html" aria-current="page">Weather</a></li>
+                        <li><a href="api.html" aria-current="page">API</a></li>
                     </ul>
                 </li>
             </ul>
         </nav>
     </header>
 
-    <div class="content-layout">
-        <main class="site-main weather-wrapper">
-            <section class="weather-card" aria-labelledby="weather-heading">
-                <header>
-                    <h1 id="weather-heading">Weather Service Retired</h1>
-                    <p>The live weather lookup has been removed. We're keeping the focus on tracking the best game prices.</p>
-                </header>
-                <p class="weather-status">Grab your controller or step outside - whatever the forecast, play on.</p>
+        <main class="content-layout">
+            <section>
+                <h1>Currency Converter</h1>
+                <form data-currency-form>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <label for="from-currency">From</label><br>
+                                    <select id="from-currency" name="from">
+                                        <option value="EUR" selected>EUR</option>
+                                        <option value="USD">USD</option>
+                                        <option value="GBP">GBP</option>
+                                    </select><br>
+                                    <label for="amount">Amount</label><br>
+                                    <input id="amount" type="number" name="amount" min="0" step="0.01" value="0">
+                                </td>
+                                <td>
+                                    <label for="to-currency">To</label><br>
+                                    <select id="to-currency" name="to">
+                                        <option value="USD">USD</option>
+                                        <option value="GBP">GBP</option>
+                                        <option value="EUR">EUR</option>
+                                    </select><br>
+                                    <label for="result">Result</label><br>
+                                    <input id="result" type="text" name="result" readonly data-currency-result value="0">
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </form>
             </section>
         </main>
-    </div>
+
 
     <footer id="contact" class="site-footer">
-        <p>&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
+    <p>&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
         <div class="footer-controls">
             <label class="footer-control" for="footer-currency">
                 <select id="footer-currency" name="footer-currency" data-control="currency">
