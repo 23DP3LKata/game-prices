@@ -1,6 +1,36 @@
+ModeToggle();
 FooterYear();
 GameSearch();
 CurrencyConverter();
+
+function ModeToggle() {
+    const button = document.querySelector('.mode-toggle');
+    if (!button) {
+        return;
+    }
+
+    const body = document.body;
+    const storageKey = 'theme';
+
+    const setButtonState = (isDark) => {
+        button.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+        button.setAttribute('aria-pressed', String(isDark));
+    };
+
+    const savedTheme = window.localStorage.getItem(storageKey);
+    if (savedTheme === 'dark') {
+        body.classList.add('dark-mode');
+        setButtonState(true);
+    } else {
+        setButtonState(false);
+    }
+
+    button.addEventListener('click', () => {
+        const isDark = body.classList.toggle('dark-mode');
+        setButtonState(isDark);
+        window.localStorage.setItem(storageKey, isDark ? 'dark' : 'light');
+    });
+}
 
 
 function FooterYear() {

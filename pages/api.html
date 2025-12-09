@@ -9,10 +9,6 @@
 </head>
 <body>
     <header class="site-header">
-        <button class="hamburger" aria-label="Toggle navigation" aria-expanded="false">
-            <span></span>
-            <span></span>
-        </button>
         <nav class="main-nav" aria-label="Galvenā navigācija">
             <ul>
                 <li class="branding">
@@ -34,10 +30,10 @@
     </header>
 
         <main class="content-layout">
-            <section>
+            <section class="api-section">
                 <h1>Currency Converter</h1>
-                <form data-currency-form>
-                    <table>
+                <form class="api-form" data-currency-form>
+                    <table class="api-table">
                         <tbody>
                             <tr>
                                 <td>
@@ -68,14 +64,14 @@
         </main>
 
 
-    <footer id="contact" class="site-footer">
-    <p>&copy; <span id="year"></span> Games Prices. Not affiliated with Valve or Steam. All times are UTC.</p>
+    <footer class="site-footer">
+    <p>&copy; <span id="year"></span> Games Prices. Not agreed with anyone.</p>
         <div class="footer-controls">
             <label class="footer-control" for="footer-currency">
                 <select id="footer-currency" name="footer-currency" data-control="currency">
-                    <option value="USD">USD - $</option>
-                    <option value="EUR">EUR - €</option>
-                    <option value="GBP">GBP - £</option>
+                    <option value="USD">USD $</option>
+                    <option value="EUR">EUR €</option>
+                    <option value="GBP">GBP £</option>
                 </select>
             </label>
             <label class="footer-control" for="footer-language">
