@@ -6,7 +6,7 @@ const router = useRouter()
 const isServicesOpen = ref(false)
 const isMobileMenuOpen = ref(false)
 const isMobileServicesOpen = ref(false)
-const selectedCurrency = ref('EUR')
+const selectedCurrency = ref('USD')
 const selectedLanguage = ref('ENG')
 const selectedTheme = ref('light')
 
@@ -32,11 +32,6 @@ const goToHome = () => {
   closeMobileMenu()
 }
 
-const goToAbout = () => {
-  router.push('/about')
-  closeMobileMenu()
-}
-
 const handleLogin = () => {
   console.log('Login clicked')
   closeMobileMenu()
@@ -58,10 +53,22 @@ const changeLanguage = (lang) => {
 const toggleTheme = () => {
   selectedTheme.value = selectedTheme.value === 'light' ? 'dark' : 'light'
 }
+
+const sections = [
+  { id: 'what-is', title: 'What is GamePrices?' },
+  { id: 'why', title: 'Why was it created?' },
+  { id: 'data', title: 'Data collection' },
+  { id: 'reliability', title: 'Reliability' },
+  { id: 'audience', title: 'Audience' },
+  { id: 'features', title: 'Registered features' },
+  { id: 'history', title: 'Price history' },
+  { id: 'sync', title: 'Data freshness' },
+  { id: 'mission', title: 'Mission' }
+]
 </script>
 
 <template>
-  <div class="home-page" :class="selectedTheme">
+  <div class="about-page" :class="selectedTheme">
     <header class="header">
       <div class="header-container">
         <button class="theme-toggle" @click="toggleTheme" :aria-label="selectedTheme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'">
@@ -90,8 +97,8 @@ const toggleTheme = () => {
           </div>
 
           <nav class="nav-menu desktop-nav">
-            <button class="nav-btn">Games</button>
-            <button class="nav-btn" @click="goToAbout">About us</button>
+            <button class="nav-btn" @click="goToHome">Games</button>
+            <button class="nav-btn active">About us</button>
             
             <div class="services-dropdown">
               <button class="nav-btn" @click="toggleServices">
@@ -125,8 +132,8 @@ const toggleTheme = () => {
 
       <div class="mobile-menu" :class="{ 'mobile-menu-open': isMobileMenuOpen }">
         <nav class="mobile-nav">
-          <button class="mobile-nav-btn" @click="closeMobileMenu">Games</button>
-          <button class="mobile-nav-btn" @click="goToAbout">About us</button>
+          <button class="mobile-nav-btn" @click="goToHome">Games</button>
+          <button class="mobile-nav-btn active" @click="closeMobileMenu">About us</button>
           
           <div class="mobile-services">
             <button class="mobile-nav-btn" @click="toggleMobileServices">
@@ -146,47 +153,73 @@ const toggleTheme = () => {
     </header>
 
     <main class="main-content">
-      <div class="hero-section">
-        <h1 class="hero-title">Find the best game deals in one place</h1>
-        <p class="hero-subtitle">Game Prices automatically collects prices from leading digital stores, compares them, visualizes price history, and helps you find the best deals without wasting time.</p>
-        
-        <div class="cta-buttons">
-          <button class="cta-primary">Get Started</button>
-          <button class="cta-secondary">Learn More</button>
-        </div>
+      <div class="content-layout">
+        <article class="about-article">
+          <header class="section-header">
+            <h1>About Game Prices</h1>
+            <p class="section-subtitle">Discover how the platform works behind the scenes and who it is built for.</p>
+          </header>
 
-        <div class="feature-grid">
-          <div class="feature-item">
-            <div class="feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-                <line x1="7" y1="7" x2="7.01" y2="7"/>
-              </svg>
-            </div>
-            <h3>Price Comparison</h3>
-            <p>We provide real-time price comparison from major stores so you always know where the best deal is.</p>
-          </div>
+          <div class="article-content">
+            <section id="what-is">
+              <h2>What is GamePrices?</h2>
+              <p>GamePrices is a data-driven platform that compares game prices across multiple digital stores, providing real-time information, historical analytics, and automated deal tracking.</p>
+            </section>
 
-          <div class="feature-item">
-            <div class="feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-              </svg>
-            </div>
-            <h3>Price History & Analytics</h3>
-            <p>Track detailed price history to understand trends and choose the perfect moment to buy.</p>
-          </div>
+            <section id="why">
+              <h2>Why was GamePrices created?</h2>
+              <p>The platform was built to solve a common problem: players waste time checking different stores manually, comparing prices, and searching for real discounts.</p>
+            </section>
 
-          <div class="feature-item">
-            <div class="feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-              </svg>
-            </div>
-            <h3>Wishlist & Notifications</h3>
-            <p>Save your favorite games to a wishlist and get instant notifications when prices drop.</p>
+            <section id="data">
+              <h2>How does GamePrices collect pricing data?</h2>
+              <p>GamePrices integrates with public APIs from Steam, Epic Games, GG.deals, IsThereAnyDeal, and other sources to automatically gather and update accurate pricing information.</p>
+            </section>
+
+            <section id="reliability">
+              <h2>What makes GamePrices reliable?</h2>
+              <p>The system uses a structured ER data model, automated synchronization services, and detailed validation to ensure price accuracy, data consistency, and stable performance.</p>
+            </section>
+
+            <section id="audience">
+              <h2>Who is GamePrices for?</h2>
+              <p>GamePrices is designed for all types of users - guests who want quick price checks, registered users who track wishlists and receive alerts, and administrators who maintain data quality.</p>
+            </section>
+
+            <section id="features">
+              <h2>What features do registered users get?</h2>
+              <p>Registered users can save games to a wishlist, receive automatic notifications about price drops, customize their profile, and report issues directly to administrators.</p>
+            </section>
+
+            <section id="history">
+              <h2>Does GamePrices show price history?</h2>
+              <p>Yes. The platform provides clear visual graphs showing historical price changes, helping users analyze trends and buy at the best moment.</p>
+            </section>
+
+            <section id="sync">
+              <h2>How does GamePrices ensure data stays up to date?</h2>
+              <p>A built-in DataSyncService regularly pulls fresh data from external APIs, updates local records, and logs errors to maintain system accuracy and reliability.</p>
+            </section>
+
+            <section id="mission">
+              <h2>What is your mission?</h2>
+              <p>Our mission is to make the game market transparent, efficient, and easy to understand, helping every player save time, save money, and make smarter purchasing decisions.</p>
+            </section>
           </div>
-        </div>
+        </article>
+
+        <aside class="sidebar desktop-sidebar">
+          <div class="sidebar-content">
+            <h3>On this page</h3>
+            <nav class="sidebar-nav">
+              <ul>
+                <li v-for="section in sections" :key="section.id">
+                  <a :href="`#${section.id}`">{{ section.title }}</a>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </aside>
       </div>
     </main>
 
@@ -235,7 +268,7 @@ const toggleTheme = () => {
   box-sizing: border-box;
 }
 
-.home-page {
+.about-page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -243,7 +276,7 @@ const toggleTheme = () => {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
 }
 
-.home-page.light {
+.about-page.light {
   --bg-primary: #ffffff;
   --bg-secondary: #f5f5f7;
   --text-primary: #1d1d1f;
@@ -253,7 +286,7 @@ const toggleTheme = () => {
   --accent-color: #0071e3;
 }
 
-.home-page.dark {
+.about-page.dark {
   --bg-primary: #000000;
   --bg-secondary: #1d1d1f;
   --text-primary: #f5f5f7;
@@ -263,11 +296,12 @@ const toggleTheme = () => {
   --accent-color: #2997ff;
 }
 
-.home-page {
+.about-page {
   background: var(--bg-primary);
   color: var(--text-primary);
 }
 
+/* header */
 .header {
   background: rgba(var(--bg-primary-rgb), 0.8);
   backdrop-filter: saturate(180%) blur(20px);
@@ -279,11 +313,11 @@ const toggleTheme = () => {
   z-index: 100;
 }
 
-.home-page.light .header {
+.about-page.light .header {
   --bg-primary-rgb: 255, 255, 255;
 }
 
-.home-page.dark .header {
+.about-page.dark .header {
   --bg-primary-rgb: 0, 0, 0;
 }
 
@@ -376,6 +410,10 @@ const toggleTheme = () => {
 
 .nav-btn:hover {
   opacity: 0.7;
+}
+
+.nav-btn.active {
+  font-weight: 500;
 }
 
 .services-dropdown {
@@ -508,6 +546,11 @@ const toggleTheme = () => {
   background: var(--hover-bg);
 }
 
+.mobile-nav-btn.active {
+  font-weight: 500;
+  background: var(--hover-bg);
+}
+
 .mobile-services {
   display: flex;
   flex-direction: column;
@@ -556,110 +599,109 @@ const toggleTheme = () => {
   opacity: 0.8;
 }
 
+/* main */
 .main-content {
   flex: 1;
-  padding: 6rem 2rem 4rem;
+  padding: 3rem 2rem;
 }
 
-.hero-section {
-  max-width: 980px;
+.content-layout {
+  max-width: 1280px;
   margin: 0 auto;
-  text-align: center;
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 4rem;
 }
 
-.hero-title {
-  font-size: 3.5rem;
+.about-article {
+  max-width: 720px;
+}
+
+.section-header {
+  margin-bottom: 3rem;
+}
+
+.section-header h1 {
+  font-size: 3rem;
   font-weight: 600;
   line-height: 1.1;
-  letter-spacing: -1.5px;
+  letter-spacing: -1px;
   margin-bottom: 1rem;
   color: var(--text-primary);
 }
 
-.hero-subtitle {
+.section-subtitle {
   font-size: 1.25rem;
   color: var(--text-secondary);
-  margin-bottom: 2.5rem;
   line-height: 1.5;
   font-weight: 400;
 }
 
-.cta-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-bottom: 5rem;
+.article-content section {
+  margin-bottom: 3rem;
+  scroll-margin-top: 80px;
 }
 
-.cta-primary {
-  background: var(--accent-color);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 6px;
-  font-weight: 400;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-}
-
-.cta-primary:hover {
-  opacity: 0.8;
-}
-
-.cta-secondary {
-  background: transparent;
-  color: var(--accent-color);
-  border: 1px solid var(--accent-color);
-  padding: 0.75rem 1.5rem;
-  border-radius: 6px;
-  font-weight: 400;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-}
-
-.cta-secondary:hover {
-  opacity: 0.7;
-}
-
-.feature-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2rem;
-  margin-top: 4rem;
-}
-
-.feature-item {
-  text-align: center;
-  padding: 2rem 1.5rem;
-}
-
-.feature-icon {
-  width: 48px;
-  height: 48px;
-  margin: 0 auto 1.5rem;
-  color: var(--text-primary);
-}
-
-.feature-icon svg {
-  width: 100%;
-  height: 100%;
-}
-
-.feature-item h3 {
-  font-size: 1.25rem;
+.article-content h2 {
+  font-size: 1.75rem;
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.article-content p {
+  font-size: 1.0625rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  font-weight: 400;
+}
+
+/* sidebar */
+.sidebar {
+  position: sticky;
+  top: 80px;
+  align-self: start;
+  height: fit-content;
+}
+
+.sidebar-content {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.sidebar-content h3 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sidebar-nav ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sidebar-nav a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.875rem;
+  transition: color 0.2s ease;
+  display: block;
+  padding: 0.25rem 0;
+}
+
+.sidebar-nav a:hover {
   color: var(--text-primary);
 }
 
-.feature-item p {
-  font-size: 0.9375rem;
-  color: var(--text-secondary);
-  line-height: 1.5;
-}
-
+/* footer */
 .footer {
   background: var(--bg-secondary);
   border-top: 1px solid var(--border-color);
@@ -722,7 +764,19 @@ const toggleTheme = () => {
   height: 24px;
   background: var(--border-color);
 }
-/* respons. */
+
+/* resposiv */
+@media (max-width: 1024px) {
+  .content-layout {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .desktop-sidebar {
+    display: none;
+  }
+}
+
 @media (max-width: 980px) {
   .desktop-nav,
   .desktop-login {
@@ -739,25 +793,16 @@ const toggleTheme = () => {
     gap: 1rem;
   }
 
-  .hero-title {
+  .section-header h1 {
     font-size: 2.5rem;
   }
 
-  .hero-subtitle {
+  .section-subtitle {
     font-size: 1.125rem;
   }
 
-  .feature-grid {
-    grid-template-columns: 1fr;
-    gap: 3rem;
-  }
-
-  .cta-buttons {
-    flex-direction: column;
-    align-items: stretch;
-    max-width: 300px;
-    margin-left: auto;
-    margin-right: auto;
+  .article-content h2 {
+    font-size: 1.5rem;
   }
 
   .footer-container {
@@ -772,12 +817,28 @@ const toggleTheme = () => {
 }
 
 @media (max-width: 640px) {
-  .hero-title {
+  .main-content {
+    padding: 2rem 1.5rem;
+  }
+
+  .section-header h1 {
     font-size: 2rem;
   }
 
-  .main-content {
-    padding: 4rem 1.5rem 3rem;
+  .section-header {
+    margin-bottom: 2rem;
+  }
+
+  .article-content section {
+    margin-bottom: 2rem;
+  }
+
+  .article-content h2 {
+    font-size: 1.25rem;
+  }
+
+  .article-content p {
+    font-size: 1rem;
   }
 }
 </style>
