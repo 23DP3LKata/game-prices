@@ -32,6 +32,11 @@ const goToHome = () => {
   closeMobileMenu()
 }
 
+const goToGames = () => {
+  router.push('/games')
+  closeMobileMenu()
+}
+
 const handleLogin = () => {
   console.log('Login clicked')
   closeMobileMenu()
@@ -97,7 +102,7 @@ const sections = [
           </div>
 
           <nav class="nav-menu desktop-nav">
-            <button class="nav-btn" @click="goToHome">Games</button>
+            <button class="nav-btn" @click="goToGames">Games</button>
             <button class="nav-btn active">About us</button>
             
             <div class="services-dropdown">
@@ -132,7 +137,7 @@ const sections = [
 
       <div class="mobile-menu" :class="{ 'mobile-menu-open': isMobileMenuOpen }">
         <nav class="mobile-nav">
-          <button class="mobile-nav-btn" @click="goToHome">Games</button>
+          <button class="mobile-nav-btn" @click="goToGames">Games</button>
           <button class="mobile-nav-btn active" @click="closeMobileMenu">About us</button>
           
           <div class="mobile-services">

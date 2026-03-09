@@ -12,6 +12,8 @@ const selectedTheme = ref('light')
 
 provide('theme', selectedTheme)
 
+const games = ref([])
+
 const toggleServices = () => {
   isServicesOpen.value = !isServicesOpen.value
 }
@@ -34,11 +36,6 @@ const goToHome = () => {
 
 const goToAbout = () => {
   router.push('/about')
-  closeMobileMenu()
-}
-
-const goToGames = () => {
-  router.push('/games')
   closeMobileMenu()
 }
 
@@ -66,7 +63,7 @@ const toggleTheme = () => {
 </script>
 
 <template>
-  <div class="home-page" :class="selectedTheme">
+  <div class="games-page" :class="selectedTheme">
     <header class="header">
       <div class="header-container">
         <button class="theme-toggle" @click="toggleTheme" :aria-label="selectedTheme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'">
@@ -95,7 +92,7 @@ const toggleTheme = () => {
           </div>
 
           <nav class="nav-menu desktop-nav">
-            <button class="nav-btn" @click="goToGames">Games</button>
+            <button class="nav-btn active">Games</button>
             <button class="nav-btn" @click="goToAbout">About us</button>
             
             <div class="services-dropdown">
@@ -114,7 +111,6 @@ const toggleTheme = () => {
 
         <button class="login-btn desktop-login" @click="handleLogin">Login</button>
 
-        <!-- menu -->
         <button class="mobile-menu-btn" @click="toggleMobileMenu" :aria-label="isMobileMenuOpen ? 'Close menu' : 'Open menu'">
           <svg v-if="!isMobileMenuOpen" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="3" y1="6" x2="21" y2="6"/>
@@ -130,7 +126,7 @@ const toggleTheme = () => {
 
       <div class="mobile-menu" :class="{ 'mobile-menu-open': isMobileMenuOpen }">
         <nav class="mobile-nav">
-          <button class="mobile-nav-btn" @click="goToGames">Games</button>
+          <button class="mobile-nav-btn active" @click="closeMobileMenu">Games</button>
           <button class="mobile-nav-btn" @click="goToAbout">About us</button>
           
           <div class="mobile-services">
@@ -151,46 +147,43 @@ const toggleTheme = () => {
     </header>
 
     <main class="main-content">
-      <div class="hero-section">
-        <h1 class="hero-title">Find the best game deals in one place</h1>
-        <p class="hero-subtitle">Game Prices automatically collects prices from leading digital stores, compares them, visualizes price history, and helps you find the best deals without wasting time.</p>
-        
-        <div class="cta-buttons">
-          <button class="cta-primary">Get Started</button>
-          <button class="cta-secondary">Learn More</button>
-        </div>
+      <div class="content-wrapper">
+        <header class="page-header">
+          <h1>Games We Track</h1>
+        </header>
 
-        <div class="feature-grid">
-          <div class="feature-item">
-            <div class="feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-                <line x1="7" y1="7" x2="7.01" y2="7"/>
-              </svg>
-            </div>
-            <h3>Price Comparison</h3>
-            <p>We provide real-time price comparison from major stores so you always know where the best deal is.</p>
-          </div>
-
-          <div class="feature-item">
-            <div class="feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-              </svg>
-            </div>
-            <h3>Price History & Analytics</h3>
-            <p>Track detailed price history to understand trends and choose the perfect moment to buy.</p>
-          </div>
-
-          <div class="feature-item">
-            <div class="feature-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-              </svg>
-            </div>
-            <h3>Wishlist & Notifications</h3>
-            <p>Save your favorite games to a wishlist and get instant notifications when prices drop.</p>
-          </div>
+        <div class="table-container">
+          <table class="games-table">
+            <thead>
+              <tr>
+                <th class="col-game">Game</th>
+                <th class="col-genre">Genre</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="game in games" :key="game.id">
+                <td class="cell-game">
+                  <div class="game-info">
+                    <img :src="game.logo" :alt="game.name" class="game-logo" />
+                    <span class="game-name">{{ game.name }}</span>
+                  </div>
+                </td>
+                <td class="cell-genre">{{ game.genre }}</td>
+              </tr>
+              <tr v-if="games.length === 0">
+                <td colspan="2" class="empty-state">
+                  <div class="empty-content">
+                    <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                      <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                      <line x1="12" y1="22.08" x2="12" y2="12"/>
+                    </svg>
+                    <p>No games available yet</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </main>
@@ -240,7 +233,7 @@ const toggleTheme = () => {
   box-sizing: border-box;
 }
 
-.home-page {
+.games-page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -248,7 +241,7 @@ const toggleTheme = () => {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
 }
 
-.home-page.light {
+.games-page.light {
   --bg-primary: #ffffff;
   --bg-secondary: #f5f5f7;
   --text-primary: #1d1d1f;
@@ -258,7 +251,7 @@ const toggleTheme = () => {
   --accent-color: #0071e3;
 }
 
-.home-page.dark {
+.games-page.dark {
   --bg-primary: #000000;
   --bg-secondary: #1d1d1f;
   --text-primary: #f5f5f7;
@@ -268,11 +261,12 @@ const toggleTheme = () => {
   --accent-color: #2997ff;
 }
 
-.home-page {
+.games-page {
   background: var(--bg-primary);
   color: var(--text-primary);
 }
 
+/* header */
 .header {
   background: rgba(var(--bg-primary-rgb), 0.8);
   backdrop-filter: saturate(180%) blur(20px);
@@ -284,11 +278,11 @@ const toggleTheme = () => {
   z-index: 100;
 }
 
-.home-page.light .header {
+.games-page.light .header {
   --bg-primary-rgb: 255, 255, 255;
 }
 
-.home-page.dark .header {
+.games-page.dark .header {
   --bg-primary-rgb: 0, 0, 0;
 }
 
@@ -383,6 +377,10 @@ const toggleTheme = () => {
   opacity: 0.7;
 }
 
+.nav-btn.active {
+  font-weight: 500;
+}
+
 .services-dropdown {
   position: relative;
 }
@@ -448,7 +446,7 @@ const toggleTheme = () => {
   opacity: 0.8;
 }
 
-/* menu */
+/* mobile menu */
 .mobile-menu-btn {
   display: none;
   background: transparent;
@@ -513,6 +511,11 @@ const toggleTheme = () => {
   background: var(--hover-bg);
 }
 
+.mobile-nav-btn.active {
+  font-weight: 500;
+  background: var(--hover-bg);
+}
+
 .mobile-services {
   display: flex;
   flex-direction: column;
@@ -561,110 +564,129 @@ const toggleTheme = () => {
   opacity: 0.8;
 }
 
+/* main */
 .main-content {
   flex: 1;
-  padding: 6rem 2rem 4rem;
+  padding: 3rem 2rem;
 }
 
-.hero-section {
-  max-width: 980px;
+.content-wrapper {
+  max-width: 1280px;
   margin: 0 auto;
-  text-align: center;
 }
 
-.hero-title {
-  font-size: 3.5rem;
+.page-header {
+  margin-bottom: 3rem;
+}
+
+.page-header h1 {
+  text-align: center;
+  font-size: 3rem;
   font-weight: 600;
   line-height: 1.1;
-  letter-spacing: -1.5px;
+  letter-spacing: -1px;
   margin-bottom: 1rem;
   color: var(--text-primary);
 }
 
-.hero-subtitle {
-  font-size: 1.25rem;
+/* table */
+.table-container {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.games-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.games-table thead {
+  background: var(--bg-secondary);
+}
+
+.games-table th {
+  padding: 0.875rem 1.5rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
   color: var(--text-secondary);
-  margin-bottom: 2.5rem;
-  line-height: 1.5;
-  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.cta-buttons {
+.games-table td {
+  padding: 1rem 1.5rem;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.games-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.games-table tbody tr:hover {
+  background: var(--hover-bg);
+}
+
+.col-game {
+  width: 60%;
+}
+
+.col-genre {
+  width: 40%;
+}
+
+.game-info {
   display: flex;
-  justify-content: center;
+  align-items: center;
   gap: 1rem;
-  margin-bottom: 5rem;
 }
 
-.cta-primary {
-  background: var(--accent-color);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 6px;
-  font-weight: 400;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-}
-
-.cta-primary:hover {
-  opacity: 0.8;
-}
-
-.cta-secondary {
-  background: transparent;
-  color: var(--accent-color);
-  border: 1px solid var(--accent-color);
-  padding: 0.75rem 1.5rem;
-  border-radius: 6px;
-  font-weight: 400;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-}
-
-.cta-secondary:hover {
-  opacity: 0.7;
-}
-
-.feature-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2rem;
-  margin-top: 4rem;
-}
-
-.feature-item {
-  text-align: center;
-  padding: 2rem 1.5rem;
-}
-
-.feature-icon {
+.game-logo {
   width: 48px;
   height: 48px;
-  margin: 0 auto 1.5rem;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--bg-secondary);
+}
+
+.game-name {
+  font-weight: 500;
   color: var(--text-primary);
 }
 
-.feature-icon svg {
-  width: 100%;
-  height: 100%;
-}
-
-.feature-item h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: var(--text-primary);
-}
-
-.feature-item p {
-  font-size: 0.9375rem;
+.cell-genre {
   color: var(--text-secondary);
-  line-height: 1.5;
 }
 
+.empty-state {
+  text-align: center;
+  padding: 4rem 1.5rem !important;
+}
+
+.empty-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.empty-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+.empty-content p {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+/* footer */
 .footer {
   background: var(--bg-secondary);
   border-top: 1px solid var(--border-color);
@@ -727,7 +749,8 @@ const toggleTheme = () => {
   height: 24px;
   background: var(--border-color);
 }
-/* respons. */
+
+/* responsive */
 @media (max-width: 980px) {
   .desktop-nav,
   .desktop-login {
@@ -744,25 +767,8 @@ const toggleTheme = () => {
     gap: 1rem;
   }
 
-  .hero-title {
+  .page-header h1 {
     font-size: 2.5rem;
-  }
-
-  .hero-subtitle {
-    font-size: 1.125rem;
-  }
-
-  .feature-grid {
-    grid-template-columns: 1fr;
-    gap: 3rem;
-  }
-
-  .cta-buttons {
-    flex-direction: column;
-    align-items: stretch;
-    max-width: 300px;
-    margin-left: auto;
-    margin-right: auto;
   }
 
   .footer-container {
@@ -777,12 +783,31 @@ const toggleTheme = () => {
 }
 
 @media (max-width: 640px) {
-  .hero-title {
+  .main-content {
+    padding: 2rem 1.5rem;
+  }
+
+  .page-header h1 {
     font-size: 2rem;
   }
 
-  .main-content {
-    padding: 4rem 1.5rem 3rem;
+  .page-header {
+    margin-bottom: 2rem;
+  }
+
+  .games-table th,
+  .games-table td {
+    padding: 0.75rem 1rem;
+  }
+
+  .game-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+  }
+
+  .game-info {
+    gap: 0.75rem;
   }
 }
 </style>
