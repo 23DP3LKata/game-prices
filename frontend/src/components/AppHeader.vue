@@ -58,6 +58,18 @@ function goToProfile() {
   isProfileMenuOpen.value = false
 }
 
+function goToLogin() {
+  router.push('/login')
+  closeMobileMenu()
+  isProfileMenuOpen.value = false
+}
+
+function goToRegister() {
+  router.push('/register')
+  closeMobileMenu()
+  isProfileMenuOpen.value = false
+}
+
 function handleLogout() {
   console.log('Logout clicked')
   isProfileMenuOpen.value = false
@@ -108,8 +120,8 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 
       <!-- Auth buttons + Profile icon (desktop) -->
       <div class="header-right desktop-profile" ref="profileWrapperRef">
-        <button class="auth-btn login-btn">Log In</button>
-        <button class="auth-btn signup-btn">Sign Up</button>
+        <button class="auth-btn login-btn" @click="goToLogin">Log In</button>
+        <button class="auth-btn signup-btn" @click="goToRegister">Sign Up</button>
 
         <button class="profile-btn" @click="toggleProfileMenu" aria-label="Profile menu">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -225,8 +237,8 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 
         <div class="mobile-divider"></div>
 
-        <button class="mobile-auth-btn mobile-login-btn">Log In</button>
-        <button class="mobile-auth-btn mobile-signup-btn">Sign Up</button>
+        <button class="mobile-auth-btn mobile-login-btn" @click="goToLogin">Log In</button>
+        <button class="mobile-auth-btn mobile-signup-btn" @click="goToRegister">Sign Up</button>
 
         <div class="mobile-divider"></div>
 

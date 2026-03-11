@@ -31,6 +31,11 @@ provide('theme', selectedTheme)
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                 <circle cx="12" cy="7" r="4"/>
               </svg>
+              <!-- <img 
+                src="https://media1.tenor.com/m/LSYvhdQf2EAAAAAd/awkward-awkward-meme.gif" 
+                alt="Bear" 
+                class="placeholder-gif" 
+              /> -->
             </div>
             <div class="user-info">
               <h2>User Name</h2>
@@ -142,6 +147,13 @@ provide('theme', selectedTheme)
   width: 36px;
   height: 36px;
 }
+
+/* .placeholder-gif {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+} */
 
 .user-info h2 {
   font-size: 1.25rem;
