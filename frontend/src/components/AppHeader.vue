@@ -106,8 +106,11 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
         </nav>
       </div>
 
-      <!-- Profile icon + dropdown (desktop) -->
-      <div class="profile-wrapper desktop-profile" ref="profileWrapperRef">
+      <!-- Auth buttons + Profile icon (desktop) -->
+      <div class="header-right desktop-profile" ref="profileWrapperRef">
+        <button class="auth-btn login-btn">Log In</button>
+        <button class="auth-btn signup-btn">Sign Up</button>
+
         <button class="profile-btn" @click="toggleProfileMenu" aria-label="Profile menu">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -219,6 +222,11 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
       <nav class="mobile-nav">
         <button class="mobile-nav-btn" :class="{ active: activePage === 'games' }" @click="goToGames">Games</button>
         <button class="mobile-nav-btn" :class="{ active: activePage === 'about' }" @click="goToAbout">About us</button>
+
+        <div class="mobile-divider"></div>
+
+        <button class="mobile-auth-btn mobile-login-btn">Log In</button>
+        <button class="mobile-auth-btn mobile-signup-btn">Sign Up</button>
 
         <div class="mobile-divider"></div>
 
@@ -374,7 +382,42 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   font-weight: 500;
 }
 
-/* Profile button */
+/* Profile button & auth */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.auth-btn {
+  border: none;
+  padding: 0.375rem 0.875rem;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+}
+
+.signup-btn {
+  background: var(--accent-color);
+  color: #ffffff;
+}
+
+.signup-btn:hover {
+  opacity: 0.85;
+}
+
+.login-btn {
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.login-btn:hover {
+  opacity: 0.7;
+}
+
 .profile-wrapper {
   position: relative;
 }
@@ -590,6 +633,36 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   height: 1px;
   background: var(--border-color);
   margin: 0.5rem 0;
+}
+
+.mobile-auth-btn {
+  border: none;
+  padding: 0.875rem 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+  text-align: center;
+}
+
+.mobile-signup-btn {
+  background: var(--accent-color);
+  color: #ffffff;
+}
+
+.mobile-signup-btn:hover {
+  opacity: 0.85;
+}
+
+.mobile-login-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.mobile-login-btn:hover {
+  opacity: 0.7;
 }
 
 .mobile-item-icon {
