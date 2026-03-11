@@ -17,36 +17,21 @@ const emit = defineEmits([
 
 const router = useRouter()
 
-const isServicesOpen = ref(false)
 const isMobileMenuOpen = ref(false)
-const isMobileServicesOpen = ref(false)
 const isProfileMenuOpen = ref(false)
 
 const profileWrapperRef = ref(null)
-const servicesRef = ref(null)
-
-function toggleServices() {
-  isServicesOpen.value = !isServicesOpen.value
-  isProfileMenuOpen.value = false
-}
 
 function toggleProfileMenu() {
   isProfileMenuOpen.value = !isProfileMenuOpen.value
-  isServicesOpen.value = false
 }
 
 function toggleMobileMenu() {
   isMobileMenuOpen.value = !isMobileMenuOpen.value
-  if (!isMobileMenuOpen.value) isMobileServicesOpen.value = false
-}
-
-function toggleMobileServices() {
-  isMobileServicesOpen.value = !isMobileServicesOpen.value
 }
 
 function closeMobileMenu() {
   isMobileMenuOpen.value = false
-  isMobileServicesOpen.value = false
 }
 
 function goToHome() {
@@ -96,9 +81,6 @@ function handleClickOutside(e) {
   if (profileWrapperRef.value && !profileWrapperRef.value.contains(e.target)) {
     isProfileMenuOpen.value = false
   }
-  if (servicesRef.value && !servicesRef.value.contains(e.target)) {
-    isServicesOpen.value = false
-  }
 }
 
 onMounted(() => document.addEventListener('click', handleClickOutside))
@@ -121,18 +103,6 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
         <nav class="nav-menu desktop-nav">
           <button class="nav-btn" :class="{ active: activePage === 'games' }" @click="goToGames">Games</button>
           <button class="nav-btn" :class="{ active: activePage === 'about' }" @click="goToAbout">About us</button>
-
-          <div class="services-dropdown" ref="servicesRef">
-            <button class="nav-btn" @click="toggleServices">
-              Services
-              <svg class="arrow-icon" :class="{ 'arrow-up': isServicesOpen }" viewBox="0 0 12 8" fill="none">
-                <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
-            </button>
-            <div class="dropdown-menu" :class="{ 'dropdown-open': isServicesOpen }">
-              <a href="#" class="dropdown-item">API</a>
-            </div>
-          </div>
         </nav>
       </div>
 
@@ -249,18 +219,6 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
       <nav class="mobile-nav">
         <button class="mobile-nav-btn" :class="{ active: activePage === 'games' }" @click="goToGames">Games</button>
         <button class="mobile-nav-btn" :class="{ active: activePage === 'about' }" @click="goToAbout">About us</button>
-
-        <div class="mobile-services">
-          <button class="mobile-nav-btn" @click="toggleMobileServices">
-            <span>Services</span>
-            <svg class="arrow-icon" :class="{ 'arrow-up': isMobileServicesOpen }" viewBox="0 0 12 8" fill="none">
-              <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
-          </button>
-          <div class="mobile-submenu" :class="{ 'mobile-submenu-open': isMobileServicesOpen }">
-            <a href="#" class="mobile-submenu-item" @click="closeMobileMenu">API</a>
-          </div>
-        </div>
 
         <div class="mobile-divider"></div>
 
@@ -414,55 +372,6 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 
 .nav-btn.active {
   font-weight: 500;
-}
-
-.services-dropdown {
-  position: relative;
-}
-
-.arrow-icon {
-  width: 10px;
-  height: 10px;
-  transition: transform 0.2s ease;
-  margin-left: 0.25rem;
-}
-
-.arrow-up {
-  transform: rotate(180deg);
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: calc(100% + 12px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  min-width: 200px;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  padding: 0.5rem 0;
-}
-
-.dropdown-open {
-  opacity: 1;
-  visibility: visible;
-}
-
-.dropdown-item {
-  display: block;
-  padding: 0.5rem 1rem;
-  color: var(--text-primary);
-  text-decoration: none;
-  font-size: 0.875rem;
-  transition: background-color 0.2s ease;
-}
-
-.dropdown-item:hover {
-  background: var(--hover-bg);
 }
 
 /* Profile button */
@@ -675,37 +584,6 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 .mobile-nav-btn.active {
   font-weight: 500;
   background: var(--hover-bg);
-}
-
-.mobile-services {
-  display: flex;
-  flex-direction: column;
-}
-
-.mobile-submenu {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease;
-  padding-left: 1rem;
-}
-
-.mobile-submenu-open {
-  max-height: 200px;
-}
-
-.mobile-submenu-item {
-  display: block;
-  padding: 0.75rem 1rem;
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-size: 0.9375rem;
-  transition: all 0.2s ease;
-  border-radius: 8px;
-}
-
-.mobile-submenu-item:hover {
-  background: var(--hover-bg);
-  color: var(--text-primary);
 }
 
 .mobile-divider {
