@@ -1,12 +1,23 @@
 <script setup>
-import { ref, provide } from 'vue'
+import { ref, provide, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
+import { useAuthStore } from '../stores/auth'
+
+const router = useRouter()
+const authStore = useAuthStore()
 
 const selectedCurrency = ref('EUR')
 const selectedLanguage = ref('ENG')
 const selectedTheme = ref('light')
 
 provide('theme', selectedTheme)
+
+onMounted(() => {
+  if (!authStore.isLoggedIn) {
+    router.push('/login')
+  }
+})
 </script>
 
 <template>
@@ -38,8 +49,8 @@ provide('theme', selectedTheme)
               /> -->
             </div>
             <div class="user-info">
-              <h2>User Name</h2>
-              <p>user@example.com</p>
+              <h2>{{ authStore.user?.nickname ?? 'User' }}</h2>
+              <p>{{ authStore.user?.email ?? '' }}</p>
             </div>
           </div>
         </div>

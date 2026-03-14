@@ -2,8 +2,10 @@
 import { ref, provide } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
+import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
 
 const selectedCurrency = ref('EUR')
 const selectedLanguage = ref('ENG')
@@ -28,23 +30,28 @@ async function handleLogin() {
   isLoading.value = true
 
   try {
-    // TODO: Backend API call
-    // const response = await fetch('/api/login', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({
-    //     email: email.value,
-    //     password: password.value,
-    //     remember: rememberMe.value,
-    //   }),
-    // })
-    // const data = await response.json()
-    // if (!response.ok) throw new Error(data.message || 'Login failed')
-    // store token / user data
-    // router.push('/profile')
+    const response = await fetch('/api/login', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: email.value.trim(),
+        password: password.value,
+        remember: rememberMe.value,
+      }),
+    })
 
-    console.log('Login attempt:', { email: email.value, remember: rememberMe.value })
-    errorMessage.value = 'Backend is not connected yet.'
+    const data = await response.json().catch(() => null)
+
+    if (!response.ok) {
+      throw new Error(data?.message || 'Login failed.')
+    }
+
+    authStore.setUser(data.user)
+    await router.push('/profile')
   } catch (err) {
     errorMessage.value = err.message || 'Something went wrong. Please try again.'
   } finally {

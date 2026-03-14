@@ -1,6 +1,7 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 
 const props = defineProps({
   activePage: { type: String, default: '' },
@@ -16,6 +17,9 @@ const emit = defineEmits([
 ])
 
 const router = useRouter()
+
+const authStore = useAuthStore()
+const isLoggedIn = computed(() => authStore.isLoggedIn)
 
 const isMobileMenuOpen = ref(false)
 const isProfileMenuOpen = ref(false)
@@ -71,10 +75,10 @@ function goToRegister() {
 }
 
 function handleLogout() {
-  console.log('Logout clicked')
+  authStore.clearUser()
   isProfileMenuOpen.value = false
   closeMobileMenu()
-  // TODO: Implement actual logout logic
+  router.push('/')
 }
 
 function changeCurrency(c) {
@@ -120,8 +124,10 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 
       <!-- Auth buttons + Profile icon (desktop) -->
       <div class="header-right desktop-profile" ref="profileWrapperRef">
-        <button class="auth-btn login-btn" @click="goToLogin">Log In</button>
-        <button class="auth-btn signup-btn" @click="goToRegister">Sign Up</button>
+        <template v-if="!isLoggedIn">
+          <button class="auth-btn login-btn" @click="goToLogin">Log In</button>
+          <button class="auth-btn signup-btn" @click="goToRegister">Sign Up</button>
+        </template>
 
         <button class="profile-btn" @click="toggleProfileMenu" aria-label="Profile menu">
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -237,8 +243,10 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 
         <div class="mobile-divider"></div>
 
-        <button class="mobile-auth-btn mobile-login-btn" @click="goToLogin">Log In</button>
-        <button class="mobile-auth-btn mobile-signup-btn" @click="goToRegister">Sign Up</button>
+        <template v-if="!isLoggedIn">
+          <button class="mobile-auth-btn mobile-login-btn" @click="goToLogin">Log In</button>
+          <button class="mobile-auth-btn mobile-signup-btn" @click="goToRegister">Sign Up</button>
+        </template>
 
         <div class="mobile-divider"></div>
 
@@ -283,7 +291,7 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 
         <div class="mobile-divider"></div>
 
-        <button class="mobile-nav-btn logout-mobile" @click="handleLogout">
+        <button v-if="isLoggedIn" class="mobile-nav-btn logout-mobile" @click="handleLogout">
           <span>Log out</span>
           <svg class="mobile-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
