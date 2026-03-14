@@ -3,13 +3,14 @@ import { computed, onMounted, provide, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import { useAuthStore } from '../stores/auth'
+import { useThemePreference } from '../composables/useThemePreference'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
 const selectedCurrency = ref('EUR')
 const selectedLanguage = ref('ENG')
-const selectedTheme = ref('light')
+const selectedTheme = useThemePreference()
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '')
 
 const profileData = ref({
@@ -722,22 +723,22 @@ onMounted(() => {
 }
 
 .profile-page.dark {
-  --bg-primary: #000000;
-  --bg-secondary: #1d1d1f;
-  --surface-muted: #1d1d1f;
+  --bg-primary: #1b1d21;
+  --bg-secondary: #25282e;
+  --surface-muted: #25282e;
   --text-primary: #f5f5f7;
-  --text-secondary: #86868b;
-  --border-color: #424245;
-  --hover-bg: #26262a;
+  --text-secondary: #a6aab3;
+  --border-color: #545a65;
+  --hover-bg: #2f333b;
   --accent-color: #2997ff;
   --accent-hover: #40a9ff;
   --accent-soft: rgba(41, 151, 255, 0.14);
-  --input-bg: #111113;
+  --input-bg: #2a2f37;
   --status-info-bg: rgba(41, 151, 255, 0.14);
   --status-info-text: #b8ddff;
   --status-success-bg: rgba(34, 197, 94, 0.14);
   --status-success-text: #9ae6b4;
-  --error-color: #ff7b7b;
+  --error-color: #ff8b8b;
 }
 
 .profile-page {
@@ -1057,8 +1058,9 @@ onMounted(() => {
 
 .setting-actions {
   display: flex;
-  align-items: center;
-  align-self: center;
+  align-items: flex-start;
+  /* align-items: center; */
+  /* align-self: center; */
   gap: 0.55rem;
 }
 

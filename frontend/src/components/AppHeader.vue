@@ -217,7 +217,7 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
               <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
               <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
             </svg>
-            <span>Dark theme</span>
+            <span>Dark Theme</span>
             <span class="theme-status">{{ selectedTheme === 'dark' ? 'On' : 'Off' }}</span>
           </button>
 
@@ -343,7 +343,7 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 }
 
 .header[data-theme="dark"] {
-  --bg-primary-rgb: 0, 0, 0;
+  --bg-primary-rgb: 27, 29, 33;
 }
 
 .header-container {

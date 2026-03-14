@@ -3,13 +3,14 @@ import { ref, provide } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import { useAuthStore } from '../stores/auth'
+import { useThemePreference } from '../composables/useThemePreference'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
 const selectedCurrency = ref('EUR')
 const selectedLanguage = ref('ENG')
-const selectedTheme = ref('light')
+const selectedTheme = useThemePreference()
 
 provide('theme', selectedTheme)
 
@@ -183,18 +184,18 @@ async function handleLogin() {
 }
 
 .login-page.dark {
-  --bg-primary: #000000;
-  --bg-secondary: #1d1d1f;
+  --bg-primary: #1b1d21;
+  --bg-secondary: #25282e;
   --text-primary: #f5f5f7;
-  --text-secondary: #86868b;
-  --border-color: #424245;
-  --hover-bg: #1d1d1f;
+  --text-secondary: #a6aab3;
+  --border-color: #545a65;
+  --hover-bg: #2f333b;
   --accent-color: #2997ff;
   --accent-hover: #40a9ff;
-  --input-bg: #1d1d1f;
-  --error-bg: #2d1b1b;
-  --error-color: #ff6b6b;
-  --error-border: #5c2a2a;
+  --input-bg: #2a2f37;
+  --error-bg: #442d2d;
+  --error-color: #ff8b8b;
+  --error-border: #7f5151;
 }
 
 .login-page {

@@ -1,10 +1,11 @@
 <script setup>
 import { ref, provide } from 'vue'
 import AppHeader from '../components/AppHeader.vue'
+import { useThemePreference } from '../composables/useThemePreference'
 
 const selectedCurrency = ref('USD')
 const selectedLanguage = ref('ENG')
-const selectedTheme = ref('light')
+const selectedTheme = useThemePreference()
 
 provide('theme', selectedTheme)
 
@@ -135,12 +136,12 @@ const sections = [
 }
 
 .about-page.dark {
-  --bg-primary: #000000;
-  --bg-secondary: #1d1d1f;
+  --bg-primary: #1b1d21;
+  --bg-secondary: #25282e;
   --text-primary: #f5f5f7;
-  --text-secondary: #86868b;
-  --border-color: #424245;
-  --hover-bg: #1d1d1f;
+  --text-secondary: #a6aab3;
+  --border-color: #545a65;
+  --hover-bg: #2f333b;
   --accent-color: #2997ff;
 }
 
