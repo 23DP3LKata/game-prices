@@ -17,6 +17,8 @@ const nickname = ref('')
 const email = ref('')
 const password = ref('')
 const passwordConfirm = ref('')
+const showPassword = ref(false)
+const showPasswordConfirm = ref(false)
 const isLoading = ref(false)
 const errorMessage = ref('')
 
@@ -148,24 +150,64 @@ async function handleRegister() {
 
           <div class="form-group">
             <label for="password">Password</label>
-            <input
-              id="password"
-              v-model="password"
-              type="password"
-              placeholder="At least 8 characters"
-              autocomplete="new-password"
-            />
+            <div class="password-input-wrapper">
+              <input
+                id="password"
+                v-model="password"
+                :type="showPassword ? 'text' : 'password'"
+                placeholder="At least 8 characters"
+                autocomplete="new-password"
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                :aria-label="showPassword ? 'Hide password' : 'Show password'"
+                :aria-pressed="showPassword"
+                @click="showPassword = !showPassword"
+              >
+                <svg v-if="showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/>
+                  <circle cx="12" cy="12" r="2.75"/>
+                </svg>
+                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 3l18 18"/>
+                  <path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6.4 0 10 6 10 6a17.6 17.6 0 0 1-4.1 4.7"/>
+                  <path d="M6.7 6.7C4.2 8.3 2.6 11 2 12c0 0 3.6 6 10 6 1.6 0 3-.4 4.2-1"/>
+                  <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
+                </svg>
+              </button>
+            </div>
           </div>
 
           <div class="form-group">
             <label for="password-confirm">Confirm Password</label>
-            <input
-              id="password-confirm"
-              v-model="passwordConfirm"
-              type="password"
-              placeholder="Repeat your password"
-              autocomplete="new-password"
-            />
+            <div class="password-input-wrapper">
+              <input
+                id="password-confirm"
+                v-model="passwordConfirm"
+                :type="showPasswordConfirm ? 'text' : 'password'"
+                placeholder="Repeat your password"
+                autocomplete="new-password"
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                :aria-label="showPasswordConfirm ? 'Hide password confirmation' : 'Show password confirmation'"
+                :aria-pressed="showPasswordConfirm"
+                @click="showPasswordConfirm = !showPasswordConfirm"
+              >
+                <svg v-if="showPasswordConfirm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/>
+                  <circle cx="12" cy="12" r="2.75"/>
+                </svg>
+                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 3l18 18"/>
+                  <path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6.4 0 10 6 10 6a17.6 17.6 0 0 1-4.1 4.7"/>
+                  <path d="M6.7 6.7C4.2 8.3 2.6 11 2 12c0 0 3.6 6 10 6 1.6 0 3-.4 4.2-1"/>
+                  <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
+                </svg>
+              </button>
+            </div>
           </div>
 
           <button type="submit" class="register-btn" :disabled="isLoading">
@@ -325,6 +367,48 @@ async function handleRegister() {
 
 .form-group input:focus {
   border-color: var(--accent-color);
+}
+
+.password-input-wrapper {
+  position: relative;
+}
+
+.password-input-wrapper input {
+  padding-right: 3rem;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border: none;
+  padding: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.password-toggle:hover {
+  color: var(--text-primary);
+  background: rgba(134, 134, 139, 0.08);
+}
+
+.password-toggle:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+.password-toggle svg {
+  width: 17px;
+  height: 17px;
 }
 
 .register-btn {
