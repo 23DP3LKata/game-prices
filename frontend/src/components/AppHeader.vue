@@ -1,5 +1,6 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
@@ -19,7 +20,7 @@ const emit = defineEmits([
 const router = useRouter()
 
 const authStore = useAuthStore()
-const isLoggedIn = computed(() => authStore.isLoggedIn)
+const { isLoggedIn } = storeToRefs(authStore)
 
 const isMobileMenuOpen = ref(false)
 const isProfileMenuOpen = ref(false)
@@ -81,6 +82,15 @@ function handleLogout() {
   router.push('/')
 }
 
+function handleAuthMenuAction() {
+  if (isLoggedIn.value) {
+    handleLogout()
+    return
+  }
+
+  goToLogin()
+}
+
 function changeCurrency(c) {
   emit('update:selectedCurrency', c)
 }
@@ -123,29 +133,32 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
       </div>
 
       <!-- Auth buttons + Profile icon (desktop) -->
-      <div class="header-right desktop-profile" ref="profileWrapperRef">
+      <div class="header-right desktop-profile">
         <template v-if="!isLoggedIn">
           <button class="auth-btn login-btn" @click="goToLogin">Log In</button>
           <button class="auth-btn signup-btn" @click="goToRegister">Sign Up</button>
         </template>
 
-        <button class="profile-btn" @click="toggleProfileMenu" aria-label="Profile menu">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
-          </svg>
-        </button>
-
-        <div class="profile-dropdown" :class="{ 'profile-dropdown-open': isProfileMenuOpen }">
-          <button class="profile-menu-item" @click="goToProfile">
-            <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <div class="profile-wrapper" ref="profileWrapperRef">
+          <button class="profile-btn" @click="toggleProfileMenu" aria-label="Profile menu">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
               <circle cx="12" cy="7" r="4"/>
             </svg>
-            <span>Profile</span>
           </button>
 
-          <div class="profile-menu-divider"></div>
+          <div class="profile-dropdown" :class="{ 'profile-dropdown-open': isProfileMenuOpen }">
+          <template v-if="isLoggedIn">
+            <button class="profile-menu-item" @click="goToProfile">
+              <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+              <span>Profile</span>
+            </button>
+
+            <div class="profile-menu-divider"></div>
+          </template>
 
           <!-- Language -->
           <div class="profile-menu-setting">
@@ -210,14 +223,19 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 
           <div class="profile-menu-divider"></div>
 
-          <button class="profile-menu-item logout-item" @click="handleLogout">
+          <button
+            class="profile-menu-item"
+            :class="{ 'logout-item': isLoggedIn }"
+            @click="handleAuthMenuAction"
+          >
             <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
               <polyline points="16 17 21 12 16 7"/>
               <line x1="21" y1="12" x2="9" y2="12"/>
             </svg>
-            <span>Log out</span>
+            <span>{{ isLoggedIn ? 'Log out' : 'Log in' }}</span>
           </button>
+          </div>
         </div>
       </div>
 
@@ -250,7 +268,7 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 
         <div class="mobile-divider"></div>
 
-        <button class="mobile-nav-btn" @click="goToProfile">
+        <button v-if="isLoggedIn" class="mobile-nav-btn" @click="goToProfile">
           <span>Profile</span>
           <svg class="mobile-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -291,8 +309,12 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 
         <div class="mobile-divider"></div>
 
-        <button v-if="isLoggedIn" class="mobile-nav-btn logout-mobile" @click="handleLogout">
-          <span>Log out</span>
+        <button
+          class="mobile-nav-btn"
+          :class="{ 'logout-mobile': isLoggedIn }"
+          @click="handleAuthMenuAction"
+        >
+          <span>{{ isLoggedIn ? 'Log out' : 'Log in' }}</span>
           <svg class="mobile-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
             <polyline points="16 17 21 12 16 7"/>
@@ -470,7 +492,7 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 .profile-dropdown {
   position: absolute;
   top: calc(100% + 8px);
-  right: 0;
+  left: 0;
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: 12px;
