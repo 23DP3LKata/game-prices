@@ -1,5 +1,5 @@
 <script setup>
-import { ref, provide } from 'vue'
+import { onMounted, provide, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import { useThemePreference } from '../composables/useThemePreference'
@@ -8,18 +8,47 @@ const router = useRouter()
 const selectedCurrency = ref('EUR')
 const selectedLanguage = ref('ENG')
 const selectedTheme = useThemePreference()
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '')
+const isLoading = ref(false)
+const loadError = ref('')
 
 provide('theme', selectedTheme)
 
-const games = ref([
-  { id: 1, name: 'Game Title Placeholder', genre: 'Action, Adventure', logo: '' },
-  { id: 2, name: 'Game Title Placeholder 2', genre: 'RPG, Strategy', logo: '' },
-  { id: 3, name: 'Game Title Placeholder 3', genre: 'Simulation, Indie', logo: '' },
-])
+const games = ref([])
+
+async function fetchGames() {
+  isLoading.value = true
+  loadError.value = ''
+
+  try {
+    const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/games` : '/api/games', {
+      headers: {
+        Accept: 'application/json',
+      },
+    })
+
+    const data = await response.json().catch(() => null)
+
+    if (!response.ok) {
+      throw new Error(data?.message || 'Unable to load games right now.')
+    }
+
+    games.value = Array.isArray(data?.games) ? data.games : []
+  } catch (err) {
+    loadError.value = err instanceof Error ? err.message : 'Unable to load games right now.'
+    games.value = []
+  } finally {
+    isLoading.value = false
+  }
+}
 
 const goToGame = (id) => {
   router.push(`/game/${id}`)
 }
+
+onMounted(() => {
+  fetchGames()
+})
 </script>
 
 <template>
@@ -46,25 +75,44 @@ const goToGame = (id) => {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="game in games" :key="game.id" class="game-row" @click="goToGame(game.id)">
-                <td class="cell-game">
-                  <div class="game-info">
-                    <div v-if="game.logo" class="game-logo-wrap">
-                      <img :src="game.logo" :alt="game.name" class="game-logo" />
+              <template v-if="!isLoading && !loadError && games.length > 0">
+                <tr v-for="game in games" :key="game.id" class="game-row" @click="goToGame(game.id)">
+                  <td class="cell-game">
+                    <div class="game-info">
+                      <div v-if="game.logo" class="game-logo-wrap">
+                        <img :src="game.logo" :alt="game.name" class="game-logo" />
+                      </div>
+                      <div v-else class="game-logo-placeholder">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                          <circle cx="8.5" cy="8.5" r="1.5"/>
+                          <polyline points="21 15 16 10 5 21"/>
+                        </svg>
+                      </div>
+                      <span class="game-name">{{ game.name }}</span>
                     </div>
-                    <div v-else class="game-logo-placeholder">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                        <circle cx="8.5" cy="8.5" r="1.5"/>
-                        <polyline points="21 15 16 10 5 21"/>
-                      </svg>
-                    </div>
-                    <span class="game-name">{{ game.name }}</span>
+                  </td>
+                  <td class="cell-genre">{{ game.genre || 'Unknown' }}</td>
+                </tr>
+              </template>
+
+              <tr v-if="isLoading">
+                <td colspan="2" class="empty-state">
+                  <div class="empty-content">
+                    <p>Loading games...</p>
                   </div>
                 </td>
-                <td class="cell-genre">{{ game.genre }}</td>
               </tr>
-              <tr v-if="games.length === 0">
+
+              <tr v-else-if="loadError">
+                <td colspan="2" class="empty-state">
+                  <div class="empty-content">
+                    <p>{{ loadError }}</p>
+                  </div>
+                </td>
+              </tr>
+
+              <tr v-else-if="games.length === 0">
                 <td colspan="2" class="empty-state">
                   <div class="empty-content">
                     <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">

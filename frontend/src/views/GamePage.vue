@@ -1,5 +1,5 @@
 <script setup>
-import { ref, provide, onMounted } from 'vue'
+import { ref, provide, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import { useThemePreference } from '../composables/useThemePreference'
@@ -10,7 +10,9 @@ const route = useRoute()
 const selectedCurrency = ref('EUR')
 const selectedLanguage = ref('ENG')
 const selectedTheme = useThemePreference()
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '')
 const isLoading = ref(true)
+const loadError = ref('')
 
 provide('theme', selectedTheme)
 
@@ -31,48 +33,72 @@ const priceHistory = ref([])
 
 async function fetchGameData(id) {
   isLoading.value = true
-  // TODO: Replace with real API call, e.g.:
-  // const response = await fetch(`/api/games/${id}`)
-  // const data = await response.json()
-  // game.value = data.game
-  // prices.value = data.prices
-  // priceHistory.value = data.priceHistory
+  loadError.value = ''
 
-  // Placeholder data for development
-  game.value = {
-    id: id,
-    name: 'Game Title Placeholder',
-    description: 'This is a placeholder description for the game. It will be replaced with real data from the database when the API is connected. The game offers an immersive experience with stunning visuals and engaging gameplay mechanics.',
-    image: '',
-    genre: 'Action, Adventure',
-    releaseDate: '2025-01-15',
-    developer: 'Studio Placeholder',
-    publisher: 'Publisher Placeholder',
+  try {
+    const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/games/${encodeURIComponent(id)}` : `/api/games/${encodeURIComponent(id)}`, {
+      headers: {
+        Accept: 'application/json',
+      },
+    })
+
+    const data = await response.json().catch(() => null)
+
+    if (response.status === 404) {
+      throw new Error('Game not found.')
+    }
+
+    if (!response.ok) {
+      throw new Error(data?.message || 'Unable to load game data right now.')
+    }
+
+    const payload = data?.game ?? {}
+
+    game.value = {
+      id: payload.id ?? null,
+      name: payload.name ?? 'Unknown game',
+      description: payload.description ?? '',
+      image: payload.image ?? '',
+      genre: payload.genre ?? '',
+      releaseDate: payload.releaseDate ?? '',
+      developer: payload.developer ?? '',
+      publisher: payload.publisher ?? '',
+    }
+
+    // Prices will be connected to external providers in a later iteration.
+    prices.value = Array.isArray(data?.prices) ? data.prices : []
+    priceHistory.value = Array.isArray(data?.priceHistory) ? data.priceHistory : []
+  } catch (err) {
+    loadError.value = err instanceof Error ? err.message : 'Unable to load game data right now.'
+    game.value = {
+      id: null,
+      name: '',
+      description: '',
+      image: '',
+      genre: '',
+      releaseDate: '',
+      developer: '',
+      publisher: '',
+    }
+    prices.value = []
+    priceHistory.value = []
+  } finally {
+    isLoading.value = false
   }
-
-  prices.value = [
-    { store: 'Steam', price: 59.99, currency: 'EUR', url: '#', onSale: false, discount: 0 },
-    { store: 'Epic Games', price: 54.99, currency: 'EUR', url: '#', onSale: true, discount: 8 },
-    { store: 'GOG', price: 59.99, currency: 'EUR', url: '#', onSale: false, discount: 0 },
-    { store: 'PlayStation Store', price: 69.99, currency: 'EUR', url: '#', onSale: false, discount: 0 },
-    { store: 'Xbox Store', price: 69.99, currency: 'EUR', url: '#', onSale: false, discount: 0 },
-  ]
-
-  priceHistory.value = [
-    { date: '2025-01-15', price: 59.99 },
-    { date: '2025-02-10', price: 49.99 },
-    { date: '2025-03-05', price: 59.99 },
-    { date: '2025-04-20', price: 39.99 },
-    { date: '2025-05-15', price: 59.99 },
-  ]
-
-  isLoading.value = false
 }
 
 onMounted(() => {
-  const gameId = route.params.id
-  fetchGameData(gameId)
+  fetchGameData(route.params.id)
 })
+
+watch(
+  () => route.params.id,
+  (gameId) => {
+    if (gameId) {
+      fetchGameData(gameId)
+    }
+  },
+)
 
 const goToGames = () => {
   router.push('/games')
@@ -98,6 +124,11 @@ const getBestPrice = () => {
       <div v-if="isLoading" class="loading-state">
         <div class="loading-spinner"></div>
         <p>Loading game data...</p>
+      </div>
+
+      <div v-else-if="loadError" class="loading-state">
+        <p>{{ loadError }}</p>
+        <button class="breadcrumb-link" @click="goToGames">Back to games</button>
       </div>
 
       <!-- Game content -->

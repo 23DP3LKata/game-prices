@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\GameController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\LoginController;
@@ -26,3 +27,6 @@ Route::patch('/profile/nickname', [ProfileController::class, 'updateNickname'])
 		Authenticate::class,
 	])
 	->name('api.profile.nickname.update');
+
+Route::get('/games', [GameController::class, 'index'])->name('api.games.index');
+Route::get('/games/{game}', [GameController::class, 'show'])->name('api.games.show');
