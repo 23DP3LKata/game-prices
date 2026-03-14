@@ -11,17 +11,40 @@ const selectedTheme = ref('light')
 
 provide('theme', selectedTheme)
 
-const name = ref('')
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '')
+
+const nickname = ref('')
 const email = ref('')
 const password = ref('')
 const passwordConfirm = ref('')
 const isLoading = ref(false)
 const errorMessage = ref('')
 
+function getErrorMessage(payload) {
+  if (!payload) {
+    return 'Registration failed.'
+  }
+
+  if (payload.errors) {
+    const firstFieldErrors = Object.values(payload.errors).find(
+      (fieldErrors) => Array.isArray(fieldErrors) && fieldErrors.length > 0,
+    )
+
+    if (firstFieldErrors) {
+      return firstFieldErrors[0]
+    }
+  }
+
+  return payload.message || 'Registration failed.'
+}
+
 async function handleRegister() {
   errorMessage.value = ''
 
-  if (!name.value || !email.value || !password.value || !passwordConfirm.value) {
+  const trimmedNickname = nickname.value.trim()
+  const trimmedEmail = email.value.trim()
+
+  if (!trimmedNickname || !trimmedEmail || !password.value || !passwordConfirm.value) {
     errorMessage.value = 'Please fill in all fields.'
     return
   }
@@ -39,25 +62,36 @@ async function handleRegister() {
   isLoading.value = true
 
   try {
-    // TODO: Backend API call
-    // const response = await fetch('/api/register', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({
-    //     name: name.value,
-    //     email: email.value,
-    //     password: password.value,
-    //     password_confirmation: passwordConfirm.value,
-    //   }),
-    // })
-    // const data = await response.json()
-    // if (!response.ok) throw new Error(data.message || 'Registration failed')
-    // router.push('/login')
+    const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/register` : '/api/register', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        nickname: trimmedNickname,
+        email: trimmedEmail,
+        password: password.value,
+        password_confirmation: passwordConfirm.value,
+      }),
+    })
 
-    console.log('Register attempt:', { name: name.value, email: email.value })
-    errorMessage.value = 'Backend is not connected yet.'
+    const data = await response.json().catch(() => null)
+
+    if (!response.ok) {
+      throw new Error(getErrorMessage(data))
+    }
+
+    nickname.value = ''
+    email.value = ''
+    password.value = ''
+    passwordConfirm.value = ''
+
+    await router.push('/login')
   } catch (err) {
-    errorMessage.value = err.message || 'Something went wrong. Please try again.'
+    errorMessage.value = err instanceof Error
+      ? err.message
+      : 'Something went wrong. Please try again.'
   } finally {
     isLoading.value = false
   }
@@ -91,13 +125,13 @@ async function handleRegister() {
           </div>
 
           <div class="form-group">
-            <label for="name">Nickname</label>
+            <label for="nickname">Nickname</label>
             <input
-              id="name"
-              v-model="name"
+              id="nickname"
+              v-model="nickname"
               type="text"
               placeholder="Your nickname"
-              autocomplete="name"
+              autocomplete="username"
             />
           </div>
 
