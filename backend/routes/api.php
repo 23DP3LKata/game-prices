@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\LoginController;
+use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Session\Middleware\StartSession;
@@ -15,3 +17,12 @@ Route::post('/login', [LoginController::class, 'store'])
 		StartSession::class,
 	])
 	->name('api.login');
+
+Route::patch('/profile/nickname', [ProfileController::class, 'updateNickname'])
+	->middleware([
+		EncryptCookies::class,
+		AddQueuedCookiesToResponse::class,
+		StartSession::class,
+		Authenticate::class,
+	])
+	->name('api.profile.nickname.update');
