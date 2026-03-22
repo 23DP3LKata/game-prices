@@ -38,6 +38,7 @@ const showConfirmPassword = ref(false)
 const editDraft = ref({
   nickname: '',
   email: '',
+  confirmEmail: '',
   currentPassword: '',
   newPassword: '',
   confirmPassword: '',
@@ -59,6 +60,13 @@ const displayedPassword = computed(() => {
   }
 
   return maskPassword(profileData.value.passwordPreview)
+})
+
+const isEmailConfirmationMatched = computed(() => {
+  const nextEmail = editDraft.value.email.trim().toLowerCase()
+  const confirmEmail = editDraft.value.confirmEmail.trim().toLowerCase()
+
+  return nextEmail.length > 0 && nextEmail === confirmEmail
 })
 
 function syncProfileDataFromStore() {
@@ -147,6 +155,7 @@ function startEdit(fieldName) {
 
   if (fieldName === 'email') {
     editDraft.value.email = profileData.value.email
+    editDraft.value.confirmEmail = ''
   }
 
   if (fieldName === 'password') {
@@ -253,11 +262,22 @@ async function saveNickname() {
   }
 }
 
-function saveEmail() {
+async function saveEmail() {
   const nextEmail = editDraft.value.email.trim().toLowerCase()
+  const confirmEmail = editDraft.value.confirmEmail.trim().toLowerCase()
 
   if (!nextEmail) {
     fieldError.value = 'Email cannot be empty.'
+    return
+  }
+
+  if (!confirmEmail) {
+    fieldError.value = 'Please confirm your new email address.'
+    return
+  }
+
+  if (nextEmail !== confirmEmail) {
+    fieldError.value = 'Email addresses do not match.'
     return
   }
 
@@ -266,15 +286,48 @@ function saveEmail() {
     return
   }
 
-  profileData.value.email = nextEmail
-  authStore.setUser({
-    ...(authStore.user ?? {}),
-    email: nextEmail,
-  })
+  isSaving.value = true
+  fieldError.value = ''
 
-  isEmailVisible.value = false
-  cancelEdit()
-  setStatus('info', 'Email updated on the frontend only.')
+  try {
+    const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/profile/email` : '/api/profile/email', {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: nextEmail,
+      }),
+    })
+
+    const data = await response.json().catch(() => null)
+
+    if (response.status === 401) {
+      authStore.clearUser()
+      await router.push('/login')
+      return
+    }
+
+    if (!response.ok) {
+      throw new Error(data?.errors?.email?.[0] || data?.message || 'Unable to update email.')
+    }
+
+    profileData.value.email = data.user.email
+    authStore.setUser({
+      ...(authStore.user ?? {}),
+      ...data.user,
+    })
+
+    isEmailVisible.value = false
+    cancelEdit()
+    setStatus('success', 'Email updated successfully.')
+  } catch (err) {
+    fieldError.value = err instanceof Error ? err.message : 'Unable to update email.'
+  } finally {
+    isSaving.value = false
+  }
 }
 
 function savePassword() {
@@ -437,12 +490,26 @@ onMounted(() => {
                         class="setting-input"
                         placeholder="your@email.com"
                         autocomplete="email"
+                        @keyup.esc="cancelEdit"
+                      />
+
+                      <input
+                        v-model="editDraft.confirmEmail"
+                        type="email"
+                        class="setting-input"
+                        placeholder="Please confirm your new email address."
+                        autocomplete="email"
                         @keyup.enter="saveField('email')"
                         @keyup.esc="cancelEdit"
                       />
 
                       <div class="edit-actions">
-                        <button type="button" class="action-btn save-btn" @click="saveField('email')">
+                        <button
+                          type="button"
+                          class="action-btn save-btn"
+                          :disabled="!isEmailConfirmationMatched || isSaving"
+                          @click="saveField('email')"
+                        >
                           Save
                         </button>
                       </div>

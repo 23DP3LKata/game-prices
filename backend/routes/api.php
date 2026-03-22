@@ -28,5 +28,14 @@ Route::patch('/profile/nickname', [ProfileController::class, 'updateNickname'])
 	])
 	->name('api.profile.nickname.update');
 
+Route::patch('/profile/email', [ProfileController::class, 'updateEmail'])
+	->middleware([
+		EncryptCookies::class,
+		AddQueuedCookiesToResponse::class,
+		StartSession::class,
+		Authenticate::class,
+	])
+	->name('api.profile.email.update');
+
 Route::get('/games', [GameController::class, 'index'])->name('api.games.index');
 Route::get('/games/{game}', [GameController::class, 'show'])->name('api.games.show');
