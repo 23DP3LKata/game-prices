@@ -37,5 +37,23 @@ Route::patch('/profile/email', [ProfileController::class, 'updateEmail'])
 	])
 	->name('api.profile.email.update');
 
+Route::patch('/profile/password', [ProfileController::class, 'updatePassword'])
+	->middleware([
+		EncryptCookies::class,
+		AddQueuedCookiesToResponse::class,
+		StartSession::class,
+		Authenticate::class,
+	])
+	->name('api.profile.password.update');
+
+Route::post('/profile/password/verify', [ProfileController::class, 'verifyCurrentPassword'])
+	->middleware([
+		EncryptCookies::class,
+		AddQueuedCookiesToResponse::class,
+		StartSession::class,
+		Authenticate::class,
+	])
+	->name('api.profile.password.verify');
+
 Route::get('/games', [GameController::class, 'index'])->name('api.games.index');
 Route::get('/games/{game}', [GameController::class, 'show'])->name('api.games.show');

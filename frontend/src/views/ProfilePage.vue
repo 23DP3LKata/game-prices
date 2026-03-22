@@ -11,6 +11,7 @@ const authStore = useAuthStore()
 const selectedLanguage = ref('ENG')
 const selectedTheme = useThemePreference()
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '')
+const PASSWORD_PREVIEW_STORAGE_KEY = 'profile_password_preview'
 
 const profileData = ref({
   nickname: 'User',
@@ -34,6 +35,7 @@ const showPasswordRevealInput = ref(false)
 const showCurrentPassword = ref(false)
 const showNewPassword = ref(false)
 const showConfirmPassword = ref(false)
+const isVerifyingPassword = ref(false)
 
 const editDraft = ref({
   nickname: '',
@@ -193,17 +195,57 @@ function togglePasswordReveal() {
   passwordRevealError.value = ''
 }
 
-function unlockPasswordVisibility() {
+async function unlockPasswordVisibility() {
   if (!passwordRevealInput.value.trim()) {
     passwordRevealError.value = 'Enter your current account password.'
     return
   }
 
-  isPasswordVisible.value = true
-  isPasswordRevealPromptOpen.value = false
+  isVerifyingPassword.value = true
   passwordRevealError.value = ''
-  passwordRevealInput.value = ''
-  showPasswordRevealInput.value = false
+
+  try {
+    const plainPassword = passwordRevealInput.value
+
+    const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/profile/password/verify` : '/api/profile/password/verify', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        current_password: plainPassword,
+      }),
+    })
+
+    const data = await response.json().catch(() => null)
+
+    if (response.status === 401) {
+      authStore.clearUser()
+      await router.push('/login')
+      return
+    }
+
+    if (!response.ok) {
+      throw new Error(data?.errors?.current_password?.[0] || data?.message || 'Unable to verify password.')
+    }
+
+    profileData.value.passwordPreview = plainPassword
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(PASSWORD_PREVIEW_STORAGE_KEY, plainPassword)
+    }
+
+    isPasswordVisible.value = true
+    isPasswordRevealPromptOpen.value = false
+    passwordRevealError.value = ''
+    passwordRevealInput.value = ''
+    showPasswordRevealInput.value = false
+  } catch (err) {
+    passwordRevealError.value = err instanceof Error ? err.message : 'Unable to verify password.'
+  } finally {
+    isVerifyingPassword.value = false
+  }
 }
 
 async function saveNickname() {
@@ -330,7 +372,7 @@ async function saveEmail() {
   }
 }
 
-function savePassword() {
+async function savePassword() {
   const currentPassword = editDraft.value.currentPassword.trim()
   const newPassword = editDraft.value.newPassword
   const confirmPassword = editDraft.value.confirmPassword
@@ -350,12 +392,55 @@ function savePassword() {
     return
   }
 
-  profileData.value.passwordPreview = newPassword
-  isPasswordVisible.value = false
-  isPasswordRevealPromptOpen.value = false
+  isSaving.value = true
+  fieldError.value = ''
 
-  cancelEdit()
-  setStatus('info', 'Password updated on the frontend only.')
+  try {
+    const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/profile/password` : '/api/profile/password', {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        current_password: currentPassword,
+        new_password: newPassword,
+        new_password_confirmation: confirmPassword,
+      }),
+    })
+
+    const data = await response.json().catch(() => null)
+
+    if (response.status === 401) {
+      authStore.clearUser()
+      await router.push('/login')
+      return
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        data?.errors?.current_password?.[0]
+          || data?.errors?.new_password?.[0]
+          || data?.message
+          || 'Unable to update password.',
+      )
+    }
+
+    profileData.value.passwordPreview = newPassword
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(PASSWORD_PREVIEW_STORAGE_KEY, newPassword)
+    }
+    isPasswordVisible.value = false
+    isPasswordRevealPromptOpen.value = false
+
+    cancelEdit()
+    setStatus('success', 'Password updated successfully.')
+  } catch (err) {
+    fieldError.value = err instanceof Error ? err.message : 'Unable to update password.'
+  } finally {
+    isSaving.value = false
+  }
 }
 
 function saveField(fieldName) {
@@ -389,6 +474,13 @@ onMounted(() => {
   }
 
   syncProfileDataFromStore()
+
+  if (typeof window !== 'undefined') {
+    const savedPasswordPreview = window.sessionStorage.getItem(PASSWORD_PREVIEW_STORAGE_KEY)
+    if (savedPasswordPreview) {
+      profileData.value.passwordPreview = savedPasswordPreview
+    }
+  }
 })
 </script>
 
@@ -430,8 +522,8 @@ onMounted(() => {
               <div class="setting-row" :class="{ editing: activeEditField === 'nickname' }">
                 <div class="setting-main">
                   <div class="setting-copy">
-                    <p class="setting-label">Nickname</p>
-                    <p class="setting-hint">Saved to your account</p>
+                    <p class="setting-label">Username</p>
+                    <p class="setting-hint">You may update your username.</p>
                   </div>
 
                   <Transition name="setting-swap" mode="out-in">
@@ -475,7 +567,7 @@ onMounted(() => {
                 <div class="setting-main">
                   <div class="setting-copy">
                     <p class="setting-label">Email</p>
-                    <p class="setting-hint">Masked by default, frontend only</p>
+                    <p class="setting-hint">This email is linked to your account.</p>
                   </div>
 
                   <Transition name="setting-swap" mode="out-in">
@@ -552,7 +644,7 @@ onMounted(() => {
                 <div class="setting-main">
                   <div class="setting-copy">
                     <p class="setting-label">Password</p>
-                    <p class="setting-hint">Unlock to reveal, edit stays on the frontend</p>
+                    <p class="setting-hint">Improve your security with a strong password.</p>
                   </div>
 
                   <Transition name="setting-swap" mode="out-in">
@@ -594,7 +686,7 @@ onMounted(() => {
                               </button>
                             </div>
 
-                            <button type="button" class="action-btn mini-btn" @click="unlockPasswordVisibility">
+                            <button type="button" class="action-btn mini-btn" :disabled="isVerifyingPassword" @click="unlockPasswordVisibility">
                               Unlock
                             </button>
                           </div>
@@ -707,7 +799,7 @@ onMounted(() => {
                       </div>
 
                       <div class="edit-actions">
-                        <button type="button" class="action-btn save-btn" @click="saveField('password')">
+                        <button type="button" class="action-btn save-btn" :disabled="isSaving" @click="saveField('password')">
                           Save
                         </button>
                       </div>

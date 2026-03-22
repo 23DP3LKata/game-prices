@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 
 class ProfileController extends Controller
 {
@@ -63,6 +65,60 @@ class ProfileController extends Controller
                 'email' => $user->email,
                 'role' => $user->role,
             ],
+        ]);
+    }
+
+    public function updatePassword(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'string'],
+            'new_password' => ['required', 'confirmed', Password::min(8)],
+        ]);
+
+        $user = $request->user();
+
+        if (! Hash::check($validated['current_password'], $user->password)) {
+            return response()->json([
+                'message' => 'The current password is incorrect.',
+                'errors' => [
+                    'current_password' => ['The current password is incorrect.'],
+                ],
+            ], 422);
+        }
+
+        $user->password = $validated['new_password'];
+        $user->save();
+
+        return response()->json([
+            'message' => 'Password updated successfully.',
+            'user' => [
+                'id' => $user->id,
+                'nickname' => $user->nickname,
+                'email' => $user->email,
+                'role' => $user->role,
+            ],
+        ]);
+    }
+
+    public function verifyCurrentPassword(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'string'],
+        ]);
+
+        $user = $request->user();
+
+        if (! Hash::check($validated['current_password'], $user->password)) {
+            return response()->json([
+                'message' => 'The current password is incorrect.',
+                'errors' => [
+                    'current_password' => ['The current password is incorrect.'],
+                ],
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => 'Current password verified.',
         ]);
     }
 }
