@@ -7,7 +7,6 @@ import { useThemePreference } from '../composables/useThemePreference'
 const router = useRouter()
 const route = useRoute()
 
-const selectedCurrency = ref('EUR')
 const selectedLanguage = ref('ENG')
 const selectedTheme = useThemePreference()
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '')
@@ -114,7 +113,6 @@ const getBestPrice = () => {
   <div class="game-page" :class="selectedTheme">
     <AppHeader
       v-model:selectedTheme="selectedTheme"
-      v-model:selectedCurrency="selectedCurrency"
       v-model:selectedLanguage="selectedLanguage"
       activePage=""
     />

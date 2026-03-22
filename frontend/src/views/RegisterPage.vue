@@ -6,7 +6,6 @@ import { useThemePreference } from '../composables/useThemePreference'
 
 const router = useRouter()
 
-const selectedCurrency = ref('EUR')
 const selectedLanguage = ref('ENG')
 const selectedTheme = useThemePreference()
 
@@ -105,7 +104,6 @@ async function handleRegister() {
   <div class="register-page" :class="selectedTheme">
     <AppHeader
       v-model:selectedTheme="selectedTheme"
-      v-model:selectedCurrency="selectedCurrency"
       v-model:selectedLanguage="selectedLanguage"
       activePage=""
     />

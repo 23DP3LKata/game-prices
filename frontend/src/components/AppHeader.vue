@@ -7,13 +7,11 @@ import { useAuthStore } from '../stores/auth'
 const props = defineProps({
   activePage: { type: String, default: '' },
   selectedTheme: { type: String, default: 'light' },
-  selectedCurrency: { type: String, default: 'EUR' },
   selectedLanguage: { type: String, default: 'ENG' }
 })
 
 const emit = defineEmits([
   'update:selectedTheme',
-  'update:selectedCurrency',
   'update:selectedLanguage'
 ])
 
@@ -89,10 +87,6 @@ function handleAuthMenuAction() {
   }
 
   goToLogin()
-}
-
-function changeCurrency(c) {
-  emit('update:selectedCurrency', c)
 }
 
 function changeLanguage(l) {
@@ -181,26 +175,6 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
             </div>
           </div>
 
-          <!-- Currency -->
-          <div class="profile-menu-setting">
-            <div class="setting-label">
-              <svg class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <line x1="12" y1="1" x2="12" y2="23"/>
-                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-              </svg>
-              <span>Currency</span>
-            </div>
-            <div class="setting-options">
-              <button
-                v-for="currency in ['EUR', 'USD', 'GBP']"
-                :key="currency"
-                class="setting-btn"
-                :class="{ active: selectedCurrency === currency }"
-                @click="changeCurrency(currency)"
-              >{{ currency }}</button>
-            </div>
-          </div>
-
           <!-- Dark theme -->
           <button class="profile-menu-item" @click="toggleTheme">
             <svg v-if="selectedTheme === 'light'" class="menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -286,19 +260,6 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
               :class="{ active: selectedLanguage === lang }"
               @click="changeLanguage(lang)"
             >{{ lang }}</button>
-          </div>
-        </div>
-
-        <div class="mobile-setting">
-          <span class="mobile-setting-label">Currency</span>
-          <div class="mobile-setting-options">
-            <button
-              v-for="currency in ['EUR', 'USD', 'GBP']"
-              :key="currency"
-              class="mobile-setting-btn"
-              :class="{ active: selectedCurrency === currency }"
-              @click="changeCurrency(currency)"
-            >{{ currency }}</button>
           </div>
         </div>
 

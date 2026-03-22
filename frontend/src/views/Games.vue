@@ -5,7 +5,6 @@ import AppHeader from '../components/AppHeader.vue'
 import { useThemePreference } from '../composables/useThemePreference'
 
 const router = useRouter()
-const selectedCurrency = ref('EUR')
 const selectedLanguage = ref('ENG')
 const selectedTheme = useThemePreference()
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '')
@@ -55,7 +54,6 @@ onMounted(() => {
   <div class="games-page" :class="selectedTheme">
     <AppHeader
       v-model:selectedTheme="selectedTheme"
-      v-model:selectedCurrency="selectedCurrency"
       v-model:selectedLanguage="selectedLanguage"
       activePage="games"
     />

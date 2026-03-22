@@ -3,7 +3,6 @@ import { ref, provide } from 'vue'
 import AppHeader from '../components/AppHeader.vue'
 import { useThemePreference } from '../composables/useThemePreference'
 
-const selectedCurrency = ref('USD')
 const selectedLanguage = ref('ENG')
 const selectedTheme = useThemePreference()
 
@@ -26,7 +25,6 @@ const sections = [
   <div class="about-page" :class="selectedTheme">
     <AppHeader
       v-model:selectedTheme="selectedTheme"
-      v-model:selectedCurrency="selectedCurrency"
       v-model:selectedLanguage="selectedLanguage"
       activePage="about"
     />
