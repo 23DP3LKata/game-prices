@@ -495,14 +495,14 @@ onMounted(() => {
     <main class="main-content">
       <div class="content-wrapper">
         <header class="page-header">
-          <h1>Account</h1>
+          <h1>Settings</h1>
           <p class="subtitle">
-            Manage nickname, email and password in a simple layout.
+            Change your account details
           </p>
         </header>
 
         <section class="settings-card">
-          <aside class="profile-sidebar">
+          <div class="avatar-top">
             <div class="avatar-shell">
               <div class="avatar-placeholder">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -511,7 +511,7 @@ onMounted(() => {
                 </svg>
               </div>
             </div>
-          </aside>
+          </div>
 
           <div class="settings-panel">
             <div v-if="statusMessage" class="status-banner" :class="statusType">
@@ -523,15 +523,16 @@ onMounted(() => {
                 <div class="setting-main">
                   <div class="setting-copy">
                     <p class="setting-label">Username</p>
-                    <p class="setting-hint">You may update your username.</p>
                   </div>
 
                   <Transition name="setting-swap" mode="out-in">
                     <div v-if="activeEditField !== 'nickname'" key="nickname-display" class="setting-display">
                       <p class="setting-value">{{ profileData.nickname }}</p>
+                      <p class="setting-hint">You may update your username.</p>
                     </div>
 
                     <div v-else key="nickname-edit" class="setting-edit">
+                      <p class="setting-hint">You may update your username.</p>
                       <input
                         v-model="editDraft.nickname"
                         type="text"
@@ -546,6 +547,9 @@ onMounted(() => {
                         <button type="button" class="action-btn save-btn" :disabled="isSaving" @click="saveField('nickname')">
                           Save
                         </button>
+                        <button type="button" class="action-btn cancel-btn" :disabled="isSaving" @click="cancelEdit">
+                          Cancel
+                        </button>
                       </div>
 
                       <p v-if="fieldError" class="field-error">{{ fieldError }}</p>
@@ -553,7 +557,7 @@ onMounted(() => {
                   </Transition>
                 </div>
 
-                <div class="setting-actions">
+                <div v-if="activeEditField !== 'nickname'" class="setting-actions">
                   <button type="button" class="icon-btn" aria-label="Edit nickname" @click="startEdit('nickname')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M12 20h9"/>
@@ -567,15 +571,16 @@ onMounted(() => {
                 <div class="setting-main">
                   <div class="setting-copy">
                     <p class="setting-label">Email</p>
-                    <p class="setting-hint">This email is linked to your account.</p>
                   </div>
 
                   <Transition name="setting-swap" mode="out-in">
                     <div v-if="activeEditField !== 'email'" key="email-display" class="setting-display">
                       <p class="setting-value sensitive">{{ displayedEmail }}</p>
+                      <p class="setting-hint">This email is linked to your account.</p>
                     </div>
 
                     <div v-else key="email-edit" class="setting-edit">
+                      <p class="setting-hint">This email is linked to your account.</p>
                       <input
                         v-model="editDraft.email"
                         type="email"
@@ -604,6 +609,9 @@ onMounted(() => {
                         >
                           Save
                         </button>
+                        <button type="button" class="action-btn cancel-btn" :disabled="isSaving" @click="cancelEdit">
+                          Cancel
+                        </button>
                       </div>
 
                       <p v-if="fieldError" class="field-error">{{ fieldError }}</p>
@@ -611,7 +619,7 @@ onMounted(() => {
                   </Transition>
                 </div>
 
-                <div class="setting-actions">
+                <div v-if="activeEditField !== 'email'" class="setting-actions">
                   <button
                     type="button"
                     class="icon-btn"
@@ -644,16 +652,16 @@ onMounted(() => {
                 <div class="setting-main">
                   <div class="setting-copy">
                     <p class="setting-label">Password</p>
-                    <p class="setting-hint">Improve your security with a strong password.</p>
                   </div>
 
                   <Transition name="setting-swap" mode="out-in">
                     <div v-if="activeEditField !== 'password'" key="password-display" class="setting-display">
                       <p class="setting-value sensitive">{{ displayedPassword }}</p>
+                      <p class="setting-hint">Improve your security with a strong password.</p>
 
                       <Transition name="inline-drop">
                         <div v-if="isPasswordRevealPromptOpen" class="unlock-panel">
-                          <label for="password-reveal" class="unlock-label">Current account password</label>
+                          <label for="password-reveal" class="unlock-label">For security, please enter your password to continue.</label>
                           <div class="unlock-row">
                             <div class="password-input-wrapper compact">
                               <input
@@ -698,7 +706,7 @@ onMounted(() => {
 
                     <div v-else key="password-edit" class="setting-edit password-edit">
                       <div class="field-stack">
-                        <label class="input-label" for="current-password">Current account password</label>
+                        <label class="input-label" for="current-password">For security, please enter your password to continue.</label>
                         <div class="password-input-wrapper">
                           <input
                             id="current-password"
@@ -802,6 +810,9 @@ onMounted(() => {
                         <button type="button" class="action-btn save-btn" :disabled="isSaving" @click="saveField('password')">
                           Save
                         </button>
+                        <button type="button" class="action-btn cancel-btn" :disabled="isSaving" @click="cancelEdit">
+                          Cancel
+                        </button>
                       </div>
 
                       <p v-if="fieldError" class="field-error">{{ fieldError }}</p>
@@ -809,7 +820,7 @@ onMounted(() => {
                   </Transition>
                 </div>
 
-                <div class="setting-actions">
+                <div v-if="activeEditField !== 'password'" class="setting-actions">
                   <button
                     type="button"
                     class="icon-btn"
@@ -935,23 +946,19 @@ onMounted(() => {
 }
 
 .settings-card {
-  display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
-  gap: 1.5rem;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 1.5rem;
 }
 
-.profile-sidebar {
+.avatar-top {
   display: flex;
-  align-items: center;
   justify-content: center;
-  align-self: stretch;
-  border-right: 1px solid var(--border-color);
-  padding: 0.75rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .avatar-shell {
@@ -1022,18 +1029,26 @@ onMounted(() => {
 
 .setting-row.editing {
   background: transparent;
+  grid-template-columns: 1fr;
+}
+
+.setting-row.editing .setting-actions {
+  display: none;
 }
 
 .setting-main {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 1.25rem;
   min-width: 0;
 }
 
 .setting-copy {
-  margin-bottom: 0.45rem;
+  margin: 0;
 }
 
 .setting-label {
-  margin: 0;
+  margin: 0.2rem 0 0;
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -1046,7 +1061,7 @@ onMounted(() => {
 }
 
 .setting-hint {
-  margin: 0.2rem 0 0;
+  margin: 0.1rem 0 0;
   font-size: 0.82rem;
   color: var(--text-secondary);
 }
@@ -1054,11 +1069,11 @@ onMounted(() => {
 .setting-display {
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
+  gap: 0.35rem;
 }
 
 .setting-value {
-  margin: 0;
+  margin: 0.15rem 0 0;
   font-size: 1rem;
   line-height: 1.5;
   color: var(--text-primary);
@@ -1074,9 +1089,9 @@ onMounted(() => {
   flex-direction: column;
   gap: 0.75rem;
   padding: 0.75rem;
-  border: 1px solid var(--border-color);
   border-radius: 8px;
   background: transparent;
+  width: 100%;
 }
 
 .password-edit {
@@ -1098,12 +1113,12 @@ onMounted(() => {
 
 .setting-input {
   width: 100%;
-  padding: 0.65rem 0.85rem;
+  padding: 0.45rem 0.75rem;
   border: 1px solid var(--border-color);
   border-radius: 8px;
   background: var(--input-bg);
   color: var(--text-primary);
-  font-size: 0.9375rem;
+  font-size: 0.9rem;
   font-family: inherit;
   outline: none;
   box-sizing: border-box;
@@ -1203,6 +1218,21 @@ onMounted(() => {
   color: #ffffff;
 }
 
+.save-btn,
+.cancel-btn {
+  border-radius: 999px;
+}
+
+.cancel-btn {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.cancel-btn:hover {
+  background: var(--hover-bg);
+}
+
 .save-btn:hover,
 .mini-btn:hover {
   background: var(--accent-hover);
@@ -1286,14 +1316,7 @@ onMounted(() => {
 
 @media (max-width: 880px) {
   .settings-card {
-    grid-template-columns: 1fr;
     padding: 1.25rem;
-  }
-
-  .profile-sidebar {
-    border-right: none;
-    border-bottom: 1px solid var(--border-color);
-    padding: 1rem 0;
   }
 }
 
@@ -1313,6 +1336,11 @@ onMounted(() => {
 
   .setting-row {
     grid-template-columns: 1fr;
+  }
+
+  .setting-main {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
   }
 
   .setting-actions {
