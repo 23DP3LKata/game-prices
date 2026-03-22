@@ -30,7 +30,7 @@ return new class extends Migration
             $table->decimal('current_price', 10, 2)->nullable();
             $table->decimal('original_price', 10, 2)->nullable();
             $table->unsignedTinyInteger('discount_percent')->nullable();
-            $table->string('currency', 12)->nullable();
+            $table->boolean('is_on_sale')->default(false);
 
             $table->timestamp('last_synced_at')->nullable();
             $table->timestamps();
@@ -41,6 +41,8 @@ return new class extends Migration
             $table->index('last_synced_at');
             $table->index(['store_id', 'last_synced_at']);
             $table->index(['game_id', 'is_active', 'current_price']);
+            $table->index(['game_id', 'is_available', 'is_on_sale']);
+            $table->index(['store_id', 'is_active', 'is_available']);
         });
     }
 
