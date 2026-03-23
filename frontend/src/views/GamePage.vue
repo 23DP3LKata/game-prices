@@ -30,6 +30,12 @@ const prices = ref([])
 
 const priceHistory = ref([])
 
+const toNumber = (value) => {
+  if (value === null || value === undefined || value === '') return null
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
 async function fetchGameData(id) {
   isLoading.value = true
   loadError.value = ''
@@ -64,9 +70,23 @@ async function fetchGameData(id) {
       publisher: payload.publisher ?? '',
     }
 
-    // Prices will be connected to external providers in a later iteration.
-    prices.value = Array.isArray(data?.prices) ? data.prices : []
-    priceHistory.value = Array.isArray(data?.priceHistory) ? data.priceHistory : []
+    const rawPrices = Array.isArray(data?.prices) ? data.prices : []
+    prices.value = rawPrices.map((item) => ({
+      store: item?.store?.name || item?.store?.code || 'Unknown',
+      price: toNumber(item?.currentPrice ?? item?.price),
+      originalPrice: toNumber(item?.originalPrice),
+      discount: toNumber(item?.discountPercent ?? item?.discount) ?? 0,
+      onSale: Boolean(item?.isOnSale ?? item?.onSale),
+      url: item?.storeUrl || item?.url || '#',
+      currency: item?.currency || 'EUR',
+    })).filter((item) => item.price !== null)
+
+    const rawHistory = Array.isArray(data?.priceHistory) ? data.priceHistory : []
+    priceHistory.value = rawHistory.map((point) => ({
+      price: toNumber(point?.price),
+      date: point?.recordedAt || point?.date || '',
+      store: point?.store?.name || point?.store?.code || 'Unknown',
+    })).filter((point) => point.price !== null && point.date)
   } catch (err) {
     loadError.value = err instanceof Error ? err.message : 'Unable to load game data right now.'
     game.value = {

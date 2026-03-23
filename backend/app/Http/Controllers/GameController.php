@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Game;
+use App\Models\GamePrice;
 use Illuminate\Http\JsonResponse;
 
 class GameController extends Controller
@@ -32,6 +33,51 @@ class GameController extends Controller
             abort(404);
         }
 
+        $storeListings = $game->storeListings()
+            ->where('is_active', true)
+            ->with('store')
+            ->get();
+
+        $prices = $storeListings->map(fn ($listing) => [
+            'store' => [
+                'code' => $listing->store?->code,
+                'name' => $listing->store?->name,
+            ],
+            'externalGameId' => $listing->external_game_id,
+            'storeUrl' => $listing->external_url,
+            'currentPrice' => $listing->current_price,
+            'originalPrice' => $listing->original_price,
+            'discountPercent' => $listing->discount_percent,
+            'isOnSale' => $listing->is_on_sale,
+            'isAvailable' => $listing->is_available,
+            'lastSyncedAt' => optional($listing->last_synced_at)->toDateTimeString(),
+            'currency' => 'EUR',
+        ])->values();
+
+        $priceHistory = collect();
+        if ($storeListings->isNotEmpty()) {
+            $priceHistory = GamePrice::query()
+                ->whereIn('game_store_listing_id', $storeListings->pluck('id'))
+                ->with('gameStoreListing.store')
+                ->orderByDesc('recorded_at')
+                ->limit(60)
+                ->get()
+                ->map(fn (GamePrice $price) => [
+                    'store' => [
+                        'code' => $price->gameStoreListing?->store?->code,
+                        'name' => $price->gameStoreListing?->store?->name,
+                    ],
+                    'externalGameId' => $price->gameStoreListing?->external_game_id,
+                    'recordedAt' => optional($price->recorded_at)->toDateTimeString(),
+                    'price' => $price->price,
+                    'originalPrice' => $price->original_price,
+                    'discountPercent' => $price->discount_percent,
+                    'isOnSale' => $price->is_on_sale,
+                    'isAvailable' => $price->is_available,
+                    'currency' => 'EUR',
+                ])->values();
+        }
+
         return response()->json([
             'game' => [
                 'id' => $game->id,
@@ -44,9 +90,8 @@ class GameController extends Controller
                 'developer' => $game->developer,
                 'publisher' => $game->publisher,
             ],
-            // Price API integration will be added in a future iteration.
-            'prices' => [],
-            'priceHistory' => [],
+            'prices' => $prices,
+            'priceHistory' => $priceHistory,
         ]);
     }
 }
