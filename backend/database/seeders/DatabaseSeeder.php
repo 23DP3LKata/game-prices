@@ -16,7 +16,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call(StoreSeeder::class);
         $this->call(GameSeeder::class);
+        $this->call(GameStoreListingSeeder::class);
 
         User::query()->firstOrCreate(
             ['email' => 'test@example.com'],
@@ -26,9 +28,5 @@ class DatabaseSeeder extends Seeder
                 'role' => 'user',
             ],
         );
-
-        if (Game::query()->count() < 8) {
-            Game::factory()->count(3)->create();
-        }
     }
 }
