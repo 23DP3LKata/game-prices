@@ -11,11 +11,6 @@ class GameStoreListingSeeder extends Seeder
 {
     public function run(): void
     {
-        $store = Store::query()->where('code', 'steam')->first();
-        if (! $store) {
-            return;
-        }
-
         $steamMap = [
             'resident-evil-requiem' => '3764200',
             'sid-meiers-civilization-vii' => '1295660',
@@ -23,6 +18,11 @@ class GameStoreListingSeeder extends Seeder
             'slime-rancher-2' => '1657630',
             'sons-of-the-forest' => '1326470',
         ];
+
+        $store = Store::query()->where('code', 'steam')->first();
+        if (! $store) {
+            return;
+        }
 
         $games = Game::query()->get();
 
@@ -38,7 +38,7 @@ class GameStoreListingSeeder extends Seeder
                     'game_id' => $game->id,
                 ],
                 [
-                    'external_game_id' => $steamAppId,
+                    'external_game_id' => 'app/'.$steamAppId,
                     'title_in_store' => $game->name,
                     'external_url' => $this->steamUrl($steamAppId),
                     'is_active' => true,

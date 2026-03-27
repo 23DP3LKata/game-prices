@@ -13,6 +13,7 @@ return new class extends Migration
             $table->string('code', 32)->unique();
             $table->string('name', 120);
             $table->string('website_url', 255)->nullable();
+            $table->unsignedInteger('itad_shop_id')->nullable()->unique();
             $table->boolean('is_active')->default(true);
             $table->boolean('sync_enabled')->default(true);
             $table->unsignedSmallInteger('priority')->default(100);
@@ -20,6 +21,7 @@ return new class extends Migration
 
             $table->index(['is_active', 'name']);
             $table->index(['sync_enabled', 'is_active']);
+            $table->index('itad_shop_id');
         });
     }
 

@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('developer', 120)->nullable();
             $table->string('publisher', 120)->nullable();
             $table->date('release_date')->nullable();
+            $table->uuid('itad_id')->nullable()->unique();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 

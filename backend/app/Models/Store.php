@@ -17,6 +17,7 @@ class Store extends Model
         'code',
         'name',
         'website_url',
+        'itad_shop_id',
         'is_active',
         'sync_enabled',
         'priority',
@@ -31,6 +32,7 @@ class Store extends Model
             'is_active' => 'boolean',
             'sync_enabled' => 'boolean',
             'priority' => 'integer',
+            'itad_shop_id' => 'integer',
         ];
     }
 

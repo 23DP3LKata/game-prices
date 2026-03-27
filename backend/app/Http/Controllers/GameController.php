@@ -56,26 +56,41 @@ class GameController extends Controller
 
         $priceHistory = collect();
         if ($storeListings->isNotEmpty()) {
-            $priceHistory = GamePrice::query()
+            $history = GamePrice::query()
                 ->whereIn('game_store_listing_id', $storeListings->pluck('id'))
                 ->with('gameStoreListing.store')
                 ->orderByDesc('recorded_at')
-                ->limit(60)
-                ->get()
-                ->map(fn (GamePrice $price) => [
-                    'store' => [
-                        'code' => $price->gameStoreListing?->store?->code,
-                        'name' => $price->gameStoreListing?->store?->name,
-                    ],
-                    'externalGameId' => $price->gameStoreListing?->external_game_id,
-                    'recordedAt' => optional($price->recorded_at)->toDateTimeString(),
-                    'price' => $price->price,
-                    'originalPrice' => $price->original_price,
-                    'discountPercent' => $price->discount_percent,
-                    'isOnSale' => $price->is_on_sale,
-                    'isAvailable' => $price->is_available,
-                    'currency' => 'EUR',
-                ])->values();
+                ->limit(200)
+                ->get();
+
+            $priceHistory = $history
+                ->groupBy(fn (GamePrice $price) => optional($price->recorded_at)->toDateTimeString())
+                ->map(function ($group) {
+                    /** @var \Illuminate\Support\Collection<int, GamePrice> $group */
+                    $lowest = $group->sortBy(fn (GamePrice $price) => $price->price)->first();
+                    if (! $lowest) {
+                        return null;
+                    }
+
+                    return [
+                        'store' => [
+                            'code' => $lowest->gameStoreListing?->store?->code,
+                            'name' => $lowest->gameStoreListing?->store?->name,
+                        ],
+                        'externalGameId' => $lowest->gameStoreListing?->external_game_id,
+                        'recordedAt' => optional($lowest->recorded_at)->toDateTimeString(),
+                        'price' => $lowest->price,
+                        'originalPrice' => $lowest->original_price,
+                        'discountPercent' => $lowest->discount_percent,
+                        'isOnSale' => $lowest->is_on_sale,
+                        'isAvailable' => $lowest->is_available,
+                        'currency' => 'EUR',
+                    ];
+                })
+                ->filter()
+                ->sortByDesc('recordedAt')
+                ->take(60)
+                ->values();
         }
 
         return response()->json([

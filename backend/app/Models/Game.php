@@ -23,6 +23,7 @@ class Game extends Model
         'developer',
         'publisher',
         'release_date',
+        'itad_id',
         'is_active',
     ];
 
