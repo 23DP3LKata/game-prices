@@ -18,7 +18,6 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(StoreSeeder::class);
         $this->call(GameSeeder::class);
-        $this->call(GameStoreListingSeeder::class);
 
         User::query()->firstOrCreate(
             ['email' => 'test@example.com'],
