@@ -104,7 +104,6 @@ class ItadPriceSyncService
                         [
                             'external_game_id' => $shopGameId,
                             'title_in_store' => $game->name,
-                            'external_url' => $this->storeUrl($store->code, $shopGameId),
                             'is_active' => true,
                             'is_available' => true,
                         ],
@@ -383,15 +382,4 @@ class ItadPriceSyncService
         return null;
     }
 
-    private function storeUrl(string $storeCode, string $shopGameId): ?string
-    {
-        if ($storeCode === 'steam' && str_starts_with($shopGameId, 'app/')) {
-            $appId = substr($shopGameId, 4);
-            if ($appId !== '') {
-                return 'https://store.steampowered.com/app/'.urlencode($appId).'/';
-            }
-        }
-
-        return null;
-    }
 }
