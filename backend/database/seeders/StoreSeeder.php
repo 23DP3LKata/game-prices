@@ -24,6 +24,41 @@ class StoreSeeder extends Seeder
                 'itad_shop_id' => config('itad.shops.epic'),
                 'priority' => 20,
             ],
+            [
+                'code' => 'microsoft-store',
+                'name' => 'Microsoft Store',
+                'website_url' => 'https://apps.microsoft.com',
+                'itad_shop_id' => config('itad.shops.microsoft_store'),
+                'priority' => 30,
+            ],
+            [
+                'code' => '2game',
+                'name' => '2Game',
+                'website_url' => 'https://2game.com',
+                'itad_shop_id' => config('itad.shops.2game'),
+                'priority' => 40,
+            ],
+            [
+                'code' => 'greenmangaming',
+                'name' => 'Green Man Gaming',
+                'website_url' => 'https://www.greenmangaming.com',
+                'itad_shop_id' => config('itad.shops.greenmangaming'),
+                'priority' => 50,
+            ],
+            [
+                'code' => 'planetplay',
+                'name' => 'PlanetPlay',
+                'website_url' => 'https://www.planetplay.com',
+                'itad_shop_id' => config('itad.shops.planetplay'),
+                'priority' => 60,
+            ],
+            [
+                'code' => 'gamesplanet',
+                'name' => 'GamesPlanet',
+                'website_url' => 'https://gamesplanet.com',
+                'itad_shop_id' => config('itad.shops.gamesplanet'),
+                'priority' => 70,
+            ],
         ];
 
         foreach ($stores as $payload) {
