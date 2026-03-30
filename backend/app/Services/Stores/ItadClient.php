@@ -3,7 +3,9 @@
 namespace App\Services\Stores;
 
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 
 class ItadClient
@@ -23,11 +25,13 @@ class ItadClient
             ->post('/lookup/id/title/v1', array_values($titles));
 
         if (! $response->ok()) {
+            $this->logFailure('lookupGameIdsByTitle', $response, ['titles' => count($titles)]);
             return [];
         }
 
         $payload = $response->json();
         if (! is_array($payload)) {
+            $this->logInvalidPayload('lookupGameIdsByTitle', $payload, ['titles' => count($titles)]);
             return [];
         }
 
@@ -48,11 +52,13 @@ class ItadClient
             ->post("/lookup/shop/{$shopId}/id/v1", array_values($itadIds));
 
         if (! $response->ok()) {
+            $this->logFailure('lookupShopIdsByGameIds', $response, ['shop_id' => $shopId, 'itad_ids' => count($itadIds)]);
             return [];
         }
 
         $payload = $response->json();
         if (! is_array($payload)) {
+            $this->logInvalidPayload('lookupShopIdsByGameIds', $payload, ['shop_id' => $shopId, 'itad_ids' => count($itadIds)]);
             return [];
         }
 
@@ -79,11 +85,13 @@ class ItadClient
             ->post('/games/prices/v3', array_values($itadIds));
 
         if (! $response->ok()) {
+            $this->logFailure('fetchPrices', $response, ['itad_ids' => count($itadIds), 'shop_ids' => count($shopIds)]);
             return [];
         }
 
         $payload = $response->json();
         if (! is_array($payload)) {
+            $this->logInvalidPayload('fetchPrices', $payload, ['itad_ids' => count($itadIds), 'shop_ids' => count($shopIds)]);
             return [];
         }
 
@@ -103,5 +111,23 @@ class ItadClient
         }
 
         return $request;
+    }
+
+    private function logFailure(string $operation, Response $response, array $context = []): void
+    {
+        $body = $response->body();
+        Log::warning('ITAD request failed.', $context + [
+            'operation' => $operation,
+            'status' => $response->status(),
+            'body' => is_string($body) ? substr($body, 0, 1000) : null,
+        ]);
+    }
+
+    private function logInvalidPayload(string $operation, mixed $payload, array $context = []): void
+    {
+        Log::warning('ITAD response payload invalid.', $context + [
+            'operation' => $operation,
+            'payload_type' => gettype($payload),
+        ]);
     }
 }
