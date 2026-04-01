@@ -9,6 +9,7 @@ use App\Models\Store;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class ItadPriceSyncService
 {
@@ -191,14 +192,32 @@ class ItadPriceSyncService
                     $stats['synced']++;
 
                     $store = $listing->store;
+                    if (! $store) {
+                        $stats['skipped']++;
+                        continue;
+                    }
+
                     $shopId = $store?->itad_shop_id;
                     if (! is_numeric($shopId)) {
                         $stats['skipped']++;
                         continue;
                     }
 
-                    $deal = $this->findDealForShop($deals, (int) $shopId);
+                    $deal = $this->findDealForShop($deals, (int) $shopId, $store);
                     if (! $deal) {
+                        if (config('app.debug')) {
+                            Log::info('ITAD deal not found for store.', [
+                                'itad_id' => $itadId,
+                                'game_id' => $listing->game_id,
+                                'store_id' => $store->id,
+                                'store_code' => $store->code,
+                                'store_name' => $store->name,
+                                'shop_id' => (int) $shopId,
+                                'deal_shop_ids' => $this->collectDealShopIds($deals),
+                                'deal_shop_names' => $this->collectDealShopNames($deals),
+                            ]);
+                        }
+
                         $this->markUnavailable($listing, $now);
                         $stats['skipped']++;
                         continue;
@@ -245,7 +264,7 @@ class ItadPriceSyncService
         return is_array($deals) ? $deals : [];
     }
 
-    private function findDealForShop(array $deals, int $shopId): ?array
+    private function findDealForShop(array $deals, int $shopId, Store $store): ?array
     {
         foreach ($deals as $deal) {
             if (! is_array($deal)) {
@@ -254,6 +273,23 @@ class ItadPriceSyncService
 
             $dealShopId = $this->extractShopId($deal);
             if ($dealShopId !== null && $dealShopId === $shopId) {
+                return $deal;
+            }
+
+            $dealShopName = $this->extractShopName($deal);
+            if ($dealShopName === null) {
+                continue;
+            }
+
+            $normalizedDeal = $this->normalizeShopName($dealShopName);
+            if ($normalizedDeal === '') {
+                continue;
+            }
+
+            $normalizedStoreName = $this->normalizeShopName($store->name);
+            $normalizedStoreCode = $this->normalizeShopName($store->code);
+
+            if ($normalizedDeal === $normalizedStoreName || $normalizedDeal === $normalizedStoreCode) {
                 return $deal;
             }
         }
@@ -277,6 +313,78 @@ class ItadPriceSyncService
         }
 
         return null;
+    }
+
+    private function extractShopName(array $deal): ?string
+    {
+        $shop = $deal['shop'] ?? null;
+        if (is_array($shop)) {
+            $name = $shop['name'] ?? $shop['title'] ?? null;
+            if (is_string($name) && $name !== '') {
+                return $name;
+            }
+        }
+
+        if (is_string($shop) && $shop !== '' && ! is_numeric($shop)) {
+            return $shop;
+        }
+
+        $name = $deal['shopName'] ?? $deal['shop_name'] ?? null;
+        if (is_string($name) && $name !== '') {
+            return $name;
+        }
+
+        return null;
+    }
+
+    private function normalizeShopName(string $value): string
+    {
+        $normalized = strtolower(preg_replace('/[^a-z0-9]+/', '', $value) ?? '');
+        return $normalized;
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function collectDealShopIds(array $deals): array
+    {
+        $ids = [];
+        foreach ($deals as $deal) {
+            if (! is_array($deal)) {
+                continue;
+            }
+
+            $id = $this->extractShopId($deal);
+            if ($id !== null) {
+                $ids[] = $id;
+            }
+        }
+
+        $ids = array_values(array_unique($ids));
+        sort($ids);
+        return $ids;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function collectDealShopNames(array $deals): array
+    {
+        $names = [];
+        foreach ($deals as $deal) {
+            if (! is_array($deal)) {
+                continue;
+            }
+
+            $name = $this->extractShopName($deal);
+            if ($name !== null) {
+                $names[] = $name;
+            }
+        }
+
+        $names = array_values(array_unique($names));
+        sort($names, SORT_NATURAL | SORT_FLAG_CASE);
+        return $names;
     }
 
     private function extractDiscount(array $deal): ?int
