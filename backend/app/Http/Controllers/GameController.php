@@ -12,15 +12,47 @@ class GameController extends Controller
     {
         $games = Game::query()
             ->where('is_active', true)
+            ->with([
+                'storeListings' => function ($query) {
+                    $query->where('is_active', true)->with('store');
+                },
+            ])
             ->orderBy('name')
-            ->get(['id', 'name', 'slug', 'genre', 'image_url'])
-            ->map(fn (Game $game) => [
-                'id' => $game->id,
-                'name' => $game->name,
-                'slug' => $game->slug,
-                'genre' => $game->genre,
-                'logo' => $game->image_url,
-            ]);
+            ->get(['id', 'name', 'slug', 'genre', 'image_url', 'release_date'])
+            ->map(function (Game $game) {
+                $storeListings = $game->storeListings;
+
+                $stores = $storeListings
+                    ->map(fn ($listing) => [
+                        'code' => $listing->store?->code,
+                        'name' => $listing->store?->name,
+                    ])
+                    ->filter(fn (array $store) => filled($store['code']))
+                    ->unique('code')
+                    ->values();
+
+                $bestPrice = $storeListings
+                    ->map(fn ($listing) => $listing->current_price !== null ? (float) $listing->current_price : null)
+                    ->filter(fn ($price) => $price !== null)
+                    ->min();
+
+                $bestDiscount = $storeListings
+                    ->map(fn ($listing) => $listing->discount_percent !== null ? (int) $listing->discount_percent : null)
+                    ->filter(fn ($discount) => $discount !== null)
+                    ->max();
+
+                return [
+                    'id' => $game->id,
+                    'name' => $game->name,
+                    'slug' => $game->slug,
+                    'genre' => $game->genre,
+                    'logo' => $game->image_url,
+                    'releaseDate' => optional($game->release_date)->toDateString(),
+                    'stores' => $stores,
+                    'bestPrice' => $bestPrice !== null ? round((float) $bestPrice, 2) : null,
+                    'bestDiscount' => $bestDiscount !== null ? (int) $bestDiscount : null,
+                ];
+            });
 
         return response()->json([
             'games' => $games,
