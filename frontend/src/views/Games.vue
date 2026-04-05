@@ -14,6 +14,7 @@ const selectedStores = ref([])
 const selectedPrice = ref('')
 const selectedDiscount = ref('')
 const selectedReleaseSort = ref('newest')
+const searchQuery = ref('')
 
 provide('theme', selectedTheme)
 
@@ -90,6 +91,23 @@ const filteredGames = computed(() => {
   })
 })
 
+const searchedGames = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase()
+
+  if (!query) {
+    return games.value
+  }
+
+  return games.value.filter((game) => {
+    const gameName = (game.name || '').toLowerCase()
+    const gameGenre = (game.genre || '').toLowerCase()
+
+    return gameName.includes(query) || gameGenre.includes(query)
+  })
+})
+
+const visibleGames = computed(() => (searchQuery.value.trim() ? searchedGames.value : filteredGames.value))
+
 function toggleStore(code) {
   if (selectedStores.value.includes(code)) {
     selectedStores.value = selectedStores.value.filter((storeCode) => storeCode !== code)
@@ -160,6 +178,19 @@ onMounted(() => {
     <main class="main-content">
       <div class="content-wrapper">
         <div class="layout-actions">
+          <label class="search-shell" for="game-search">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <line x1="16.65" y1="16.65" x2="21" y2="21" />
+            </svg>
+            <input
+              id="game-search"
+              v-model="searchQuery"
+              type="search"
+              placeholder="Search games"
+              autocomplete="off"
+            />
+          </label>
           <button v-if="hasActiveFilters" type="button" class="reset-button" @click="resetFilters">
             Reset
           </button>
@@ -243,7 +274,7 @@ onMounted(() => {
 
           <section class="results-panel">
             <div class="results-summary">
-              <span>{{ filteredGames.length }} games shown</span>
+              <span>{{ visibleGames.length }} games shown</span>
               <span v-if="games.length > 0">{{ games.length }} total</span>
             </div>
 
@@ -256,9 +287,9 @@ onMounted(() => {
                   </tr>
                 </thead>
                 <tbody>
-                  <template v-if="!isLoading && !loadError && filteredGames.length > 0">
+                  <template v-if="!isLoading && !loadError && visibleGames.length > 0">
                     <tr
-                      v-for="game in filteredGames"
+                      v-for="game in visibleGames"
                       :key="game.id"
                       class="game-row"
                       @click="goToGame(game.id)"
@@ -320,13 +351,13 @@ onMounted(() => {
                     </td>
                   </tr>
 
-                  <tr v-else-if="filteredGames.length === 0">
+                  <tr v-else-if="visibleGames.length === 0">
                     <td colspan="2" class="empty-state">
                       <div class="empty-content">
                         <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                           <path d="M20 20V14M17 17H23M4 20V4m0 0 4 4m-4-4-4 4" />
                         </svg>
-                        <p>No games match the selected filters</p>
+                        <p>{{ searchQuery.trim() ? 'No games match your search' : 'No games match the selected filters' }}</p>
                       </div>
                     </td>
                   </tr>
@@ -382,10 +413,7 @@ onMounted(() => {
 }
 
 .games-page {
-  background:
-    radial-gradient(circle at top left, color-mix(in srgb, var(--accent-color) 18%, transparent) 0, transparent 28%),
-    linear-gradient(180deg, color-mix(in srgb, var(--bg-secondary) 45%, transparent), transparent 320px),
-    var(--bg-primary);
+  background: var(--bg-primary);
   color: var(--text-primary);
 }
 
@@ -409,9 +437,64 @@ onMounted(() => {
 
 .layout-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
   margin-bottom: 1rem;
   min-height: 2.4rem;
+}
+
+.search-shell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  border-radius: 999px;
+  padding: 0.5rem 0.8rem;
+  min-width: 230px;
+  background: color-mix(in srgb, var(--bg-primary) 92%, var(--bg-secondary));
+  transition: background-color 0.2s ease;
+}
+
+.search-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.search-shell input {
+  width: min(360px, 45vw);
+  min-width: 140px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.search-shell input::placeholder {
+  color: color-mix(in srgb, var(--text-secondary) 88%, var(--bg-primary));
+}
+
+.search-shell input[type='search']::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  background-color: color-mix(in srgb, var(--text-secondary) 72%, var(--bg-primary));
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 3l6 6M9 3l-6 6' stroke='%23ffffff' stroke-width='1.3' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 8px 8px;
+  opacity: 0.75;
+  transition: opacity 0.15s ease;
+}
+
+.search-shell input[type='search']::-webkit-search-cancel-button:hover {
+  opacity: 1;
 }
 
 .filters-panel {
@@ -691,6 +774,21 @@ onMounted(() => {
 @media (max-width: 640px) {
   .main-content {
     padding: 2rem 1.5rem;
+  }
+
+  .layout-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-shell {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .search-shell input {
+    width: 100%;
+    min-width: 0;
   }
 
   .games-table th,
