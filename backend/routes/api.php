@@ -4,6 +4,7 @@ use App\Http\Controllers\GameController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Admin\AdminApiController;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -54,6 +55,20 @@ Route::post('/profile/password/verify', [ProfileController::class, 'verifyCurren
 		Authenticate::class,
 	])
 	->name('api.profile.password.verify');
+
+Route::prefix('/admin')
+	->middleware([
+		EncryptCookies::class,
+		AddQueuedCookiesToResponse::class,
+		StartSession::class,
+		Authenticate::class,
+		'ensure.admin',
+	])
+	->group(function (): void {
+		Route::get('/users', [AdminApiController::class, 'users'])->name('api.admin.users');
+		Route::post('/sync-prices', [AdminApiController::class, 'syncPrices'])->name('api.admin.sync.prices');
+		Route::post('/sync-listings', [AdminApiController::class, 'syncListings'])->name('api.admin.sync.listings');
+	});
 
 Route::get('/games', [GameController::class, 'index'])->name('api.games.index');
 Route::get('/games/{game}', [GameController::class, 'show'])->name('api.games.show');
