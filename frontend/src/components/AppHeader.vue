@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
@@ -18,7 +18,8 @@ const emit = defineEmits([
 const router = useRouter()
 
 const authStore = useAuthStore()
-const { isLoggedIn } = storeToRefs(authStore)
+const { isLoggedIn, user } = storeToRefs(authStore)
+const isAdmin = computed(() => user.value?.role === 'admin')
 
 const isMobileMenuOpen = ref(false)
 const isProfileMenuOpen = ref(false)
@@ -59,6 +60,12 @@ function goToProfile() {
   router.push('/profile')
   closeMobileMenu()
   isProfileMenuOpen.value = false
+}
+
+function goToAdminConsole() {
+  closeMobileMenu()
+  isProfileMenuOpen.value = false
+  router.push('/admin')
 }
 
 function goToLogin() {
@@ -132,6 +139,8 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
           <button class="auth-btn login-btn" @click="goToLogin">Log In</button>
           <button class="auth-btn signup-btn" @click="goToRegister">Sign Up</button>
         </template>
+
+        <button v-if="isAdmin" class="auth-btn login-btn" @click="goToAdminConsole">Console</button>
 
         <div class="profile-wrapper" ref="profileWrapperRef">
           <button class="profile-btn" @click="toggleProfileMenu" aria-label="Profile menu">
