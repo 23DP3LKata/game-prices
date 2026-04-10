@@ -3,9 +3,13 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Game;
+use App\Models\ItadSyncLog;
+use App\Models\Store;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Carbon;
 
 class AdminApiController extends Controller
 {
@@ -17,6 +21,7 @@ class AdminApiController extends Controller
 
         return response()->json([
             'users' => $users,
+            'sync_overview' => $this->syncOverview(),
         ]);
     }
 
@@ -32,19 +37,93 @@ class AdminApiController extends Controller
 
     private function runSyncCommand(string $command, string $successMessage): JsonResponse
     {
+        $startedAt = Carbon::now();
         $exitCode = Artisan::call($command);
         $output = trim(Artisan::output());
+        $finishedAt = Carbon::now();
+
+        $syncType = str_contains($command, 'listings') ? 'listings' : 'prices';
+        $status = $exitCode === 0 ? 'success' : 'failed';
+
+        ItadSyncLog::query()->create([
+            'sync_type' => $syncType,
+            'status' => $status,
+            'command' => $command,
+            'stores_total' => $this->enabledStoresCount(),
+            'games_total' => $this->activeGamesCount(),
+            'output' => $output !== '' ? $output : null,
+            'started_at' => $startedAt,
+            'finished_at' => $finishedAt,
+        ]);
 
         if ($exitCode === 0) {
             return response()->json([
                 'message' => $successMessage,
                 'output' => $output,
+                'sync_overview' => $this->syncOverview(),
             ]);
         }
 
         return response()->json([
             'message' => 'Command failed: '.$command,
             'output' => $output,
+            'sync_overview' => $this->syncOverview(),
         ], 500);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function syncOverview(): array
+    {
+        $latestPrices = ItadSyncLog::query()
+            ->where('sync_type', 'prices')
+            ->latest('created_at')
+            ->first();
+
+        $latestListings = ItadSyncLog::query()
+            ->where('sync_type', 'listings')
+            ->latest('created_at')
+            ->first();
+
+        $logs = ItadSyncLog::query()
+            ->latest('created_at')
+            ->limit(20)
+            ->get([
+                'id',
+                'sync_type',
+                'status',
+                'command',
+                'stores_total',
+                'games_total',
+                'output',
+                'started_at',
+                'finished_at',
+                'created_at',
+            ]);
+
+        return [
+            'stores_total' => $this->enabledStoresCount(),
+            'games_total' => $this->activeGamesCount(),
+            'latest_prices_at' => $latestPrices?->finished_at,
+            'latest_listings_at' => $latestListings?->finished_at,
+            'logs' => $logs,
+        ];
+    }
+
+    private function enabledStoresCount(): int
+    {
+        return Store::query()
+            ->where('is_active', true)
+            ->where('sync_enabled', true)
+            ->whereNotNull('itad_shop_id')
+            ->count();
+    }
+
+    private function activeGamesCount(): int
+    {
+        return Game::query()
+            ->where('is_active', true)
+            ->count();
     }
 }
