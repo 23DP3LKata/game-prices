@@ -17,8 +17,17 @@ const users = ref([])
 const isLoadingUsers = ref(false)
 const isSyncRunning = ref(false)
 const commandOutput = ref('')
+const selectedLogId = ref(null)
+const selectedLogOutput = ref('')
 const statusType = ref('')
 const statusMessage = ref('')
+const syncOverview = ref({
+  stores_total: 0,
+  games_total: 0,
+  latest_prices_at: null,
+  latest_listings_at: null,
+  logs: [],
+})
 
 provide('theme', selectedTheme)
 
@@ -64,6 +73,13 @@ async function loadUsers() {
     }
 
     users.value = data?.users ?? []
+    syncOverview.value = {
+      stores_total: data?.sync_overview?.stores_total ?? 0,
+      games_total: data?.sync_overview?.games_total ?? 0,
+      latest_prices_at: data?.sync_overview?.latest_prices_at ?? null,
+      latest_listings_at: data?.sync_overview?.latest_listings_at ?? null,
+      logs: data?.sync_overview?.logs ?? [],
+    }
   } catch (err) {
     setStatus('error', err instanceof Error ? err.message : 'Unable to load users.')
   } finally {
@@ -104,6 +120,13 @@ async function runSync(command) {
     }
 
     commandOutput.value = data?.output || 'No output.'
+    syncOverview.value = {
+      stores_total: data?.sync_overview?.stores_total ?? syncOverview.value.stores_total,
+      games_total: data?.sync_overview?.games_total ?? syncOverview.value.games_total,
+      latest_prices_at: data?.sync_overview?.latest_prices_at ?? syncOverview.value.latest_prices_at,
+      latest_listings_at: data?.sync_overview?.latest_listings_at ?? syncOverview.value.latest_listings_at,
+      logs: data?.sync_overview?.logs ?? syncOverview.value.logs,
+    }
     setStatus('success', data?.message || 'Command completed.')
 
     await loadUsers()
@@ -121,6 +144,23 @@ function formatDate(value) {
 
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString()
+}
+
+function formatSyncType(value) {
+  return value === 'prices' ? 'Prices' : 'Listings'
+}
+
+function toggleLogOutput(log) {
+  if (selectedLogId.value === log.id) {
+    selectedLogId.value = null
+    selectedLogOutput.value = ''
+    return
+  }
+
+  selectedLogId.value = log.id
+  selectedLogOutput.value = log.output && String(log.output).trim() !== ''
+    ? log.output
+    : 'No output for this sync entry.'
 }
 
 onMounted(async () => {
@@ -169,21 +209,113 @@ onMounted(async () => {
           {{ statusMessage }}
         </div>
 
-        <section v-if="activeTab === 'sync'" class="panel-card">
-          <div class="actions">
-            <button class="action-btn primary" :disabled="isSyncRunning" @click="runSync('prices')">
-              {{ isSyncRunning ? 'Running...' : 'Run prices sync' }}
-            </button>
-            <button class="action-btn" :disabled="isSyncRunning" @click="runSync('listings')">
-              {{ isSyncRunning ? 'Running...' : 'Run listings sync' }}
-            </button>
+        <template v-if="activeTab === 'sync'">
+          <div class="sync-layout">
+            <section class="panel-card sync-run-card">
+              <div class="sync-container">
+                <div class="sync-block">
+                  <button class="action-btn primary" :disabled="isSyncRunning" @click="runSync('prices')">
+                    {{ isSyncRunning ? 'Running...' : 'Run prices sync' }}
+                  </button>
+                  <div class="sync-meta">
+                    <span class="sync-meta-label">Last prices sync</span>
+                    <span class="sync-meta-value">{{ formatDate(syncOverview.latest_prices_at) }}</span>
+                  </div>
+                </div>
+
+                <div class="sync-block">
+                  <button class="action-btn" :disabled="isSyncRunning" @click="runSync('listings')">
+                    {{ isSyncRunning ? 'Running...' : 'Run listings sync' }}
+                  </button>
+                  <div class="sync-meta">
+                    <span class="sync-meta-label">Last listings sync</span>
+                    <span class="sync-meta-value">{{ formatDate(syncOverview.latest_listings_at) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="commandOutput" class="output-wrap">
+                <p class="output-title">Command output</p>
+                <pre class="command-output">{{ commandOutput }}</pre>
+              </div>
+            </section>
+
+            <section class="panel-card sync-in-card">
+              <table class="sync-table">
+                <thead>
+                  <tr>
+                    <th>In sync</th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Stores</td>
+                    <td>{{ syncOverview.stores_total }} total</td>
+                  </tr>
+                  <tr>
+                    <td>Games</td>
+                    <td>{{ syncOverview.games_total }} total</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
           </div>
 
-          <div v-if="commandOutput" class="output-wrap">
-            <p class="output-title">Command output</p>
-            <pre class="command-output">{{ commandOutput }}</pre>
-          </div>
-        </section>
+          <section class="panel-card logs-card">
+            <div class="logs-wrap">
+              <p class="logs-title">Sync logs</p>
+
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Type</th>
+                      <th>Status</th>
+                      <th>Stores</th>
+                      <th>Games</th>
+                        <th class="logs-actions-col"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="log in syncOverview.logs" :key="`log-${log.id}`">
+                      <td>{{ formatDate(log.finished_at || log.created_at) }}</td>
+                      <td>{{ formatSyncType(log.sync_type) }}</td>
+                      <td>
+                        <span class="status-pill" :class="log.status">{{ log.status }}</span>
+                      </td>
+                      <td>{{ log.stores_total }}</td>
+                      <td>{{ log.games_total }}</td>
+                      <td class="logs-actions-cell">
+                        <button
+                          class="log-menu-btn"
+                          :class="{ active: selectedLogId === log.id }"
+                          @click="toggleLogOutput(log)"
+                          aria-label="Show sync output"
+                        >
+                          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                            <circle cx="8" cy="3" r="1.25" />
+                            <circle cx="8" cy="8" r="1.25" />
+                            <circle cx="8" cy="13" r="1.25" />
+                          </svg>
+                        </button>
+                      </td>
+                    </tr>
+                    <tr v-if="!syncOverview.logs.length">
+                      <td colspan="6" class="empty">No sync logs yet.</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div v-if="selectedLogId !== null" class="log-output-wrap">
+                  <p class="output-title">Log output</p>
+                  <pre class="command-output">{{ selectedLogOutput }}</pre>
+                </div>
+              </div>
+            </div>
+          </section>
+        </template>
 
         <section v-else class="panel-card">
           <div v-if="isLoadingUsers" class="loading">Loading users...</div>
@@ -247,6 +379,8 @@ onMounted(async () => {
   --border-color: #d2d2d7;
   --hover-bg: #f5f5f7;
   --accent-color: #0071e3;
+  --sync-btn-bg: #ffffff;
+  --sync-btn-text: #1d1d1f;
 }
 
 .admin-page.dark {
@@ -257,6 +391,8 @@ onMounted(async () => {
   --border-color: #545a65;
   --hover-bg: #2f333b;
   --accent-color: #2997ff;
+  --sync-btn-bg: #2b2f36;
+  --sync-btn-text: #f5f5f7;
 }
 
 .admin-page {
@@ -288,6 +424,12 @@ onMounted(async () => {
   border-radius: 8px;
   padding: 0.5rem 1rem;
   cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+}
+
+.tab-btn:hover {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
 }
 
 .tab-btn.active {
@@ -303,6 +445,21 @@ onMounted(async () => {
   padding: 1rem;
 }
 
+.sync-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  gap: 1rem;
+}
+
+.sync-run-card,
+.sync-in-card {
+  min-height: 100%;
+}
+
+.logs-card {
+  margin-top: 1rem;
+}
+
 .panel-card h2 {
   font-size: 1.125rem;
   margin-bottom: 0.3rem;
@@ -313,26 +470,129 @@ onMounted(async () => {
   margin-bottom: 1rem;
 }
 
-.actions {
+.sync-block {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.75rem;
+  gap: 0.4rem;
+  flex: 1;
+}
+
+.sync-container {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.sync-meta {
+  width: 100%;
+  padding: 0.15rem 0 0;
+}
+
+.sync-summary {
+  margin-top: 0;
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  background: var(--bg-primary);
+}
+
+.sync-meta-label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.sync-meta-value {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.84rem;
+  color: var(--text-primary);
+}
+
+.sync-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sync-table th,
+.sync-table td {
+  border-bottom: 1px solid var(--border-color);
+  text-align: left;
+  padding: 0.75rem 0.4rem;
+}
+
+.sync-table th {
+  font-weight: 600;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.sync-table td:last-child {
+  color: var(--text-primary);
+}
+
+.logs-actions-col,
+.logs-actions-cell {
+  width: 2.25rem;
+  min-width: 2.25rem;
+  text-align: center;
+  padding-left: 0.2rem;
+  padding-right: 0.2rem;
+}
+
+.log-menu-btn {
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.log-menu-btn svg {
+  width: 0.8rem;
+  height: 0.8rem;
+}
+
+.log-menu-btn:hover,
+.log-menu-btn.active {
+  color: var(--text-primary);
+  background: transparent;
+}
+
+.log-output-wrap {
+  margin-top: 0.75rem;
 }
 
 .action-btn {
   border: 1px solid var(--border-color);
-  background: transparent;
-  color: var(--text-primary);
+  background: var(--sync-btn-bg);
+  color: var(--sync-btn-text);
   border-radius: 8px;
-  padding: 0.6rem 0.9rem;
+  padding: 0.9rem 1.25rem;
   cursor: pointer;
+  font-size: 1rem;
+  width: 100%;
+  transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
 }
 
 .action-btn.primary {
-  background: var(--accent-color);
-  border-color: var(--accent-color);
-  color: #fff;
+  background: var(--sync-btn-bg);
+  border-color: var(--border-color);
+  color: var(--sync-btn-text);
+}
+
+.action-btn:hover:not(:disabled) {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
 }
 
 .action-btn:disabled {
@@ -380,6 +640,16 @@ onMounted(async () => {
   overflow-x: auto;
 }
 
+.logs-wrap {
+  margin-top: 1rem;
+}
+
+.logs-title {
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary);
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -407,6 +677,25 @@ th {
 .role-pill.admin {
   border-color: var(--accent-color);
   color: var(--accent-color);
+}
+
+.status-pill {
+  display: inline-flex;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.75rem;
+  text-transform: capitalize;
+}
+
+.status-pill.success {
+  color: #2ea043;
+  border-color: #2ea043;
+}
+
+.status-pill.failed {
+  color: #d1242f;
+  border-color: #d1242f;
 }
 
 .empty,
@@ -439,6 +728,14 @@ th {
 @media (max-width: 768px) {
   .main-content {
     padding: 1rem 1rem 2rem;
+  }
+
+  .sync-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sync-container {
+    grid-template-columns: 1fr;
   }
 }
 </style>
