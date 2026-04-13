@@ -56,6 +56,15 @@ Route::post('/profile/password/verify', [ProfileController::class, 'verifyCurren
 	])
 	->name('api.profile.password.verify');
 
+Route::delete('/profile/account', [ProfileController::class, 'deleteAccount'])
+	->middleware([
+		EncryptCookies::class,
+		AddQueuedCookiesToResponse::class,
+		StartSession::class,
+		Authenticate::class,
+	])
+	->name('api.profile.account.delete');
+
 Route::prefix('/admin')
 	->middleware([
 		EncryptCookies::class,
