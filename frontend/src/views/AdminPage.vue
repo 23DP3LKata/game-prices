@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, provide, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, provide, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import { useAuthStore } from '../stores/auth'
@@ -19,6 +19,7 @@ const isSyncRunning = ref(false)
 const commandOutput = ref('')
 const selectedLogId = ref(null)
 const selectedLogOutput = ref('')
+const selectedUserMenuId = ref(null)
 const statusType = ref('')
 const statusMessage = ref('')
 const syncOverview = ref({
@@ -163,7 +164,89 @@ function toggleLogOutput(log) {
     : 'No output for this sync entry.'
 }
 
+function toggleUserMenu(userId) {
+  selectedUserMenuId.value = selectedUserMenuId.value === userId ? null : userId
+}
+
+function closeUserMenu() {
+  selectedUserMenuId.value = null
+}
+
+function onBlockUserClick(user) {
+  closeUserMenu()
+  clearStatus()
+
+  if (user.account_status === 'inactive') {
+    setStatus('error', `${user.nickname} is already blocked.`)
+    return
+  }
+
+  fetch(apiBaseUrl ? `${apiBaseUrl}/admin/users/${user.id}/block` : `/api/admin/users/${user.id}/block`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+    },
+  })
+    .then(async (response) => {
+      const data = await response.json().catch(() => null)
+
+      if (response.status === 401) {
+        authStore.clearUser()
+        await router.push('/login')
+        return
+      }
+
+      if (response.status === 403) {
+        await router.push('/')
+        return
+      }
+
+      if (!response.ok) {
+        throw new Error(data?.message || 'Unable to block user.')
+      }
+
+      users.value = data?.users ?? users.value.map((item) => {
+        if (item.id !== user.id) {
+          return item
+        }
+
+        return {
+          ...item,
+          account_status: 'inactive',
+        }
+      })
+
+      syncOverview.value = {
+        stores_total: data?.sync_overview?.stores_total ?? syncOverview.value.stores_total,
+        games_total: data?.sync_overview?.games_total ?? syncOverview.value.games_total,
+        latest_prices_at: data?.sync_overview?.latest_prices_at ?? syncOverview.value.latest_prices_at,
+        latest_listings_at: data?.sync_overview?.latest_listings_at ?? syncOverview.value.latest_listings_at,
+        logs: data?.sync_overview?.logs ?? syncOverview.value.logs,
+      }
+
+      setStatus('success', data?.message || `${user.nickname} has been blocked.`)
+    })
+    .catch((err) => {
+      setStatus('error', err instanceof Error ? err.message : 'Unable to block user.')
+    })
+}
+
+function handleDocumentClick(event) {
+  const target = event.target
+
+  if (!(target instanceof Element)) {
+    return
+  }
+
+  if (!target.closest('.user-menu-wrap')) {
+    closeUserMenu()
+  }
+}
+
 onMounted(async () => {
+  document.addEventListener('click', handleDocumentClick)
+
   if (!authStore.isLoggedIn) {
     await router.push('/login')
     return
@@ -175,6 +258,10 @@ onMounted(async () => {
   }
 
   await loadUsers()
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleDocumentClick)
 })
 </script>
 
@@ -324,12 +411,14 @@ onMounted(async () => {
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>Nickname</th>
+                  <th>Username</th>
                   <th>Email</th>
                   <th>Role</th>
+                  <th>Status</th>
                   <th>Verified</th>
                   <th>Created</th>
                   <th>Updated</th>
+                  <th class="users-actions-col"></th>
                 </tr>
               </thead>
               <tbody>
@@ -340,12 +429,44 @@ onMounted(async () => {
                   <td>
                     <span class="role-pill" :class="{ admin: item.role === 'admin' }">{{ item.role }}</span>
                   </td>
+                  <td>
+                    <span class="status-pill" :class="item.account_status === 'inactive' ? 'failed' : 'success'">
+                      {{ item.account_status === 'inactive' ? 'blocked' : 'active' }}
+                    </span>
+                  </td>
                   <td>{{ item.email_verified_at ? 'Yes' : 'No' }}</td>
                   <td>{{ formatDate(item.created_at) }}</td>
                   <td>{{ formatDate(item.updated_at) }}</td>
+                  <td class="users-actions-cell">
+                    <div class="user-menu-wrap">
+                      <button
+                        type="button"
+                        class="log-menu-btn"
+                        :class="{ active: selectedUserMenuId === item.id }"
+                        aria-label="Open user actions"
+                        @click.stop="toggleUserMenu(item.id)"
+                      >
+                        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                          <circle cx="8" cy="3" r="1.25" />
+                          <circle cx="8" cy="8" r="1.25" />
+                          <circle cx="8" cy="13" r="1.25" />
+                        </svg>
+                      </button>
+
+                      <div v-if="selectedUserMenuId === item.id" class="user-menu" @click.stop>
+                        <button
+                          type="button"
+                          class="user-menu-action"
+                          @click="onBlockUserClick(item)"
+                        >
+                          Block user
+                        </button>
+                      </div>
+                    </div>
+                  </td>
                 </tr>
                 <tr v-if="users.length === 0">
-                  <td colspan="7" class="empty">No users found.</td>
+                  <td colspan="9" class="empty">No users found.</td>
                 </tr>
               </tbody>
             </table>
@@ -566,6 +687,48 @@ onMounted(async () => {
 .log-menu-btn.active {
   color: var(--text-primary);
   background: transparent;
+}
+
+.users-actions-col,
+.users-actions-cell {
+  width: 2.25rem;
+  min-width: 2.25rem;
+  text-align: center;
+  padding-left: 0.2rem;
+  padding-right: 0.2rem;
+}
+
+.user-menu-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.user-menu {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  right: 0;
+  min-width: 180px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.3rem;
+  z-index: 20;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.16);
+}
+
+.user-menu-action {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+  padding: 0.45rem 0.55rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.user-menu-action:hover {
+  background: var(--hover-bg);
 }
 
 .log-output-wrap {
