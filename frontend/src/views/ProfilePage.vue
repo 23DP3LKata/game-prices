@@ -35,6 +35,7 @@ const showPasswordRevealInput = ref(false)
 const showCurrentPassword = ref(false)
 const showNewPassword = ref(false)
 const showConfirmPassword = ref(false)
+const showDeleteAccountPassword = ref(false)
 const isVerifyingPassword = ref(false)
 
 const editDraft = ref({
@@ -44,6 +45,7 @@ const editDraft = ref({
   currentPassword: '',
   newPassword: '',
   confirmPassword: '',
+  deleteAccountPassword: '',
 })
 
 provide('theme', selectedTheme)
@@ -97,6 +99,7 @@ function clearRowState() {
   showCurrentPassword.value = false
   showNewPassword.value = false
   showConfirmPassword.value = false
+  showDeleteAccountPassword.value = false
 }
 
 function maskSegment(value, prefixLength, suffixLength = 0) {
@@ -164,6 +167,10 @@ function startEdit(fieldName) {
     editDraft.value.currentPassword = ''
     editDraft.value.newPassword = ''
     editDraft.value.confirmPassword = ''
+  }
+
+  if (fieldName === 'delete-account') {
+    editDraft.value.deleteAccountPassword = ''
   }
 }
 
@@ -443,6 +450,50 @@ async function savePassword() {
   }
 }
 
+async function deleteAccount() {
+  const currentPassword = editDraft.value.deleteAccountPassword.trim()
+
+  if (!currentPassword) {
+    fieldError.value = 'Enter your current account password.'
+    return
+  }
+
+  isSaving.value = true
+  fieldError.value = ''
+
+  try {
+    const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/profile/account` : '/api/profile/account', {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        current_password: currentPassword,
+      }),
+    })
+
+    const data = await response.json().catch(() => null)
+
+    if (!response.ok) {
+      throw new Error(data?.errors?.current_password?.[0] || data?.message || 'Unable to delete account.')
+    }
+
+    authStore.clearUser()
+
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem(PASSWORD_PREVIEW_STORAGE_KEY)
+    }
+
+    await router.push('/login')
+  } catch (err) {
+    fieldError.value = err instanceof Error ? err.message : 'Unable to delete account.'
+  } finally {
+    isSaving.value = false
+  }
+}
+
 function saveField(fieldName) {
   if (fieldName === 'nickname') {
     return saveNickname()
@@ -454,6 +505,10 @@ function saveField(fieldName) {
 
   if (fieldName === 'password') {
     return savePassword()
+  }
+
+  if (fieldName === 'delete-account') {
+    return deleteAccount()
   }
 
   return undefined
@@ -848,6 +903,73 @@ onMounted(() => {
                   </button>
                 </div>
               </div>
+
+              <div class="setting-row danger-row" :class="{ editing: activeEditField === 'delete-account' }">
+                <div class="setting-main">
+                  <div class="setting-copy">
+                    <p class="setting-label">Delete account</p>
+                  </div>
+
+                  <Transition name="setting-swap" mode="out-in">
+                    <div v-if="activeEditField !== 'delete-account'" key="delete-account-display" class="setting-display">
+                      <p class="setting-value">Permanently remove your account.</p>
+                      <p class="setting-hint">This action cannot be undone.</p>
+                    </div>
+
+                    <div v-else key="delete-account-edit" class="setting-edit danger-edit">
+                      <p class="setting-hint">Confirm your password to permanently delete your account.</p>
+
+                      <div class="password-input-wrapper">
+                        <input
+                          v-model="editDraft.deleteAccountPassword"
+                          :type="showDeleteAccountPassword ? 'text' : 'password'"
+                          class="setting-input"
+                          placeholder="Current password"
+                          autocomplete="current-password"
+                          @keyup.enter="saveField('delete-account')"
+                          @keyup.esc="cancelEdit"
+                        />
+
+                        <button
+                          type="button"
+                          class="password-toggle"
+                          :aria-label="showDeleteAccountPassword ? 'Hide password' : 'Show password'"
+                          :aria-pressed="showDeleteAccountPassword"
+                          @click="showDeleteAccountPassword = !showDeleteAccountPassword"
+                        >
+                          <svg v-if="showDeleteAccountPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/>
+                            <circle cx="12" cy="12" r="2.75"/>
+                          </svg>
+                          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 3l18 18"/>
+                            <path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6.4 0 10 6 10 6a17.6 17.6 0 0 1-4.1 4.7"/>
+                            <path d="M6.7 6.7C4.2 8.3 2.6 11 2 12c0 0 3.6 6 10 6 1.6 0 3-.4 4.2-1"/>
+                            <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
+                          </svg>
+                        </button>
+                      </div>
+
+                      <div class="edit-actions">
+                        <button type="button" class="action-btn danger-btn" :disabled="isSaving" @click="saveField('delete-account')">
+                          Delete account
+                        </button>
+                        <button type="button" class="action-btn cancel-btn" :disabled="isSaving" @click="cancelEdit">
+                          Cancel
+                        </button>
+                      </div>
+
+                      <p v-if="fieldError" class="field-error">{{ fieldError }}</p>
+                    </div>
+                  </Transition>
+                </div>
+
+                <div v-if="activeEditField !== 'delete-account'" class="setting-actions">
+                  <button type="button" class="action-btn danger-btn compact-danger-btn" @click="startEdit('delete-account')">
+                    Delete
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -888,6 +1010,9 @@ onMounted(() => {
   --status-success-bg: rgba(22, 163, 74, 0.1);
   --status-success-text: #18753a;
   --error-color: #c53636;
+  --danger-bg: #c53636;
+  --danger-hover: #a72d2d;
+  --danger-soft: rgba(197, 54, 54, 0.12);
 }
 
 .profile-page.dark {
@@ -907,6 +1032,9 @@ onMounted(() => {
   --status-success-bg: rgba(34, 197, 94, 0.14);
   --status-success-text: #9ae6b4;
   --error-color: #ff8b8b;
+  --danger-bg: #d44f4f;
+  --danger-hover: #c64242;
+  --danger-soft: rgba(212, 79, 79, 0.2);
 }
 
 .profile-page {
@@ -1060,6 +1188,10 @@ onMounted(() => {
   color: var(--accent-color);
 }
 
+.danger-row.editing .setting-label {
+  color: var(--danger-bg);
+}
+
 .setting-hint {
   margin: 0.1rem 0 0;
   font-size: 0.82rem;
@@ -1096,6 +1228,10 @@ onMounted(() => {
 
 .password-edit {
   gap: 0.9rem;
+}
+
+.danger-edit {
+  border: 1px solid var(--danger-soft);
 }
 
 .field-stack {
@@ -1236,6 +1372,20 @@ onMounted(() => {
 .save-btn:hover,
 .mini-btn:hover {
   background: var(--accent-hover);
+}
+
+.danger-btn {
+  background: var(--danger-bg);
+  color: #ffffff;
+}
+
+.danger-btn:hover {
+  background: var(--danger-hover);
+}
+
+.compact-danger-btn {
+  border-radius: 999px;
+  padding-inline: 0.9rem;
 }
 
 .action-btn:disabled {
