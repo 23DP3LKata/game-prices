@@ -8,7 +8,9 @@ use App\Models\ItadSyncLog;
 use App\Models\Store;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
 
 class AdminApiController extends Controller
@@ -17,7 +19,7 @@ class AdminApiController extends Controller
     {
         $users = User::query()
             ->orderByDesc('created_at')
-            ->get(['id', 'nickname', 'email', 'role', 'email_verified_at', 'created_at', 'updated_at']);
+            ->get(['id', 'nickname', 'email', 'role', 'account_status', 'email_verified_at', 'created_at', 'updated_at']);
 
         return response()->json([
             'users' => $users,
@@ -33,6 +35,45 @@ class AdminApiController extends Controller
     public function syncListings(): JsonResponse
     {
         return $this->runSyncCommand('itad:sync-listings', 'Listings sync completed.');
+    }
+
+    public function blockUser(Request $request, User $user): JsonResponse
+    {
+        if ((int) $request->user()->id === (int) $user->id) {
+            return response()->json([
+                'message' => 'You cannot block your own account.',
+            ], 422);
+        }
+
+        if ($user->account_status === 'inactive') {
+            return response()->json([
+                'message' => 'User is already blocked.',
+                'user' => [
+                    'id' => $user->id,
+                    'account_status' => $user->account_status,
+                ],
+            ]);
+        }
+
+        $user->account_status = 'inactive';
+        $user->setRememberToken(null);
+        $user->save();
+
+        DB::table(config('session.table', 'sessions'))
+            ->where('user_id', $user->id)
+            ->delete();
+
+        return response()->json([
+            'message' => 'User blocked successfully.',
+            'user' => [
+                'id' => $user->id,
+                'account_status' => $user->account_status,
+            ],
+            'users' => User::query()
+                ->orderByDesc('created_at')
+                ->get(['id', 'nickname', 'email', 'role', 'account_status', 'email_verified_at', 'created_at', 'updated_at']),
+            'sync_overview' => $this->syncOverview(),
+        ]);
     }
 
     private function runSyncCommand(string $command, string $successMessage): JsonResponse

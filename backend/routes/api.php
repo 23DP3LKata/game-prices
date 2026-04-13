@@ -66,6 +66,7 @@ Route::prefix('/admin')
 	])
 	->group(function (): void {
 		Route::get('/users', [AdminApiController::class, 'users'])->name('api.admin.users');
+		Route::post('/users/{user}/block', [AdminApiController::class, 'blockUser'])->name('api.admin.users.block');
 		Route::post('/sync-prices', [AdminApiController::class, 'syncPrices'])->name('api.admin.sync.prices');
 		Route::post('/sync-listings', [AdminApiController::class, 'syncListings'])->name('api.admin.sync.listings');
 	});
