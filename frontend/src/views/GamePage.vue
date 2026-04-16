@@ -1,5 +1,5 @@
 <script setup>
-import { ref, provide, onMounted, watch } from 'vue'
+import { computed, ref, provide, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import { useThemePreference } from '../composables/useThemePreference'
@@ -30,10 +30,338 @@ const prices = ref([])
 
 const priceHistory = ref([])
 
+const chartLayout = {
+  width: 1000,
+  height: 320,
+  paddingTop: 24,
+  paddingRight: 84,
+  paddingBottom: 48,
+  paddingLeft: 56,
+}
+const PRICE_CHANGE_EPSILON = 0.0001
+
+const activeChartPointIndex = ref(null)
+
 const toNumber = (value) => {
   if (value === null || value === undefined || value === '') return null
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : null
+}
+
+function formatChartPrice(value) {
+  return Number(value).toFixed(2)
+}
+
+function getNiceIntegerStep(maxValue, targetIntervals = 5) {
+  if (!Number.isFinite(maxValue) || maxValue <= 0) {
+    return 1
+  }
+
+  const roughStep = maxValue / targetIntervals
+  const exponent = Math.floor(Math.log10(roughStep))
+  const base = 10 ** exponent
+  const normalized = roughStep / base
+
+  let multiplier = 10
+
+  if (normalized <= 1) {
+    multiplier = 1
+  } else if (normalized <= 2) {
+    multiplier = 2
+  } else if (normalized <= 5) {
+    multiplier = 5
+  }
+
+  const step = multiplier * base
+  return Math.max(1, Math.round(step))
+}
+
+function formatTooltipDate(value) {
+  if (!value) {
+    return 'n/a'
+  }
+
+  const parsedDate = new Date(value)
+  if (!Number.isNaN(parsedDate.getTime())) {
+    return new Intl.DateTimeFormat('en-GB', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(parsedDate)
+  }
+
+  return value
+}
+
+function formatDiscountValue(value) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) {
+    return '—'
+  }
+
+  const parsedValue = Number(value)
+  if (parsedValue <= 0) {
+    return '—'
+  }
+
+  return `-${Math.round(parsedValue)}%`
+}
+
+function formatStoreValue(value) {
+  if (!value || String(value).trim() === '') {
+    return 'Unknown'
+  }
+
+  return String(value)
+}
+
+const sortedPriceHistory = computed(() => [...priceHistory.value].sort((left, right) => left.date.localeCompare(right.date)))
+
+function normalizeSyncKey(value) {
+  if (!value) {
+    return ''
+  }
+
+  const parsedDate = new Date(value)
+  if (!Number.isNaN(parsedDate.getTime())) {
+    const year = parsedDate.getUTCFullYear()
+    const month = String(parsedDate.getUTCMonth() + 1).padStart(2, '0')
+    const day = String(parsedDate.getUTCDate()).padStart(2, '0')
+    const hours = String(parsedDate.getUTCHours()).padStart(2, '0')
+    const minutes = String(parsedDate.getUTCMinutes()).padStart(2, '0')
+    const seconds = String(parsedDate.getUTCSeconds()).padStart(2, '0')
+
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}Z`
+  }
+
+  return String(value)
+}
+
+const minPricePerSyncHistory = computed(() => {
+  const history = sortedPriceHistory.value
+
+  if (history.length === 0) {
+    return []
+  }
+
+  const syncGroupsMap = new Map()
+  const syncOrder = []
+
+  history.forEach((point) => {
+    const syncKey = point.syncKey || normalizeSyncKey(point.date)
+
+    if (!syncGroupsMap.has(syncKey)) {
+      syncGroupsMap.set(syncKey, {
+        syncKey,
+        syncDate: point.date,
+        points: [],
+      })
+      syncOrder.push(syncKey)
+    }
+
+    const group = syncGroupsMap.get(syncKey)
+    group.points.push(point)
+
+    if (point.date > group.syncDate) {
+      group.syncDate = point.date
+    }
+  })
+
+  const syncGroups = syncOrder
+    .map((syncKey) => syncGroupsMap.get(syncKey))
+    .sort((left, right) => left.syncDate.localeCompare(right.syncDate))
+
+  const latestStoreState = new Map()
+  const result = []
+
+  syncGroups.forEach((group) => {
+    group.points.forEach((point) => {
+      const storeKey = String(point.store || 'unknown').trim().toLowerCase()
+      const previousPoint = latestStoreState.get(storeKey)
+
+      if (!previousPoint || point.date >= previousPoint.date) {
+        latestStoreState.set(storeKey, point)
+      }
+    })
+
+    let minPoint = null
+
+    latestStoreState.forEach((point) => {
+      if (!minPoint || point.price < minPoint.price - PRICE_CHANGE_EPSILON) {
+        minPoint = point
+        return
+      }
+
+      if (Math.abs(point.price - minPoint.price) <= PRICE_CHANGE_EPSILON && point.date > minPoint.date) {
+        minPoint = point
+      }
+    })
+
+    if (!minPoint) {
+      return
+    }
+
+    result.push({
+      ...minPoint,
+      date: group.syncDate,
+      syncKey: group.syncKey,
+    })
+  })
+
+  return result
+})
+
+const chartState = computed(() => {
+  const points = minPricePerSyncHistory.value
+
+  if (points.length === 0) {
+    return {
+      points: [],
+      ticks: [],
+      path: '',
+      minPrice: 0,
+      maxPrice: 0,
+    }
+  }
+
+  const prices = points.map((point) => point.price)
+  const rawMaxPrice = Math.max(...prices)
+  const minPrice = 0
+  const tickStep = getNiceIntegerStep(rawMaxPrice)
+  const maxPrice = Math.max(tickStep, Math.ceil(rawMaxPrice / tickStep) * tickStep)
+  const chartWidth = chartLayout.width - chartLayout.paddingLeft - chartLayout.paddingRight
+  const chartHeight = chartLayout.height - chartLayout.paddingTop - chartLayout.paddingBottom
+  const denominator = Math.max(maxPrice - minPrice, 1)
+  const stepCount = Math.max(points.length - 1, 1)
+
+  const chartPoints = points.map((point, index) => {
+    const x = chartLayout.paddingLeft + (chartWidth * index) / stepCount
+    const y = chartLayout.paddingTop + chartHeight - ((point.price - minPrice) / denominator) * chartHeight
+
+    return {
+      ...point,
+      x,
+      y,
+    }
+  })
+
+  let path = ''
+
+  chartPoints.forEach((point, index) => {
+    if (index === 0) {
+      path = `M ${point.x} ${point.y}`
+      return
+    }
+
+    path += ` H ${point.x} V ${point.y}`
+  })
+
+  const changeMarkers = chartPoints
+    .map((point, index) => {
+      if (index === 0) {
+        return null
+      }
+
+      const previousPoint = chartPoints[index - 1]
+      const hasPriceChange = Math.abs(previousPoint.price - point.price) > PRICE_CHANGE_EPSILON
+
+      if (!hasPriceChange) {
+        return null
+      }
+
+      return {
+        key: `${point.date}-${point.price}-${index}`,
+        x: point.x,
+        y1: previousPoint.y,
+        y2: point.y,
+      }
+    })
+    .filter(Boolean)
+
+  const tickCount = Math.max(1, Math.round(maxPrice / tickStep))
+  const ticks = Array.from({ length: tickCount + 1 }, (_, index) => {
+    const value = maxPrice - tickStep * index
+    const ratio = 1 - value / Math.max(maxPrice, 1)
+
+    return {
+      value: Math.round(value),
+      y: chartLayout.paddingTop + chartHeight * ratio,
+    }
+  })
+
+  return {
+    points: chartPoints,
+    ticks,
+    path,
+    minPrice,
+    maxPrice,
+    chartAreaRight: chartLayout.width - chartLayout.paddingRight,
+    changeMarkers,
+  }
+})
+
+const activeChartPoint = computed(() => {
+  if (activeChartPointIndex.value === null) {
+    return null
+  }
+
+  return chartState.value.points[activeChartPointIndex.value] || null
+})
+
+const activeTooltipStyle = computed(() => {
+  const point = activeChartPoint.value
+
+  if (!point) {
+    return {}
+  }
+
+  const leftPercent = Math.min(92, Math.max(8, (point.x / chartLayout.width) * 100))
+  const topPercent = Math.min(90, Math.max(8, (point.y / chartLayout.height) * 100))
+
+  return {
+    left: `${leftPercent}%`,
+    top: `${topPercent}%`,
+  }
+})
+
+function handleChartHover(event) {
+  const points = chartState.value.points
+
+  if (points.length === 0) {
+    activeChartPointIndex.value = null
+    return
+  }
+
+  const target = event.currentTarget
+  if (!(target instanceof Element)) {
+    return
+  }
+
+  const rect = target.getBoundingClientRect()
+  if (rect.width <= 0) {
+    return
+  }
+
+  const relativeX = Math.min(Math.max(event.clientX - rect.left, 0), rect.width)
+  const viewBoxX = (relativeX / rect.width) * chartLayout.width
+
+  let nearestIndex = 0
+  let nearestDistance = Number.POSITIVE_INFINITY
+
+  points.forEach((point, index) => {
+    const distance = Math.abs(point.x - viewBoxX)
+    if (distance < nearestDistance) {
+      nearestDistance = distance
+      nearestIndex = index
+    }
+  })
+
+  activeChartPointIndex.value = nearestIndex
+}
+
+function clearChartHover() {
+  activeChartPointIndex.value = null
 }
 
 async function fetchGameData(id) {
@@ -86,6 +414,12 @@ async function fetchGameData(id) {
       price: toNumber(point?.price),
       date: point?.recordedAt || point?.date || '',
       store: point?.store?.name || point?.store?.code || 'Unknown',
+      discount: toNumber(point?.discountPercent ?? point?.discount),
+      syncKey: point?.syncLogId
+        || point?.sync_log_id
+        || point?.syncId
+        || point?.sync_id
+        || normalizeSyncKey(point?.recordedAt || point?.date || ''),
     })).filter((point) => point.price !== null && point.date)
   } catch (err) {
     loadError.value = err instanceof Error ? err.message : 'Unable to load game data right now.'
@@ -101,6 +435,7 @@ async function fetchGameData(id) {
     }
     prices.value = []
     priceHistory.value = []
+    activeChartPointIndex.value = null
   } finally {
     isLoading.value = false
   }
@@ -251,20 +586,89 @@ const getBestPrice = () => {
         <section class="section">
           <h2 class="section-title">Price History</h2>
           <div class="chart-container">
-            <div v-if="priceHistory.length > 0" class="chart-placeholder">
-              <div class="chart-bars">
-                <div 
-                  v-for="(point, index) in priceHistory" 
-                  :key="index" 
-                  class="chart-bar-group"
+            <div v-if="chartState.points.length > 0" class="chart-placeholder">
+              <div class="chart-svg-wrap">
+                <svg
+                  class="price-chart"
+                  viewBox="0 0 1000 320"
+                  role="img"
+                  aria-label="Price history chart"
+                  preserveAspectRatio="none"
+                  @mousemove="handleChartHover"
+                  @mouseleave="clearChartHover"
                 >
-                  <div class="chart-bar" :style="{ height: (point.price / 70 * 100) + '%' }">
-                    <span class="chart-bar-value">€{{ point.price.toFixed(2) }}</span>
+                  <g v-for="tick in chartState.ticks" :key="tick.value">
+                    <line
+                      class="chart-grid-line"
+                      :x1="chartLayout.paddingLeft"
+                      :x2="chartState.chartAreaRight"
+                      :y1="tick.y"
+                      :y2="tick.y"
+                    />
+                    <text class="chart-grid-label" :x="chartState.chartAreaRight + 8" :y="tick.y + 4" text-anchor="start">
+                      {{ tick.value }}
+                    </text>
+                  </g>
+
+                  <path class="chart-line" :d="chartState.path" />
+
+                  <line
+                    v-for="marker in chartState.changeMarkers"
+                    :key="marker.key"
+                    class="chart-change-marker"
+                    :x1="marker.x"
+                    :x2="marker.x"
+                    :y1="marker.y1"
+                    :y2="marker.y2"
+                  />
+
+                  <line
+                    v-if="activeChartPoint"
+                    class="chart-hover-line"
+                    :x1="activeChartPoint.x"
+                    :x2="activeChartPoint.x"
+                    :y1="chartLayout.paddingTop"
+                    :y2="chartLayout.height - chartLayout.paddingBottom"
+                  />
+
+                  <circle
+                    v-for="point in chartState.points"
+                    :key="`${point.date}-${point.price}`"
+                    class="chart-point"
+                    :cx="point.x"
+                    :cy="point.y"
+                    r="4.5"
+                  />
+
+                  <circle
+                    v-if="activeChartPoint"
+                    class="chart-point-active"
+                    :cx="activeChartPoint.x"
+                    :cy="activeChartPoint.y"
+                    r="7"
+                  />
+                </svg>
+
+                <div v-if="activeChartPoint" class="chart-tooltip" :style="activeTooltipStyle">
+                  <div class="chart-tooltip-row">
+                    <span class="chart-tooltip-label">Store</span>
+                    <span>{{ formatStoreValue(activeChartPoint.store) }}</span>
                   </div>
-                  <span class="chart-bar-label">{{ point.date.slice(5) }}</span>
+                  <div class="chart-tooltip-row">
+                    <span class="chart-tooltip-label">Date</span>
+                    <span>{{ formatTooltipDate(activeChartPoint.date) }}</span>
+                  </div>
+                  <div class="chart-tooltip-row">
+                    <span class="chart-tooltip-label">Price</span>
+                    <span>€{{ formatChartPrice(activeChartPoint.price) }}</span>
+                  </div>
+                  <div class="chart-tooltip-row">
+                    <span class="chart-tooltip-label">Discount</span>
+                    <span>{{ formatDiscountValue(activeChartPoint.discount) }}</span>
+                  </div>
                 </div>
               </div>
-              <p class="chart-note">A full interactive chart will be available when connected to the database.</p>
+
             </div>
             <div v-else class="chart-empty">
               <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -635,56 +1039,91 @@ const getBestPrice = () => {
 .chart-placeholder {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-}
-
-.chart-bars {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-around;
-  height: 200px;
   gap: 1rem;
-  padding-bottom: 0.5rem;
 }
 
-.chart-bar-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  flex: 1;
-  height: 100%;
-  justify-content: flex-end;
-}
-
-.chart-bar {
-  width: 100%;
-  max-width: 60px;
-  background: var(--accent-color);
-  border-radius: 6px 6px 0 0;
-  opacity: 0.8;
+.chart-svg-wrap {
   position: relative;
-  min-height: 20px;
-  transition: opacity 0.2s ease;
+  width: 100%;
+  height: 320px;
+}
+
+.price-chart {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.chart-grid-line {
+  stroke: color-mix(in srgb, var(--text-secondary) 25%, transparent);
+  stroke-width: 1;
+  stroke-dasharray: 5 6;
+}
+
+.chart-grid-label {
+  fill: var(--text-secondary);
+  font-size: 12px;
+  letter-spacing: 0.01em;
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--accent-color);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chart-change-marker {
+  stroke: color-mix(in srgb, var(--accent-color) 82%, #ff7a59);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.chart-hover-line {
+  stroke: color-mix(in srgb, var(--accent-color) 55%, transparent);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 5;
+}
+
+.chart-point {
+  fill: var(--bg-secondary);
+  stroke: var(--accent-color);
+  stroke-width: 3;
+}
+
+.chart-point-active {
+  fill: color-mix(in srgb, var(--accent-color) 25%, var(--bg-secondary));
+  stroke: var(--accent-color);
+  stroke-width: 3;
+}
+
+.chart-tooltip {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 14px));
+  background: color-mix(in srgb, var(--bg-primary) 84%, var(--bg-secondary));
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 0.6rem 0.7rem;
+  min-width: 180px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+  z-index: 3;
+}
+
+.chart-tooltip-row {
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
-}
-
-.chart-bar:hover {
-  opacity: 1;
-}
-
-.chart-bar-value {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  color: white;
-  padding-top: 0.375rem;
-  white-space: nowrap;
-}
-
-.chart-bar-label {
+  justify-content: space-between;
+  gap: 0.8rem;
   font-size: 0.75rem;
+  color: var(--text-primary);
+}
+
+.chart-tooltip-row + .chart-tooltip-row {
+  margin-top: 0.35rem;
+}
+
+.chart-tooltip-label {
   color: var(--text-secondary);
 }
 
@@ -774,14 +1213,6 @@ const getBestPrice = () => {
   .prices-table td {
     padding: 0.75rem 1rem;
     font-size: 0.8125rem;
-  }
-
-  .chart-bars {
-    height: 150px;
-  }
-
-  .chart-bar-value {
-    font-size: 0.625rem;
   }
 }
 </style>
