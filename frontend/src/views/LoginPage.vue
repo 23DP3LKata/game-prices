@@ -1,11 +1,12 @@
 <script setup>
-import { ref, provide } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, provide, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import { useAuthStore } from '../stores/auth'
 import { useThemePreference } from '../composables/useThemePreference'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 
 const selectedLanguage = ref('ENG')
@@ -13,12 +14,48 @@ const selectedTheme = useThemePreference()
 
 provide('theme', selectedTheme)
 
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '')
+
 const email = ref('')
 const password = ref('')
 const showPassword = ref(false)
 const rememberMe = ref(false)
 const isLoading = ref(false)
 const errorMessage = ref('')
+const forgotOpen = ref(false)
+const forgotEmail = ref('')
+const forgotLoading = ref(false)
+const forgotError = ref('')
+const forgotSuccess = ref('')
+
+const verifyStatus = computed(() => String(route.query.verify || ''))
+const verifyMessage = computed(() => {
+  if (verifyStatus.value === 'sent') {
+    return 'Account created. Please check your email and confirm it before login.'
+  }
+
+  if (verifyStatus.value === 'verified') {
+    return 'Email confirmed. You can now log in.'
+  }
+
+  if (verifyStatus.value === 'already-verified') {
+    return 'Email is already confirmed. You can log in now.'
+  }
+
+  return ''
+})
+
+const verifyError = computed(() => {
+  if (verifyStatus.value === 'invalid') {
+    return 'Verification link is invalid or expired. Please request a new verification email.'
+  }
+
+  return ''
+})
+
+function getApiUrl(path) {
+  return apiBaseUrl ? `${apiBaseUrl}${path}` : `/api${path}`
+}
 
 async function handleLogin() {
   errorMessage.value = ''
@@ -31,7 +68,7 @@ async function handleLogin() {
   isLoading.value = true
 
   try {
-    const response = await fetch('/api/login', {
+    const response = await fetch(getApiUrl('/login'), {
       method: 'POST',
       credentials: 'include',
       headers: {
@@ -59,6 +96,59 @@ async function handleLogin() {
     isLoading.value = false
   }
 }
+
+function openForgotPassword() {
+  forgotOpen.value = true
+  forgotEmail.value = email.value.trim()
+  forgotError.value = ''
+  forgotSuccess.value = ''
+}
+
+function closeForgotPassword() {
+  forgotOpen.value = false
+  forgotLoading.value = false
+  forgotError.value = ''
+  forgotSuccess.value = ''
+}
+
+async function sendForgotPassword() {
+  forgotError.value = ''
+  forgotSuccess.value = ''
+
+  if (!forgotEmail.value.trim()) {
+    forgotError.value = 'Please enter your email.'
+    return
+  }
+
+  forgotLoading.value = true
+
+  try {
+    const response = await fetch(getApiUrl('/forgot-password'), {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: forgotEmail.value.trim(),
+      }),
+    })
+
+    const data = await response.json().catch(() => null)
+
+    if (!response.ok) {
+      throw new Error(data?.message || 'Failed to send reset link.')
+    }
+
+    forgotSuccess.value = data?.message || 'Password reset link sent.'
+  } catch (err) {
+    forgotError.value = err instanceof Error
+      ? err.message
+      : 'Something went wrong. Please try again.'
+  } finally {
+    forgotLoading.value = false
+  }
+}
 </script>
 
 <template>
@@ -75,6 +165,14 @@ async function handleLogin() {
           <h1>Log In</h1>
           <p class="subtitle">Welcome back to Game Prices</p>
         </header>
+
+        <div v-if="verifyMessage" class="info-banner" role="status">
+          {{ verifyMessage }}
+        </div>
+
+        <div v-if="verifyError" class="error-banner" role="alert">
+          <span>{{ verifyError }}</span>
+        </div>
 
         <form class="login-card" @submit.prevent="handleLogin">
           <div v-if="errorMessage" class="error-banner">
@@ -134,6 +232,9 @@ async function handleLogin() {
               <span class="checkmark"></span>
               <span>Remember me</span>
             </label>
+            <button type="button" class="forgot-link" @click="openForgotPassword">
+              Forgot password?
+            </button>
           </div>
 
           <button type="submit" class="login-btn" :disabled="isLoading">
@@ -148,6 +249,40 @@ async function handleLogin() {
         </form>
       </div>
     </main>
+
+    <div v-if="forgotOpen" class="modal-backdrop" @click.self="closeForgotPassword">
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="forgot-title">
+        <h2 id="forgot-title">Reset password</h2>
+        <p class="modal-subtitle">Enter your email and we will send a reset link.</p>
+
+        <div v-if="forgotError" class="error-banner modal-banner">
+          <span>{{ forgotError }}</span>
+        </div>
+
+        <div v-if="forgotSuccess" class="info-banner modal-banner" role="status">
+          {{ forgotSuccess }}
+        </div>
+
+        <div class="form-group">
+          <label for="forgot-email">Email</label>
+          <input
+            id="forgot-email"
+            v-model="forgotEmail"
+            type="email"
+            placeholder="your@email.com"
+            autocomplete="email"
+          />
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="secondary-btn" @click="closeForgotPassword">Close</button>
+          <button type="button" class="login-btn" :disabled="forgotLoading" @click="sendForgotPassword">
+            <span v-if="!forgotLoading">Send link</span>
+            <span v-else class="spinner"></span>
+          </button>
+        </div>
+      </div>
+    </div>
 
     <footer class="footer">
       <div class="footer-container">
@@ -179,6 +314,9 @@ async function handleLogin() {
   --error-bg: #fef2f2;
   --error-color: #dc3545;
   --error-border: #fecaca;
+  --info-bg: #eef6ff;
+  --info-color: #1459a6;
+  --info-border: #c7def8;
 }
 
 .login-page.dark {
@@ -194,6 +332,9 @@ async function handleLogin() {
   --error-bg: #442d2d;
   --error-color: #ff8b8b;
   --error-border: #7f5151;
+  --info-bg: #1e2d3d;
+  --info-color: #9fd0ff;
+  --info-border: #39556f;
 }
 
 .login-page {
@@ -258,6 +399,16 @@ async function handleLogin() {
   height: 18px;
   flex-shrink: 0;
   stroke: var(--error-color);
+}
+
+.info-banner {
+  background: var(--info-bg);
+  border: 1px solid var(--info-border);
+  color: var(--info-color);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
 }
 
 .form-group {
@@ -340,7 +491,22 @@ async function handleLogin() {
 .form-options {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   margin-bottom: 1.5rem;
+}
+
+.forgot-link {
+  border: none;
+  background: transparent;
+  color: var(--accent-color);
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
 }
 
 .remember-label {
@@ -453,6 +619,56 @@ async function handleLogin() {
   border-top: 1px solid var(--border-color);
   padding: 1rem 2rem;
   margin-top: auto;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1000;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 430px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.modal-card h2 {
+  font-size: 1.25rem;
+  margin-bottom: 0.35rem;
+}
+
+.modal-subtitle {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.modal-banner {
+  margin-bottom: 1rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.secondary-btn {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
 }
 
 .footer-container {

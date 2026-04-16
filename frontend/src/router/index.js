@@ -7,6 +7,7 @@ import ProfilePage from '../views/ProfilePage.vue'
 import LoginPage from '../views/LoginPage.vue'
 import RegisterPage from '../views/RegisterPage.vue'
 import AdminPage from '../views/AdminPage.vue'
+import ResetPasswordPage from '../views/ResetPasswordPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -45,6 +46,11 @@ const router = createRouter({
       path: '/register',
       name: 'register',
       component: RegisterPage
+    },
+    {
+      path: '/reset-password',
+      name: 'reset-password',
+      component: ResetPasswordPage
     },
     {
       path: '/admin',

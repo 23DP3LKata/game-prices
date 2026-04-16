@@ -1,9 +1,10 @@
 <script setup>
-import { ref, provide } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, provide, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import { useThemePreference } from '../composables/useThemePreference'
 
+const route = useRoute()
 const router = useRouter()
 
 const selectedLanguage = ref('ENG')
@@ -12,86 +13,65 @@ const selectedTheme = useThemePreference()
 provide('theme', selectedTheme)
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '')
-
-const nickname = ref('')
-const email = ref('')
+const token = computed(() => String(route.query.token || ''))
+const email = ref(String(route.query.email || ''))
 const password = ref('')
-const passwordConfirm = ref('')
+const passwordConfirmation = ref('')
 const showPassword = ref(false)
-const showPasswordConfirm = ref(false)
+const showPasswordConfirmation = ref(false)
 const isLoading = ref(false)
 const errorMessage = ref('')
-const verifyDialogOpen = ref(false)
-const registeredEmail = ref('')
+const successMessage = ref('')
 
-function getErrorMessage(payload) {
-  if (!payload) {
-    return 'Registration failed.'
-  }
-
-  if (payload.errors) {
-    const firstFieldErrors = Object.values(payload.errors).find(
-      (fieldErrors) => Array.isArray(fieldErrors) && fieldErrors.length > 0,
-    )
-
-    if (firstFieldErrors) {
-      return firstFieldErrors[0]
-    }
-  }
-
-  return payload.message || 'Registration failed.'
+function getApiUrl(path) {
+  return apiBaseUrl ? `${apiBaseUrl}${path}` : `/api${path}`
 }
 
-async function handleRegister() {
+async function handleResetPassword() {
   errorMessage.value = ''
+  successMessage.value = ''
 
-  const trimmedNickname = nickname.value.trim()
-  const trimmedEmail = email.value.trim()
+  if (!token.value) {
+    errorMessage.value = 'Invalid password reset token.'
+    return
+  }
 
-  if (!trimmedNickname || !trimmedEmail || !password.value || !passwordConfirm.value) {
+  if (!email.value.trim() || !password.value || !passwordConfirmation.value) {
     errorMessage.value = 'Please fill in all fields.'
     return
   }
 
-  if (password.value !== passwordConfirm.value) {
+  if (password.value !== passwordConfirmation.value) {
     errorMessage.value = 'Passwords do not match.'
-    return
-  }
-
-  if (password.value.length < 8) {
-    errorMessage.value = 'Password must be at least 8 characters.'
     return
   }
 
   isLoading.value = true
 
   try {
-    const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/register` : '/api/register', {
+    const response = await fetch(getApiUrl('/reset-password'), {
       method: 'POST',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        nickname: trimmedNickname,
-        email: trimmedEmail,
+        token: token.value,
+        email: email.value.trim(),
         password: password.value,
-        password_confirmation: passwordConfirm.value,
+        password_confirmation: passwordConfirmation.value,
       }),
     })
 
     const data = await response.json().catch(() => null)
 
     if (!response.ok) {
-      throw new Error(getErrorMessage(data))
+      throw new Error(data?.message || 'Failed to reset password.')
     }
 
-    nickname.value = ''
-    email.value = ''
+    successMessage.value = data?.message || 'Password was reset successfully.'
     password.value = ''
-    passwordConfirm.value = ''
-    registeredEmail.value = trimmedEmail
-    verifyDialogOpen.value = true
+    passwordConfirmation.value = ''
   } catch (err) {
     errorMessage.value = err instanceof Error
       ? err.message
@@ -102,20 +82,12 @@ async function handleRegister() {
 }
 
 async function goToLogin() {
-  verifyDialogOpen.value = false
-
-  await router.push({
-    path: '/login',
-    query: {
-      verify: 'sent',
-      email: registeredEmail.value,
-    },
-  })
+  await router.push('/login')
 }
 </script>
 
 <template>
-  <div class="register-page" :class="selectedTheme">
+  <div class="login-page" :class="selectedTheme">
     <AppHeader
       v-model:selectedTheme="selectedTheme"
       v-model:selectedLanguage="selectedLanguage"
@@ -125,31 +97,14 @@ async function goToLogin() {
     <main class="main-content">
       <div class="content-wrapper">
         <header class="page-header">
-          <h1>Sign Up</h1>
-          <p class="subtitle">Create your Game Prices account</p>
+          <h1>Set New Password</h1>
+          <p class="subtitle">Enter your email and choose a new password</p>
         </header>
 
-        <form class="register-card" @submit.prevent="handleRegister">
-          <div v-if="errorMessage" class="error-banner">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-            <span>{{ errorMessage }}</span>
-          </div>
+        <div v-if="errorMessage" class="error-banner">{{ errorMessage }}</div>
+        <div v-if="successMessage" class="info-banner">{{ successMessage }}</div>
 
-          <div class="form-group">
-            <label for="nickname">Nickname</label>
-            <input
-              id="nickname"
-              v-model="nickname"
-              type="text"
-              placeholder="Your nickname"
-              autocomplete="username"
-            />
-          </div>
-
+        <form class="login-card" @submit.prevent="handleResetPassword">
           <div class="form-group">
             <label for="email">Email</label>
             <input
@@ -162,7 +117,7 @@ async function goToLogin() {
           </div>
 
           <div class="form-group">
-            <label for="password">Password</label>
+            <label for="password">New password</label>
             <div class="password-input-wrapper">
               <input
                 id="password"
@@ -193,23 +148,23 @@ async function goToLogin() {
           </div>
 
           <div class="form-group">
-            <label for="password-confirm">Confirm Password</label>
+            <label for="password-confirmation">Confirm password</label>
             <div class="password-input-wrapper">
               <input
-                id="password-confirm"
-                v-model="passwordConfirm"
-                :type="showPasswordConfirm ? 'text' : 'password'"
-                placeholder="Repeat your password"
+                id="password-confirmation"
+                v-model="passwordConfirmation"
+                :type="showPasswordConfirmation ? 'text' : 'password'"
+                placeholder="Repeat your new password"
                 autocomplete="new-password"
               />
               <button
                 type="button"
                 class="password-toggle"
-                :aria-label="showPasswordConfirm ? 'Hide password confirmation' : 'Show password confirmation'"
-                :aria-pressed="showPasswordConfirm"
-                @click="showPasswordConfirm = !showPasswordConfirm"
+                :aria-label="showPasswordConfirmation ? 'Hide password confirmation' : 'Show password confirmation'"
+                :aria-pressed="showPasswordConfirmation"
+                @click="showPasswordConfirmation = !showPasswordConfirmation"
               >
-                <svg v-if="showPasswordConfirm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <svg v-if="showPasswordConfirmation" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/>
                   <circle cx="12" cy="12" r="2.75"/>
                 </svg>
@@ -223,34 +178,18 @@ async function goToLogin() {
             </div>
           </div>
 
-          <button type="submit" class="register-btn" :disabled="isLoading">
-            <span v-if="!isLoading">Create Account</span>
+          <button type="submit" class="login-btn" :disabled="isLoading">
+            <span v-if="!isLoading">Save Password</span>
             <span v-else class="spinner"></span>
           </button>
 
-          <p class="login-link">
-            Already have an account?
-            <router-link to="/login">Log In</router-link>
+          <p class="register-link">
+            Back to
+            <button type="button" class="inline-link" @click="goToLogin">Log In</button>
           </p>
         </form>
       </div>
     </main>
-
-    <div v-if="verifyDialogOpen" class="modal-backdrop" @click.self="goToLogin">
-      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="verify-title">
-        <h2 id="verify-title">Confirm your email</h2>
-        <p class="modal-subtitle">
-          We sent a verification email to <strong>{{ registeredEmail }}</strong>.
-          Please open the message and click the link. Login will be available only after confirmation.
-        </p>
-
-        <div class="modal-actions">
-          <button type="button" class="register-btn" @click="goToLogin">
-            Go to login
-          </button>
-        </div>
-      </div>
-    </div>
 
     <footer class="footer">
       <div class="footer-container">
@@ -261,7 +200,7 @@ async function goToLogin() {
 </template>
 
 <style scoped>
-.register-page {
+.login-page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -269,7 +208,7 @@ async function goToLogin() {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
 }
 
-.register-page.light {
+.login-page.light {
   --bg-primary: #ffffff;
   --bg-secondary: #f5f5f7;
   --text-primary: #1d1d1f;
@@ -282,24 +221,29 @@ async function goToLogin() {
   --error-bg: #fef2f2;
   --error-color: #dc3545;
   --error-border: #fecaca;
+  --info-bg: #eef6ff;
+  --info-color: #1459a6;
+  --info-border: #c7def8;
 }
 
-.register-page.dark {
+.login-page.dark {
   --bg-primary: #1b1d21;
   --bg-secondary: #25282e;
   --text-primary: #f5f5f7;
   --text-secondary: #a6aab3;
   --border-color: #545a65;
-  --hover-bg: #2f333b;
   --accent-color: #2997ff;
   --accent-hover: #40a9ff;
   --input-bg: #2a2f37;
   --error-bg: #442d2d;
   --error-color: #ff8b8b;
   --error-border: #7f5151;
+  --info-bg: #1e2d3d;
+  --info-color: #9fd0ff;
+  --info-border: #39556f;
 }
 
-.register-page {
+.login-page {
   background: var(--bg-primary);
   color: var(--text-primary);
 }
@@ -336,31 +280,11 @@ async function goToLogin() {
   color: var(--text-secondary);
 }
 
-.register-card {
+.login-card {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 2rem;
-}
-
-.error-banner {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: var(--error-bg);
-  border: 1px solid var(--error-border);
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  margin-bottom: 1.25rem;
-  color: var(--error-color);
-  font-size: 0.875rem;
-}
-
-.error-banner svg {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-  stroke: var(--error-color);
 }
 
 .form-group {
@@ -396,6 +320,25 @@ async function goToLogin() {
 
 .form-group input:focus {
   border-color: var(--accent-color);
+}
+
+.error-banner {
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  color: var(--error-color);
+  border-radius: 8px;
+  padding: 0.7rem;
+  margin-bottom: 0.75rem;
+}
+
+.info-banner {
+  background: var(--info-bg);
+  border: 1px solid var(--info-border);
+  color: var(--info-color);
+  border-radius: 8px;
+  padding: 0.7rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
 }
 
 .password-input-wrapper {
@@ -440,7 +383,7 @@ async function goToLogin() {
   height: 17px;
 }
 
-.register-btn {
+.login-btn {
   width: 100%;
   padding: 0.75rem;
   font-size: 0.9375rem;
@@ -448,7 +391,7 @@ async function goToLogin() {
   border: none;
   border-radius: 8px;
   background: var(--accent-color);
-  color: #ffffff;
+  color: #fff;
   cursor: pointer;
   transition: background-color 0.2s ease;
   font-family: inherit;
@@ -458,11 +401,11 @@ async function goToLogin() {
   min-height: 44px;
 }
 
-.register-btn:hover:not(:disabled) {
+.login-btn:hover:not(:disabled) {
   background: var(--accent-hover);
 }
 
-.register-btn:disabled {
+.login-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -480,20 +423,24 @@ async function goToLogin() {
   to { transform: rotate(360deg); }
 }
 
-.login-link {
+.register-link {
   text-align: center;
   font-size: 0.875rem;
   color: var(--text-secondary);
   margin-top: 1.25rem;
 }
 
-.login-link a {
+.inline-link {
+  border: none;
+  background: transparent;
   color: var(--accent-color);
-  text-decoration: none;
+  font-size: inherit;
   font-weight: 500;
+  cursor: pointer;
+  padding: 0;
 }
 
-.login-link a:hover {
+.inline-link:hover {
   text-decoration: underline;
 }
 
@@ -502,44 +449,6 @@ async function goToLogin() {
   border-top: 1px solid var(--border-color);
   padding: 1rem 2rem;
   margin-top: auto;
-}
-
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.35);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  z-index: 1000;
-}
-
-.modal-card {
-  width: 100%;
-  max-width: 430px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 1.5rem;
-}
-
-.modal-card h2 {
-  font-size: 1.25rem;
-  margin-bottom: 0.5rem;
-  color: var(--text-primary);
-}
-
-.modal-subtitle {
-  color: var(--text-secondary);
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-  line-height: 1.45;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
 }
 
 .footer-container {
@@ -564,7 +473,7 @@ async function goToLogin() {
     font-size: 2rem;
   }
 
-  .register-card {
+  .login-card {
     padding: 1.5rem;
   }
 }
