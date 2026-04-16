@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Password;
@@ -25,8 +26,10 @@ class RegisteredUserController extends Controller
             'role' => 'user',
         ]);
 
+        event(new Registered($user));
+
         return response()->json([
-            'message' => 'Registration completed successfully.',
+            'message' => 'Registration completed successfully. Please verify your email.',
             'user' => [
                 'id' => $user->id,
                 'nickname' => $user->nickname,
