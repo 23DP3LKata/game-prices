@@ -11,12 +11,10 @@ const authStore = useAuthStore()
 const selectedLanguage = ref('ENG')
 const selectedTheme = useThemePreference()
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '')
-const PASSWORD_PREVIEW_STORAGE_KEY = 'profile_password_preview'
 
 const profileData = ref({
   nickname: 'User',
   email: '',
-  passwordPreview: '',
 })
 
 const activeEditField = ref('')
@@ -26,17 +24,6 @@ const statusType = ref('')
 const statusMessage = ref('')
 
 const isEmailVisible = ref(false)
-const isPasswordVisible = ref(false)
-const isPasswordRevealPromptOpen = ref(false)
-const passwordRevealInput = ref('')
-const passwordRevealError = ref('')
-
-const showPasswordRevealInput = ref(false)
-const showCurrentPassword = ref(false)
-const showNewPassword = ref(false)
-const showConfirmPassword = ref(false)
-const showDeleteAccountPassword = ref(false)
-const isVerifyingPassword = ref(false)
 
 const editDraft = ref({
   nickname: '',
@@ -58,13 +45,7 @@ const displayedEmail = computed(() => {
   return isEmailVisible.value ? profileData.value.email : maskEmail(profileData.value.email)
 })
 
-const displayedPassword = computed(() => {
-  if (isPasswordVisible.value) {
-    return profileData.value.passwordPreview || 'No frontend password preview yet'
-  }
-
-  return maskPassword(profileData.value.passwordPreview)
-})
+const displayedPassword = computed(() => maskPassword())
 
 const isEmailConfirmationMatched = computed(() => {
   const nextEmail = editDraft.value.email.trim().toLowerCase()
@@ -93,13 +74,6 @@ function clearStatus() {
 
 function clearRowState() {
   fieldError.value = ''
-  passwordRevealError.value = ''
-  passwordRevealInput.value = ''
-  showPasswordRevealInput.value = false
-  showCurrentPassword.value = false
-  showNewPassword.value = false
-  showConfirmPassword.value = false
-  showDeleteAccountPassword.value = false
 }
 
 function maskSegment(value, prefixLength, suffixLength = 0) {
@@ -134,8 +108,8 @@ function maskEmail(value) {
   return `${maskSegment(localPart, 2)}@${maskSegment(domainName, 1)}${domainSuffix}`
 }
 
-function maskPassword(value) {
-  const hiddenLength = Math.max(value?.length || 0, 10)
+function maskPassword() {
+  const hiddenLength = 10
   return '*'.repeat(hiddenLength)
 }
 
@@ -152,7 +126,6 @@ function startEdit(fieldName) {
   activeEditField.value = fieldName
   clearRowState()
   clearStatus()
-  isPasswordRevealPromptOpen.value = false
 
   if (fieldName === 'nickname') {
     editDraft.value.nickname = profileData.value.nickname
@@ -182,77 +155,6 @@ function cancelEdit() {
 function toggleEmailVisibility() {
   clearStatus()
   isEmailVisible.value = !isEmailVisible.value
-}
-
-function togglePasswordReveal() {
-  clearStatus()
-
-  if (activeEditField.value === 'password') {
-    return
-  }
-
-  if (isPasswordVisible.value) {
-    isPasswordVisible.value = false
-    isPasswordRevealPromptOpen.value = false
-    clearRowState()
-    return
-  }
-
-  isPasswordRevealPromptOpen.value = !isPasswordRevealPromptOpen.value
-  passwordRevealError.value = ''
-}
-
-async function unlockPasswordVisibility() {
-  if (!passwordRevealInput.value.trim()) {
-    passwordRevealError.value = 'Enter your current account password.'
-    return
-  }
-
-  isVerifyingPassword.value = true
-  passwordRevealError.value = ''
-
-  try {
-    const plainPassword = passwordRevealInput.value
-
-    const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/profile/password/verify` : '/api/profile/password/verify', {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        current_password: plainPassword,
-      }),
-    })
-
-    const data = await response.json().catch(() => null)
-
-    if (response.status === 401) {
-      authStore.clearUser()
-      await router.push('/login')
-      return
-    }
-
-    if (!response.ok) {
-      throw new Error(data?.errors?.current_password?.[0] || data?.message || 'Unable to verify password.')
-    }
-
-    profileData.value.passwordPreview = plainPassword
-    if (typeof window !== 'undefined') {
-      window.sessionStorage.setItem(PASSWORD_PREVIEW_STORAGE_KEY, plainPassword)
-    }
-
-    isPasswordVisible.value = true
-    isPasswordRevealPromptOpen.value = false
-    passwordRevealError.value = ''
-    passwordRevealInput.value = ''
-    showPasswordRevealInput.value = false
-  } catch (err) {
-    passwordRevealError.value = err instanceof Error ? err.message : 'Unable to verify password.'
-  } finally {
-    isVerifyingPassword.value = false
-  }
 }
 
 async function saveNickname() {
@@ -434,13 +336,6 @@ async function savePassword() {
       )
     }
 
-    profileData.value.passwordPreview = newPassword
-    if (typeof window !== 'undefined') {
-      window.sessionStorage.setItem(PASSWORD_PREVIEW_STORAGE_KEY, newPassword)
-    }
-    isPasswordVisible.value = false
-    isPasswordRevealPromptOpen.value = false
-
     cancelEdit()
     setStatus('success', 'Password updated successfully.')
   } catch (err) {
@@ -481,10 +376,6 @@ async function deleteAccount() {
     }
 
     authStore.clearUser()
-
-    if (typeof window !== 'undefined') {
-      window.sessionStorage.removeItem(PASSWORD_PREVIEW_STORAGE_KEY)
-    }
 
     await router.push('/login')
   } catch (err) {
@@ -529,13 +420,6 @@ onMounted(() => {
   }
 
   syncProfileDataFromStore()
-
-  if (typeof window !== 'undefined') {
-    const savedPasswordPreview = window.sessionStorage.getItem(PASSWORD_PREVIEW_STORAGE_KEY)
-    if (savedPasswordPreview) {
-      profileData.value.passwordPreview = savedPasswordPreview
-    }
-  }
 })
 </script>
 
@@ -713,50 +597,6 @@ onMounted(() => {
                     <div v-if="activeEditField !== 'password'" key="password-display" class="setting-display">
                       <p class="setting-value sensitive">{{ displayedPassword }}</p>
                       <p class="setting-hint">Improve your security with a strong password.</p>
-
-                      <Transition name="inline-drop">
-                        <div v-if="isPasswordRevealPromptOpen" class="unlock-panel">
-                          <label for="password-reveal" class="unlock-label">For security, please enter your password to continue.</label>
-                          <div class="unlock-row">
-                            <div class="password-input-wrapper compact">
-                              <input
-                                id="password-reveal"
-                                v-model="passwordRevealInput"
-                                :type="showPasswordRevealInput ? 'text' : 'password'"
-                                class="setting-input"
-                                placeholder="Enter your current password"
-                                autocomplete="current-password"
-                                @keyup.enter="unlockPasswordVisibility"
-                              />
-
-                              <button
-                                type="button"
-                                class="password-toggle"
-                                :aria-label="showPasswordRevealInput ? 'Hide password' : 'Show password'"
-                                :aria-pressed="showPasswordRevealInput"
-                                @click="showPasswordRevealInput = !showPasswordRevealInput"
-                              >
-                                <svg v-if="showPasswordRevealInput" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/>
-                                  <circle cx="12" cy="12" r="2.75"/>
-                                </svg>
-                                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                                  <path d="M3 3l18 18"/>
-                                  <path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6.4 0 10 6 10 6a17.6 17.6 0 0 1-4.1 4.7"/>
-                                  <path d="M6.7 6.7C4.2 8.3 2.6 11 2 12c0 0 3.6 6 10 6 1.6 0 3-.4 4.2-1"/>
-                                  <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
-                                </svg>
-                              </button>
-                            </div>
-
-                            <button type="button" class="action-btn mini-btn" :disabled="isVerifyingPassword" @click="unlockPasswordVisibility">
-                              Unlock
-                            </button>
-                          </div>
-
-                          <p v-if="passwordRevealError" class="field-error">{{ passwordRevealError }}</p>
-                        </div>
-                      </Transition>
                     </div>
 
                     <div v-else key="password-edit" class="setting-edit password-edit">
@@ -766,30 +606,11 @@ onMounted(() => {
                           <input
                             id="current-password"
                             v-model="editDraft.currentPassword"
-                            :type="showCurrentPassword ? 'text' : 'password'"
+                            type="password"
                             class="setting-input"
                             placeholder="Current password"
                             autocomplete="current-password"
                           />
-
-                          <button
-                            type="button"
-                            class="password-toggle"
-                            :aria-label="showCurrentPassword ? 'Hide password' : 'Show password'"
-                            :aria-pressed="showCurrentPassword"
-                            @click="showCurrentPassword = !showCurrentPassword"
-                          >
-                            <svg v-if="showCurrentPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/>
-                              <circle cx="12" cy="12" r="2.75"/>
-                            </svg>
-                            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="M3 3l18 18"/>
-                              <path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6.4 0 10 6 10 6a17.6 17.6 0 0 1-4.1 4.7"/>
-                              <path d="M6.7 6.7C4.2 8.3 2.6 11 2 12c0 0 3.6 6 10 6 1.6 0 3-.4 4.2-1"/>
-                              <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
-                            </svg>
-                          </button>
                         </div>
                       </div>
 
@@ -799,30 +620,11 @@ onMounted(() => {
                           <input
                             id="new-password"
                             v-model="editDraft.newPassword"
-                            :type="showNewPassword ? 'text' : 'password'"
+                            type="password"
                             class="setting-input"
                             placeholder="At least 8 characters"
                             autocomplete="new-password"
                           />
-
-                          <button
-                            type="button"
-                            class="password-toggle"
-                            :aria-label="showNewPassword ? 'Hide password' : 'Show password'"
-                            :aria-pressed="showNewPassword"
-                            @click="showNewPassword = !showNewPassword"
-                          >
-                            <svg v-if="showNewPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/>
-                              <circle cx="12" cy="12" r="2.75"/>
-                            </svg>
-                            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="M3 3l18 18"/>
-                              <path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6.4 0 10 6 10 6a17.6 17.6 0 0 1-4.1 4.7"/>
-                              <path d="M6.7 6.7C4.2 8.3 2.6 11 2 12c0 0 3.6 6 10 6 1.6 0 3-.4 4.2-1"/>
-                              <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
-                            </svg>
-                          </button>
                         </div>
                       </div>
 
@@ -832,32 +634,13 @@ onMounted(() => {
                           <input
                             id="confirm-password"
                             v-model="editDraft.confirmPassword"
-                            :type="showConfirmPassword ? 'text' : 'password'"
+                            type="password"
                             class="setting-input"
                             placeholder="Repeat your new password"
                             autocomplete="new-password"
                             @keyup.enter="saveField('password')"
                             @keyup.esc="cancelEdit"
                           />
-
-                          <button
-                            type="button"
-                            class="password-toggle"
-                            :aria-label="showConfirmPassword ? 'Hide password' : 'Show password'"
-                            :aria-pressed="showConfirmPassword"
-                            @click="showConfirmPassword = !showConfirmPassword"
-                          >
-                            <svg v-if="showConfirmPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/>
-                              <circle cx="12" cy="12" r="2.75"/>
-                            </svg>
-                            <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="M3 3l18 18"/>
-                              <path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6.4 0 10 6 10 6a17.6 17.6 0 0 1-4.1 4.7"/>
-                              <path d="M6.7 6.7C4.2 8.3 2.6 11 2 12c0 0 3.6 6 10 6 1.6 0 3-.4 4.2-1"/>
-                              <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
-                            </svg>
-                          </button>
                         </div>
                       </div>
 
@@ -876,29 +659,10 @@ onMounted(() => {
                 </div>
 
                 <div v-if="activeEditField !== 'password'" class="setting-actions">
-                  <button
-                    type="button"
-                    class="icon-btn"
-                    :aria-label="isPasswordVisible ? 'Hide password' : 'Reveal password'"
-                    :aria-pressed="isPasswordVisible"
-                    @click="togglePasswordReveal"
-                  >
-                    <svg v-if="isPasswordVisible" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/>
-                      <circle cx="12" cy="12" r="2.75"/>
-                    </svg>
-                    <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M3 3l18 18"/>
-                      <path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6.4 0 10 6 10 6a17.6 17.6 0 0 1-4.1 4.7"/>
-                      <path d="M6.7 6.7C4.2 8.3 2.6 11 2 12c0 0 3.6 6 10 6 1.6 0 3-.4 4.2-1"/>
-                      <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
-                    </svg>
-                  </button>
-
                   <button type="button" class="icon-btn" aria-label="Edit password" @click="startEdit('password')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M12 20h9"/>
-                      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>
+                      <path d= "M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>
                     </svg>
                   </button>
                 </div>
@@ -922,32 +686,13 @@ onMounted(() => {
                       <div class="password-input-wrapper">
                         <input
                           v-model="editDraft.deleteAccountPassword"
-                          :type="showDeleteAccountPassword ? 'text' : 'password'"
+                          type="password"
                           class="setting-input"
                           placeholder="Current password"
                           autocomplete="current-password"
                           @keyup.enter="saveField('delete-account')"
                           @keyup.esc="cancelEdit"
                         />
-
-                        <button
-                          type="button"
-                          class="password-toggle"
-                          :aria-label="showDeleteAccountPassword ? 'Hide password' : 'Show password'"
-                          :aria-pressed="showDeleteAccountPassword"
-                          @click="showDeleteAccountPassword = !showDeleteAccountPassword"
-                        >
-                          <svg v-if="showDeleteAccountPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/>
-                            <circle cx="12" cy="12" r="2.75"/>
-                          </svg>
-                          <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 3l18 18"/>
-                            <path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6.4 0 10 6 10 6a17.6 17.6 0 0 1-4.1 4.7"/>
-                            <path d="M6.7 6.7C4.2 8.3 2.6 11 2 12c0 0 3.6 6 10 6 1.6 0 3-.4 4.2-1"/>
-                            <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
-                          </svg>
-                        </button>
                       </div>
 
                       <div class="edit-actions">
@@ -1240,8 +985,7 @@ onMounted(() => {
   gap: 0.35rem;
 }
 
-.input-label,
-.unlock-label {
+.input-label {
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--text-secondary);
@@ -1270,64 +1014,20 @@ onMounted(() => {
   position: relative;
 }
 
-.password-input-wrapper .setting-input {
-  padding-right: 3rem;
-}
-
-.password-input-wrapper.compact {
-  flex: 1;
-}
-
-.password-toggle {
-  position: absolute;
-  top: 50%;
-  right: 0.75rem;
-  transform: translateY(-50%);
-  width: 28px;
-  height: 28px;
-  border: none;
-  padding: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text-secondary);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: color 0.2s ease, background-color 0.2s ease;
-}
-
-.password-toggle:hover,
 .icon-btn:hover {
   color: var(--text-primary);
   background: var(--accent-soft);
 }
 
-.password-toggle:focus-visible,
 .icon-btn:focus-visible,
 .action-btn:focus-visible {
   outline: 2px solid var(--accent-color);
   outline-offset: 2px;
 }
 
-.password-toggle svg,
 .icon-btn svg {
   width: 17px;
   height: 17px;
-}
-
-.unlock-panel {
-  padding: 0.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  background: transparent;
-}
-
-.unlock-row {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  margin-top: 0.45rem;
 }
 
 .edit-actions {
@@ -1348,8 +1048,7 @@ onMounted(() => {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.save-btn,
-.mini-btn {
+.save-btn {
   background: var(--accent-color);
   color: #ffffff;
 }
@@ -1369,8 +1068,7 @@ onMounted(() => {
   background: var(--hover-bg);
 }
 
-.save-btn:hover,
-.mini-btn:hover {
+.save-btn:hover {
   background: var(--accent-hover);
 }
 
@@ -1497,9 +1195,5 @@ onMounted(() => {
     justify-content: flex-end;
   }
 
-  .unlock-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
 }
 </style>
