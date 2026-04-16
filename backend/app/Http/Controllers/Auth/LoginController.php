@@ -33,6 +33,12 @@ class LoginController extends Controller
             ], 403);
         }
 
+        if ($user !== null && ! $user->hasVerifiedEmail()) {
+            return response()->json([
+                'message' => 'Please verify your email address before logging in.',
+            ], 403);
+        }
+
         $remember = (bool) ($validated['remember'] ?? false);
 
         if (! Auth::attempt($credentials, $remember)) {
