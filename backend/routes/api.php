@@ -2,8 +2,11 @@
 
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Admin\AdminApiController;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -19,6 +22,12 @@ Route::post('/login', [LoginController::class, 'store'])
 		StartSession::class,
 	])
 	->name('api.login');
+Route::post('/email/verification-notification', [EmailVerificationController::class, 'send'])
+	->name('api.verification.send');
+Route::post('/forgot-password', [ForgotPasswordController::class, 'store'])
+	->name('api.password.email');
+Route::post('/reset-password', [ResetPasswordController::class, 'store'])
+	->name('api.password.update');
 
 Route::patch('/profile/nickname', [ProfileController::class, 'updateNickname'])
 	->middleware([
