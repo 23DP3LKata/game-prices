@@ -47,4 +47,9 @@ class Game extends Model
     {
         return $this->hasManyThrough(GamePrice::class, GameStoreListing::class);
     }
+
+    public function wishlistItems(): HasMany
+    {
+        return $this->hasMany(WishlistItem::class);
+    }
 }
