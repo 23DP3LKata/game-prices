@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\Auth\EmailVerificationController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\RegisteredUserController;
@@ -73,6 +75,21 @@ Route::delete('/profile/account', [ProfileController::class, 'deleteAccount'])
 		Authenticate::class,
 	])
 	->name('api.profile.account.delete');
+
+Route::middleware([
+	EncryptCookies::class,
+	AddQueuedCookiesToResponse::class,
+	StartSession::class,
+	Authenticate::class,
+])->group(function (): void {
+	Route::get('/notifications', [NotificationController::class, 'index'])->name('api.notifications.index');
+	Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('api.notifications.read');
+	Route::patch('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('api.notifications.read.all');
+	Route::get('/wishlist', [WishlistController::class, 'index'])->name('api.wishlist.index');
+	Route::get('/wishlist/{game}/status', [WishlistController::class, 'status'])->name('api.wishlist.status');
+	Route::post('/wishlist/{game}', [WishlistController::class, 'store'])->name('api.wishlist.store');
+	Route::delete('/wishlist/{game}', [WishlistController::class, 'destroy'])->name('api.wishlist.destroy');
+});
 
 Route::prefix('/admin')
 	->middleware([
