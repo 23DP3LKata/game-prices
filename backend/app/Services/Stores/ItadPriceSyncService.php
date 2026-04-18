@@ -5,7 +5,9 @@ namespace App\Services\Stores;
 use App\Models\Game;
 use App\Models\GamePrice;
 use App\Models\GameStoreListing;
+use App\Models\WishlistItem;
 use App\Models\Store;
+use App\Notifications\GamePriceChangedNotification;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -227,6 +229,7 @@ class ItadPriceSyncService
                     $regular = $this->extractMoney($deal['regular'] ?? $deal['regularPrice'] ?? null);
                     $discount = $this->extractDiscount($deal);
                     $isOnSale = $discount !== null && $discount > 0;
+                    $previousPrice = $listing->current_price !== null ? (string) $listing->current_price : null;
 
                     if ($price === null) {
                         $this->markUnavailable($listing, $now);
@@ -251,6 +254,8 @@ class ItadPriceSyncService
                     } else {
                         $stats['skipped']++;
                     }
+
+                    $this->notifyWishlistUsersForPriceChange($listing, $previousPrice, $price, $regular, $discount, $isOnSale, $now);
                 }
             }
         }
@@ -474,6 +479,63 @@ class ItadPriceSyncService
         );
 
         return true;
+    }
+
+    private function notifyWishlistUsersForPriceChange(
+        GameStoreListing $listing,
+        ?string $previousPrice,
+        string $newPrice,
+        ?string $originalPrice,
+        ?int $discountPercent,
+        bool $isOnSale,
+        CarbonImmutable $now,
+    ): void {
+        if ($previousPrice === null || $previousPrice === $newPrice) {
+            return;
+        }
+
+        $wishlistItems = WishlistItem::query()
+            ->where('game_id', $listing->game_id)
+            ->where('notifications_enabled', true)
+            ->with('user')
+            ->get()
+            ->filter(function (WishlistItem $item) use ($newPrice): bool {
+                if ($item->last_notified_price === null) {
+                    return true;
+                }
+
+                return (string) $item->last_notified_price !== $newPrice;
+            });
+
+        if ($wishlistItems->isEmpty()) {
+            return;
+        }
+
+        $game = $listing->game;
+        $store = $listing->store;
+
+        foreach ($wishlistItems as $wishlistItem) {
+            $user = $wishlistItem->user;
+            if (! $user) {
+                continue;
+            }
+
+            $user->notify(new GamePriceChangedNotification(
+                $game,
+                $listing,
+                $previousPrice,
+                $newPrice,
+                $originalPrice,
+                $discountPercent,
+                $isOnSale,
+                $now,
+            ));
+
+            $wishlistItem->forceFill([
+                'last_notified_price' => $newPrice,
+                'last_notified_at' => $now,
+            ])->save();
+        }
     }
 
     private function firstShopGameId(mixed $shopIds): ?string
