@@ -3,6 +3,7 @@
 namespace App\Services\Stores;
 
 use App\Models\Game;
+use App\Models\GameMinPrice;
 use App\Models\GamePrice;
 use App\Models\GameStoreListing;
 use App\Models\WishlistItem;
@@ -19,9 +20,6 @@ class ItadPriceSyncService
     {
     }
 
-    /**
-     * @return array{resolved:int, missing:int, listings_created:int, listings_updated:int, failed:int}
-     */
     public function syncListings(): array
     {
         $stats = [
@@ -124,9 +122,6 @@ class ItadPriceSyncService
         return $stats;
     }
 
-    /**
-     * @return array{synced:int, updated:int, skipped:int, failed:int}
-     */
     public function syncPrices(): array
     {
         $stats = [
@@ -146,7 +141,6 @@ class ItadPriceSyncService
             return $stats;
         }
 
-        $storeByShopId = $stores->keyBy('itad_shop_id');
         $shopIds = $stores->pluck('itad_shop_id')->unique()->values()->all();
 
         $listings = GameStoreListing::query()
@@ -173,6 +167,8 @@ class ItadPriceSyncService
                 $stats['failed']++;
                 continue;
             }
+
+            $minCandidates = [];
 
             foreach ($prices as $entry) {
                 $itadId = $entry['id'] ?? null;
@@ -255,8 +251,30 @@ class ItadPriceSyncService
                         $stats['skipped']++;
                     }
 
+                    if (! isset($minCandidates[$listing->game_id]) || (float) $price < (float) $minCandidates[$listing->game_id]['price']) {
+                        $minCandidates[$listing->game_id] = [
+                            'listing' => $listing,
+                            'price' => $price,
+                            'original_price' => $regular,
+                            'discount_percent' => $discount,
+                            'is_on_sale' => $isOnSale,
+                        ];
+                    }
+
                     $this->notifyWishlistUsersForPriceChange($listing, $previousPrice, $price, $regular, $discount, $isOnSale, $now);
                 }
+            }
+
+            foreach ($minCandidates as $gameId => $candidate) {
+                $this->recordMinPriceHistory(
+                    (int) $gameId,
+                    $candidate['listing'],
+                    $candidate['price'],
+                    $candidate['original_price'],
+                    $candidate['discount_percent'],
+                    $candidate['is_on_sale'],
+                    $now,
+                );
             }
         }
 
@@ -348,9 +366,6 @@ class ItadPriceSyncService
         return $normalized;
     }
 
-    /**
-     * @return list<int>
-     */
     private function collectDealShopIds(array $deals): array
     {
         $ids = [];
@@ -370,9 +385,6 @@ class ItadPriceSyncService
         return $ids;
     }
 
-    /**
-     * @return list<string>
-     */
     private function collectDealShopNames(array $deals): array
     {
         $names = [];
@@ -474,6 +486,41 @@ class ItadPriceSyncService
                 'original_price' => $regular,
                 'discount_percent' => $discount,
                 'is_available' => true,
+                'is_on_sale' => $isOnSale,
+            ],
+        );
+
+        return true;
+    }
+
+    private function recordMinPriceHistory(
+        int $gameId,
+        GameStoreListing $listing,
+        string $price,
+        ?string $originalPrice,
+        ?int $discountPercent,
+        bool $isOnSale,
+        CarbonImmutable $now,
+    ): bool {
+        $latest = GameMinPrice::query()
+            ->where('game_id', $gameId)
+            ->orderByDesc('recorded_at')
+            ->first();
+
+        if ($latest && $latest->price === $price) {
+            return false;
+        }
+
+        GameMinPrice::query()->updateOrCreate(
+            [
+                'game_id' => $gameId,
+                'recorded_at' => $now,
+            ],
+            [
+                'game_store_listing_id' => $listing->id,
+                'price' => $price,
+                'original_price' => $originalPrice,
+                'discount_percent' => $discountPercent,
                 'is_on_sale' => $isOnSale,
             ],
         );
