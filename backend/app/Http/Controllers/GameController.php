@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Game;
-use App\Models\GamePrice;
+use App\Models\GameMinPrice;
 use Illuminate\Http\JsonResponse;
 
 class GameController extends Controller
@@ -86,44 +86,27 @@ class GameController extends Controller
             'currency' => 'EUR',
         ])->values();
 
-        $priceHistory = collect();
-        if ($storeListings->isNotEmpty()) {
-            $history = GamePrice::query()
-                ->whereIn('game_store_listing_id', $storeListings->pluck('id'))
-                ->with('gameStoreListing.store')
-                ->orderByDesc('recorded_at')
-                ->limit(200)
-                ->get();
-
-            $priceHistory = $history
-                ->groupBy(fn (GamePrice $price) => optional($price->recorded_at)->toDateTimeString())
-                ->map(function ($group) {
-                    /** @var \Illuminate\Support\Collection<int, GamePrice> $group */
-                    $lowest = $group->sortBy(fn (GamePrice $price) => $price->price)->first();
-                    if (! $lowest) {
-                        return null;
-                    }
-
-                    return [
-                        'store' => [
-                            'code' => $lowest->gameStoreListing?->store?->code,
-                            'name' => $lowest->gameStoreListing?->store?->name,
-                        ],
-                        'externalGameId' => $lowest->gameStoreListing?->external_game_id,
-                        'recordedAt' => optional($lowest->recorded_at)->toDateTimeString(),
-                        'price' => $lowest->price,
-                        'originalPrice' => $lowest->original_price,
-                        'discountPercent' => $lowest->discount_percent,
-                        'isOnSale' => $lowest->is_on_sale,
-                        'isAvailable' => $lowest->is_available,
-                        'currency' => 'EUR',
-                    ];
-                })
-                ->filter()
-                ->sortByDesc('recordedAt')
-                ->take(60)
-                ->values();
-        }
+        $priceHistory = GameMinPrice::query()
+            ->where('game_id', $game->id)
+            ->with('gameStoreListing.store')
+            ->orderByDesc('recorded_at')
+            ->limit(60)
+            ->get()
+            ->map(fn (GameMinPrice $point) => [
+                'store' => [
+                    'code' => $point->gameStoreListing?->store?->code,
+                    'name' => $point->gameStoreListing?->store?->name,
+                ],
+                'externalGameId' => $point->gameStoreListing?->external_game_id,
+                'recordedAt' => optional($point->recorded_at)->toDateTimeString(),
+                'price' => $point->price,
+                'originalPrice' => $point->original_price,
+                'discountPercent' => $point->discount_percent,
+                'isOnSale' => $point->is_on_sale,
+                'isAvailable' => true,
+                'currency' => 'EUR',
+            ])
+            ->values();
 
         return response()->json([
             'game' => [
