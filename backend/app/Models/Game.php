@@ -11,9 +11,6 @@ class Game extends Model
 {
     use HasFactory;
 
-    /**
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'slug',
@@ -27,9 +24,6 @@ class Game extends Model
         'is_active',
     ];
 
-    /**
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -38,18 +32,8 @@ class Game extends Model
         ];
     }
 
-    public function storeListings(): HasMany
-    {
-        return $this->hasMany(GameStoreListing::class);
-    }
-
-    public function priceHistory(): HasManyThrough
-    {
-        return $this->hasManyThrough(GamePrice::class, GameStoreListing::class);
-    }
-
-    public function wishlistItems(): HasMany
-    {
-        return $this->hasMany(WishlistItem::class);
-    }
+    public function storeListings(): HasMany {return $this->hasMany(GameStoreListing::class); }
+    public function priceHistory(): HasManyThrough { return $this->hasManyThrough(GamePrice::class, GameStoreListing::class); }
+    public function minPriceHistory(): HasMany { return $this->hasMany(GameMinPrice::class); }
+    public function wishlistItems(): HasMany { return $this->hasMany(WishlistItem::class); }
 }
