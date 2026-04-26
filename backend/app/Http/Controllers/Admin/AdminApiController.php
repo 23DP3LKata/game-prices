@@ -11,7 +11,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Carbon;
 
 class AdminApiController extends Controller
 {
@@ -78,24 +77,8 @@ class AdminApiController extends Controller
 
     private function runSyncCommand(string $command, string $successMessage): JsonResponse
     {
-        $startedAt = Carbon::now();
         $exitCode = Artisan::call($command);
         $output = trim(Artisan::output());
-        $finishedAt = Carbon::now();
-
-        $syncType = str_contains($command, 'listings') ? 'listings' : 'prices';
-        $status = $exitCode === 0 ? 'success' : 'failed';
-
-        ItadSyncLog::query()->create([
-            'sync_type' => $syncType,
-            'status' => $status,
-            'command' => $command,
-            'stores_total' => $this->enabledStoresCount(),
-            'games_total' => $this->activeGamesCount(),
-            'output' => $output !== '' ? $output : null,
-            'started_at' => $startedAt,
-            'finished_at' => $finishedAt,
-        ]);
 
         if ($exitCode === 0) {
             return response()->json([
