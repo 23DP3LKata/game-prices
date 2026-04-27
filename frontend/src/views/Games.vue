@@ -2,6 +2,7 @@
 import { computed, onMounted, provide, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
+import { formatDateOnly } from '../composables/useDateTimeFormat'
 import { useThemePreference } from '../composables/useThemePreference'
 
 const router = useRouter()
@@ -309,7 +310,7 @@ onMounted(() => {
                           <div class="game-meta">
                             <span class="game-name">{{ game.name }}</span>
                             <div class="game-badges">
-                              <span v-if="game.releaseDate" class="meta-badge">{{ game.releaseDate }}</span>
+                              <span v-if="game.releaseDate" class="meta-badge">{{ formatDateOnly(game.releaseDate) || game.releaseDate }}</span>
                               <span v-if="game.bestPrice !== null && game.bestPrice !== undefined" class="meta-badge">{{ formatPrice(game.bestPrice) }}</span>
                               <span v-if="game.bestDiscount !== null && game.bestDiscount !== undefined" class="meta-badge">
                                 {{ game.bestDiscount }}% off

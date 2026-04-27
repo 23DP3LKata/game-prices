@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, provide, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
+import { formatDateTime } from '../composables/useDateTimeFormat'
 import { useAuthStore } from '../stores/auth'
 import { useThemePreference } from '../composables/useThemePreference'
 
@@ -139,12 +140,7 @@ async function runSync(command) {
 }
 
 function formatDate(value) {
-  if (!value) {
-    return '-'
-  }
-
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString()
+  return formatDateTime(value) || '-'
 }
 
 function formatSyncType(value) {

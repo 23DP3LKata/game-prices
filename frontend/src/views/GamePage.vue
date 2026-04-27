@@ -2,10 +2,13 @@
 import { computed, ref, provide, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
+import { formatDateOnly, formatDateTime } from '../composables/useDateTimeFormat'
 import { useThemePreference } from '../composables/useThemePreference'
+import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
 const route = useRoute()
+const authStore = useAuthStore()
 
 const selectedLanguage = ref('ENG')
 const selectedTheme = useThemePreference()
@@ -29,6 +32,10 @@ const game = ref({
 const prices = ref([])
 
 const priceHistory = ref([])
+const isWishlisted = ref(false)
+const isWishlistBusy = ref(false)
+const wishlistMessage = ref('')
+const wishlistError = ref('')
 
 const chartLayout = {
   width: 1000,
@@ -77,22 +84,7 @@ function getNiceIntegerStep(maxValue, targetIntervals = 5) {
 }
 
 function formatTooltipDate(value) {
-  if (!value) {
-    return 'n/a'
-  }
-
-  const parsedDate = new Date(value)
-  if (!Number.isNaN(parsedDate.getTime())) {
-    return new Intl.DateTimeFormat('en-GB', {
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(parsedDate)
-  }
-
-  return value
+  return formatDateTime(value) || 'n/a'
 }
 
 function formatDiscountValue(value) {
@@ -114,6 +106,11 @@ function formatStoreValue(value) {
   }
 
   return String(value)
+}
+
+function clearWishlistFeedback() {
+  wishlistMessage.value = ''
+  wishlistError.value = ''
 }
 
 const sortedPriceHistory = computed(() => [...priceHistory.value].sort((left, right) => left.date.localeCompare(right.date)))
@@ -325,6 +322,90 @@ const activeTooltipStyle = computed(() => {
   }
 })
 
+async function loadWishlistState(gameId) {
+  if (!authStore.isLoggedIn) {
+    isWishlisted.value = false
+    return
+  }
+
+  isWishlistBusy.value = true
+
+  try {
+    const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/wishlist/${gameId}/status` : `/api/wishlist/${gameId}/status`, {
+      headers: {
+        Accept: 'application/json',
+      },
+      credentials: 'include',
+    })
+
+    if (response.status === 401) {
+      authStore.clearUser()
+      isWishlisted.value = false
+      return
+    }
+
+    const data = await response.json().catch(() => null)
+    isWishlisted.value = Boolean(data?.isWishlisted)
+  } catch {
+    isWishlisted.value = false
+  } finally {
+    isWishlistBusy.value = false
+  }
+}
+
+async function toggleWishlist() {
+  if (!game.value.id) {
+    return
+  }
+
+  if (!authStore.isLoggedIn) {
+    await router.push('/login')
+    return
+  }
+
+  isWishlistBusy.value = true
+  clearWishlistFeedback()
+
+  try {
+    const endpoint = apiBaseUrl ? `${apiBaseUrl}/wishlist/${game.value.id}` : `/api/wishlist/${game.value.id}`
+    const requestOptions = {
+      method: isWishlisted.value ? 'DELETE' : 'POST',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+    }
+
+    if (!isWishlisted.value) {
+      requestOptions.body = JSON.stringify({})
+    }
+
+    const response = await fetch(endpoint, {
+      ...requestOptions,
+    })
+
+    if (response.status === 401) {
+      authStore.clearUser()
+      await router.push('/login')
+      return
+    }
+
+    const data = await response.json().catch(() => null)
+
+    if (!response.ok) {
+      throw new Error(data?.message || 'Unable to update wishlist.')
+    }
+
+    isWishlisted.value = !isWishlisted.value
+    wishlistMessage.value = isWishlisted.value ? 'Added to wishlist.' : 'Removed from wishlist.'
+  } catch (err) {
+    wishlistError.value = err instanceof Error ? err.message : 'Unable to update wishlist.'
+  } finally {
+    isWishlistBusy.value = false
+  }
+}
+
 function handleChartHover(event) {
   const points = chartState.value.points
 
@@ -367,6 +448,7 @@ function clearChartHover() {
 async function fetchGameData(id) {
   isLoading.value = true
   loadError.value = ''
+  clearWishlistFeedback()
 
   try {
     const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/games/${encodeURIComponent(id)}` : `/api/games/${encodeURIComponent(id)}`, {
@@ -421,6 +503,8 @@ async function fetchGameData(id) {
         || point?.sync_id
         || normalizeSyncKey(point?.recordedAt || point?.date || ''),
     })).filter((point) => point.price !== null && point.date)
+
+    await loadWishlistState(game.value.id)
   } catch (err) {
     loadError.value = err instanceof Error ? err.message : 'Unable to load game data right now.'
     game.value = {
@@ -436,6 +520,7 @@ async function fetchGameData(id) {
     prices.value = []
     priceHistory.value = []
     activeChartPointIndex.value = null
+    isWishlisted.value = false
   } finally {
     isLoading.value = false
   }
@@ -461,6 +546,14 @@ const goToGames = () => {
 const getBestPrice = () => {
   if (prices.value.length === 0) return null
   return prices.value.reduce((min, p) => p.price < min.price ? p : min, prices.value[0])
+}
+
+function openStore(url) {
+  if (!url || url === '#') {
+    return
+  }
+
+  window.open(url, '_blank', 'noopener,noreferrer')
 }
 </script>
 
@@ -529,7 +622,7 @@ const getBestPrice = () => {
               </div>
               <div class="meta-item" v-if="game.releaseDate">
                 <span class="meta-label">Release Date</span>
-                <span class="meta-value">{{ game.releaseDate }}</span>
+                <span class="meta-value">{{ formatDateOnly(game.releaseDate) || game.releaseDate }}</span>
               </div>
             </div>
 
@@ -537,6 +630,21 @@ const getBestPrice = () => {
               <span class="best-price-label">Best price</span>
               <span class="best-price-value">€{{ getBestPrice().price.toFixed(2) }}</span>
               <span class="best-price-store">on {{ getBestPrice().store }}</span>
+            </div>
+
+            <div class="wishlist-panel">
+              <button
+                type="button"
+                class="wishlist-btn"
+                :class="{ active: isWishlisted }"
+                :disabled="isWishlistBusy"
+                @click="toggleWishlist"
+              >
+                {{ isWishlisted ? 'Remove from wishlist' : 'Add to wishlist' }}
+              </button>
+
+              <p v-if="wishlistMessage" class="wishlist-feedback success">{{ wishlistMessage }}</p>
+              <p v-if="wishlistError" class="wishlist-feedback error">{{ wishlistError }}</p>
             </div>
           </div>
         </div>
@@ -557,11 +665,20 @@ const getBestPrice = () => {
                   <th class="col-store">Store</th>
                   <th class="col-price">Price</th>
                   <th class="col-discount">Discount</th>
-                  <th class="col-action">Link</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(item, index) in prices" :key="index" :class="{ 'best-row': getBestPrice() && item.price === getBestPrice().price }">
+                <tr
+                  v-for="(item, index) in prices"
+                  :key="index"
+                  :class="{ 'best-row': getBestPrice() && item.price === getBestPrice().price }"
+                  class="price-row"
+                  role="link"
+                  tabindex="0"
+                  @click="openStore(item.url)"
+                  @keydown.enter.prevent="openStore(item.url)"
+                  @keydown.space.prevent="openStore(item.url)"
+                >
                   <td class="cell-store">{{ item.store }}</td>
                   <td class="cell-price" :class="{ 'on-sale': item.onSale }">
                     €{{ item.price.toFixed(2) }}
@@ -570,12 +687,9 @@ const getBestPrice = () => {
                     <span v-if="item.discount > 0" class="discount-badge">-{{ item.discount }}%</span>
                     <span v-else class="no-discount">—</span>
                   </td>
-                  <td class="cell-action">
-                    <a :href="item.url" target="_blank" rel="noopener noreferrer" class="store-link">Visit Store</a>
-                  </td>
                 </tr>
                 <tr v-if="prices.length === 0">
-                  <td colspan="4" class="empty-state">No price data available</td>
+                  <td colspan="3" class="empty-state">No price data available</td>
                 </tr>
               </tbody>
             </table>
@@ -802,23 +916,40 @@ const getBestPrice = () => {
 /* game hero */
 .game-hero {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: minmax(360px, 460px) 1fr;
   gap: 2.5rem;
   margin-bottom: 3rem;
 }
 
 .game-image-container {
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--border-color);
   background: var(--bg-secondary);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.12);
+}
+
+.game-image-container::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.12), transparent 55%);
 }
 
 .game-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
+  image-rendering: auto;
+  transform: translateZ(0);
 }
 
 .game-image-placeholder {
@@ -906,6 +1037,53 @@ const getBestPrice = () => {
   color: var(--text-secondary);
 }
 
+.wishlist-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.wishlist-btn {
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-radius: 999px;
+  padding: 0.7rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.wishlist-btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-color);
+}
+
+.wishlist-btn.active {
+  background: color-mix(in srgb, var(--accent-color) 12%, var(--bg-secondary));
+  border-color: var(--accent-color);
+}
+
+.wishlist-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+  transform: none;
+}
+
+.wishlist-feedback {
+  font-size: 0.8125rem;
+}
+
+.wishlist-feedback.success {
+  color: var(--accent-color);
+}
+
+.wishlist-feedback.error {
+  color: var(--text-secondary);
+}
+
 /* sections */
 .section {
   margin-bottom: 3rem;
@@ -967,6 +1145,20 @@ const getBestPrice = () => {
   background: var(--hover-bg);
 }
 
+.price-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.price-row:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: -2px;
+}
+
+.price-row:hover {
+  transform: translateY(-1px);
+}
+
 .best-row {
   background: var(--hover-bg);
 }
@@ -980,10 +1172,6 @@ const getBestPrice = () => {
 }
 
 .col-discount {
-  width: 20%;
-}
-
-.col-action {
   width: 20%;
 }
 
@@ -1008,18 +1196,6 @@ const getBestPrice = () => {
 
 .no-discount {
   color: var(--text-secondary);
-}
-
-.store-link {
-  color: var(--accent-color);
-  text-decoration: none;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: opacity 0.2s ease;
-}
-
-.store-link:hover {
-  opacity: 0.7;
 }
 
 .empty-state {
@@ -1183,7 +1359,7 @@ const getBestPrice = () => {
   }
 
   .game-image-container {
-    max-width: 280px;
+    max-width: min(100%, 720px);
     margin: 0 auto;
   }
 
