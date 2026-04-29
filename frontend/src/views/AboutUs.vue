@@ -10,14 +10,14 @@ provide('theme', selectedTheme)
 
 const sections = [
   { id: 'what-is', title: 'What is GamePrices?' },
-  { id: 'why', title: 'Why was it created?' },
-  { id: 'data', title: 'Data collection' },
-  { id: 'reliability', title: 'Reliability' },
-  { id: 'audience', title: 'Audience' },
-  { id: 'features', title: 'Registered features' },
-  { id: 'history', title: 'Price history' },
-  { id: 'sync', title: 'Data freshness' },
-  { id: 'mission', title: 'Mission' }
+  { id: 'why', title: 'Why this project exists' },
+  { id: 'data', title: 'Where the data comes from' },
+  { id: 'safety', title: 'Are the shops safe?' },
+  { id: 'audience', title: 'Who it is for' },
+  { id: 'features', title: 'What registered users get' },
+  { id: 'history', title: 'Why price history matters' },
+  { id: 'sync', title: 'How often data updates' },
+  { id: 'mission', title: 'What we are learning here' }
 ]
 </script>
 
@@ -34,53 +34,58 @@ const sections = [
         <article class="about-article">
           <header class="section-header">
             <h1>About Game Prices</h1>
-            <p class="section-subtitle">Discover how the platform works behind the scenes and who it is built for.</p>
+            <p class="section-subtitle">A temporary educational project built to explore APIs, databases, background syncs, and the small product decisions that make data feel useful.</p>
+            <div class="project-note">
+              <p>
+                This is not a commercial store. It is a learning project focused on building a realistic price-tracking experience while keeping the codebase simple, testable, and honest about what it does.
+              </p>
+            </div>
           </header>
 
           <div class="article-content">
             <section id="what-is">
               <h2>What is GamePrices?</h2>
-              <p>GamePrices is a data-driven platform that compares game prices across multiple digital stores, providing real-time information, historical analytics, and automated deal tracking.</p>
+              <p>GamePrices is a small price-comparison demo for games. It gathers store offers, shows current pricing, and keeps a record of how those prices change over time so the interface feels like a real product rather than a static mockup.</p>
             </section>
 
             <section id="why">
-              <h2>Why was GamePrices created?</h2>
-              <p>The platform was built to solve a common problem: players waste time checking different stores manually, comparing prices, and searching for real discounts.</p>
+              <h2>Why does this project exist?</h2>
+              <p>The main goal was learning. GamePrices was created as a temporary non-commercial project to practice working with external APIs, a relational database, scheduled updates, notifications, and the kind of data modeling that turns raw responses into something readable.</p>
             </section>
 
             <section id="data">
-              <h2>How does GamePrices collect pricing data?</h2>
-              <p>GamePrices integrates with public APIs from Steam, Epic Games, GG.deals, IsThereAnyDeal, and other sources to automatically gather and update accurate pricing information.</p>
+              <h2>Where does the data come from?</h2>
+              <p>One of the main sources is <a href="https://isthereanydeal.com/" target="_blank" rel="noreferrer">IsThereAnyDeal</a>. Their API helps provide store and price information that can be normalized into a single place, which is ideal for this project because it lets me focus on integration logic instead of inventing fake data.</p>
             </section>
 
-            <section id="reliability">
-              <h2>What makes GamePrices reliable?</h2>
-              <p>The system uses a structured ER data model, automated synchronization services, and detailed validation to ensure price accuracy, data consistency, and stable performance.</p>
+            <section id="safety">
+              <h2>Are the shops safe?</h2>
+              <p>The platform only highlights stores that are considered authorized or otherwise trustworthy sources. The point is not to sell keys directly, but to help users see where a game is offered and what the price looks like before they decide where to buy it.</p>
             </section>
 
             <section id="audience">
               <h2>Who is GamePrices for?</h2>
-              <p>GamePrices is designed for all types of users - guests who want quick price checks, registered users who track wishlists and receive alerts, and administrators who maintain data quality.</p>
+              <p>It is useful for visitors who just want a quick comparison, for registered users who like saving games and following price drops, and for anyone who wants to study how a small product can be built around live data without turning into a full e-commerce platform.</p>
             </section>
 
             <section id="features">
-              <h2>What features do registered users get?</h2>
-              <p>Registered users can save games to a wishlist, receive automatic notifications about price drops, customize their profile, and report issues directly to administrators.</p>
+              <h2>What do registered users get?</h2>
+              <p>Registered users can bookmark games, keep a wishlist, receive alerts when prices change, and use a more personalized view of the platform. That makes the app feel closer to a real service while still staying inside the scope of a learning project.</p>
             </section>
 
             <section id="history">
-              <h2>Does GamePrices show price history?</h2>
-              <p>Yes. The platform provides clear visual graphs showing historical price changes, helping users analyze trends and buy at the best moment.</p>
+              <h2>Why keep price history?</h2>
+              <p>Current prices are useful, but price history is what makes patterns visible. By keeping past values, the project can show whether a discount is new, repeated, or just part of a normal cycle.</p>
             </section>
 
             <section id="sync">
-              <h2>How does GamePrices ensure data stays up to date?</h2>
-              <p>A built-in DataSyncService regularly pulls fresh data from external APIs, updates local records, and logs errors to maintain system accuracy and reliability.</p>
+              <h2>How often does the data update?</h2>
+              <p>The sync runs every 12 hours once the app is deployed on the server. Right now, during development, updates are triggered manually.</p>
             </section>
 
             <section id="mission">
-              <h2>What is your mission?</h2>
-              <p>Our mission is to make the game market transparent, efficient, and easy to understand, helping every player save time, save money, and make smarter purchasing decisions.</p>
+              <h2>What are we trying to learn here?</h2>
+              <p>The mission is to make the app useful as a study project: learn how APIs are shaped, how data is stored, how relations between games and stores are modeled, and how a simple interface can still communicate something credible.</p>
             </section>
           </div>
         </article>
@@ -186,6 +191,20 @@ const sections = [
   font-weight: 400;
 }
 
+.project-note {
+  margin-top: 1.5rem;
+  padding: 1rem 1.25rem;
+  border-left: 3px solid var(--accent-color);
+  background: color-mix(in srgb, var(--bg-secondary) 65%, transparent);
+  border-radius: 0 12px 12px 0;
+}
+
+.project-note p {
+  font-size: 0.975rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
 .article-content section {
   margin-bottom: 3rem;
   scroll-margin-top: 80px;
@@ -204,6 +223,17 @@ const sections = [
   color: var(--text-secondary);
   line-height: 1.7;
   font-weight: 400;
+}
+
+.article-content a {
+  color: var(--accent-color);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.article-content a:hover {
+  border-color: currentColor;
 }
 
 /* sidebar */
@@ -308,6 +338,11 @@ const sections = [
 
   .section-header {
     margin-bottom: 2rem;
+  }
+
+  .project-note {
+    margin-top: 1rem;
+    padding: 0.875rem 1rem;
   }
 
   .article-content section {
