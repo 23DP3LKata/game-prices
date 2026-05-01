@@ -3,14 +3,15 @@ import { computed, onMounted, provide, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import { useAuthStore } from '../stores/auth'
+import { useProfileApi } from '../composables/useProfileApi'
 import { useThemePreference } from '../composables/useThemePreference'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { request } = useProfileApi()
 
 const selectedLanguage = ref('ENG')
 const selectedTheme = useThemePreference()
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '')
 
 const profileData = ref({
   nickname: 'User',
@@ -174,25 +175,18 @@ async function saveNickname() {
   fieldError.value = ''
 
   try {
-    const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/profile/nickname` : '/api/profile/nickname', {
+    const result = await request('/profile/nickname', {
       method: 'PATCH',
-      credentials: 'include',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({
         nickname: nextNickname,
       }),
     })
 
-    const data = await response.json().catch(() => null)
-
-    if (response.status === 401) {
-      authStore.clearUser()
-      await router.push('/login')
+    if (!result) {
       return
     }
+
+    const { response, data } = result
 
     if (!response.ok) {
       throw new Error(data?.errors?.nickname?.[0] || data?.message || 'Unable to update nickname.')
@@ -241,25 +235,18 @@ async function saveEmail() {
   fieldError.value = ''
 
   try {
-    const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/profile/email` : '/api/profile/email', {
+    const result = await request('/profile/email', {
       method: 'PATCH',
-      credentials: 'include',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({
         email: nextEmail,
       }),
     })
 
-    const data = await response.json().catch(() => null)
-
-    if (response.status === 401) {
-      authStore.clearUser()
-      await router.push('/login')
+    if (!result) {
       return
     }
+
+    const { response, data } = result
 
     if (!response.ok) {
       throw new Error(data?.errors?.email?.[0] || data?.message || 'Unable to update email.')
@@ -305,13 +292,8 @@ async function savePassword() {
   fieldError.value = ''
 
   try {
-    const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/profile/password` : '/api/profile/password', {
+    const result = await request('/profile/password', {
       method: 'PATCH',
-      credentials: 'include',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({
         current_password: currentPassword,
         new_password: newPassword,
@@ -319,13 +301,11 @@ async function savePassword() {
       }),
     })
 
-    const data = await response.json().catch(() => null)
-
-    if (response.status === 401) {
-      authStore.clearUser()
-      await router.push('/login')
+    if (!result) {
       return
     }
+
+    const { response, data } = result
 
     if (!response.ok) {
       throw new Error(
@@ -357,19 +337,18 @@ async function deleteAccount() {
   fieldError.value = ''
 
   try {
-    const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/profile/account` : '/api/profile/account', {
+    const result = await request('/profile/account', {
       method: 'DELETE',
-      credentials: 'include',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({
         current_password: currentPassword,
       }),
     })
 
-    const data = await response.json().catch(() => null)
+    if (!result) {
+      return
+    }
+
+    const { response, data } = result
 
     if (!response.ok) {
       throw new Error(data?.errors?.current_password?.[0] || data?.message || 'Unable to delete account.')
