@@ -79,13 +79,8 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        if (! Hash::check($validated['current_password'], $user->password)) {
-            return response()->json([
-                'message' => 'The current password is incorrect.',
-                'errors' => [
-                    'current_password' => ['The current password is incorrect.'],
-                ],
-            ], 422);
+        if ($response = $this->currentPasswordErrorResponse($validated['current_password'], $user->password)) {
+            return $response;
         }
 
         $user->password = $validated['new_password'];
@@ -110,13 +105,8 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        if (! Hash::check($validated['current_password'], $user->password)) {
-            return response()->json([
-                'message' => 'The current password is incorrect.',
-                'errors' => [
-                    'current_password' => ['The current password is incorrect.'],
-                ],
-            ], 422);
+        if ($response = $this->currentPasswordErrorResponse($validated['current_password'], $user->password)) {
+            return $response;
         }
 
         DB::table(config('session.table', 'sessions'))
@@ -143,17 +133,26 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        if (! Hash::check($validated['current_password'], $user->password)) {
-            return response()->json([
-                'message' => 'The current password is incorrect.',
-                'errors' => [
-                    'current_password' => ['The current password is incorrect.'],
-                ],
-            ], 422);
+        if ($response = $this->currentPasswordErrorResponse($validated['current_password'], $user->password)) {
+            return $response;
         }
 
         return response()->json([
             'message' => 'Current password verified.',
         ]);
+    }
+
+    private function currentPasswordErrorResponse(string $currentPassword, string $hashedPassword): ?JsonResponse
+    {
+        if (Hash::check($currentPassword, $hashedPassword)) {
+            return null;
+        }
+
+        return response()->json([
+            'message' => 'The current password is incorrect.',
+            'errors' => [
+                'current_password' => ['The current password is incorrect.'],
+            ],
+        ], 422);
     }
 }
