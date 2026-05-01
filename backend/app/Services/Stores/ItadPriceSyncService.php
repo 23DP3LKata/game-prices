@@ -6,9 +6,7 @@ use App\Models\Game;
 use App\Models\GameMinPrice;
 use App\Models\GamePrice;
 use App\Models\GameStoreListing;
-use App\Models\WishlistItem;
 use App\Models\Store;
-use App\Notifications\GamePriceChangedNotification;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -16,8 +14,10 @@ use Illuminate\Support\Facades\Log;
 
 class ItadPriceSyncService
 {
-    public function __construct(private readonly ItadClient $client)
-    {
+    public function __construct(
+        private readonly ItadClient $client,
+        private readonly PriceChangeNotificationService $notificationService,
+    ) {
     }
 
     public function syncListings(): array
@@ -260,13 +260,11 @@ class ItadPriceSyncService
                             'is_on_sale' => $isOnSale,
                         ];
                     }
-
-                    $this->notifyWishlistUsersForPriceChange($listing, $previousPrice, $price, $regular, $discount, $isOnSale, $now);
                 }
             }
 
             foreach ($minCandidates as $gameId => $candidate) {
-                $this->recordMinPriceHistory(
+                if ($this->recordMinPriceHistory(
                     (int) $gameId,
                     $candidate['listing'],
                     $candidate['price'],
@@ -274,7 +272,17 @@ class ItadPriceSyncService
                     $candidate['discount_percent'],
                     $candidate['is_on_sale'],
                     $now,
-                );
+                )) {
+                    $this->notificationService->notifyForMinPriceChange(
+                        $candidate['listing']->game,
+                        $candidate['listing'],
+                        $candidate['price'],
+                        $candidate['original_price'],
+                        $candidate['discount_percent'],
+                        $candidate['is_on_sale'],
+                        $now,
+                    );
+                }
             }
         }
 
@@ -528,62 +536,7 @@ class ItadPriceSyncService
         return true;
     }
 
-    private function notifyWishlistUsersForPriceChange(
-        GameStoreListing $listing,
-        ?string $previousPrice,
-        string $newPrice,
-        ?string $originalPrice,
-        ?int $discountPercent,
-        bool $isOnSale,
-        CarbonImmutable $now,
-    ): void {
-        if ($previousPrice === null || $previousPrice === $newPrice) {
-            return;
-        }
 
-        $wishlistItems = WishlistItem::query()
-            ->where('game_id', $listing->game_id)
-            ->where('notifications_enabled', true)
-            ->with('user')
-            ->get()
-            ->filter(function (WishlistItem $item) use ($newPrice): bool {
-                if ($item->last_notified_price === null) {
-                    return true;
-                }
-
-                return (string) $item->last_notified_price !== $newPrice;
-            });
-
-        if ($wishlistItems->isEmpty()) {
-            return;
-        }
-
-        $game = $listing->game;
-        $store = $listing->store;
-
-        foreach ($wishlistItems as $wishlistItem) {
-            $user = $wishlistItem->user;
-            if (! $user) {
-                continue;
-            }
-
-            $user->notify(new GamePriceChangedNotification(
-                $game,
-                $listing,
-                $previousPrice,
-                $newPrice,
-                $originalPrice,
-                $discountPercent,
-                $isOnSale,
-                $now,
-            ));
-
-            $wishlistItem->forceFill([
-                'last_notified_price' => $newPrice,
-                'last_notified_at' => $now,
-            ])->save();
-        }
-    }
 
     private function firstShopGameId(mixed $shopIds): ?string
     {
