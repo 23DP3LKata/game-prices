@@ -3,10 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Game;
 use App\Models\ItadSyncLog;
-use App\Models\Store;
 use App\Models\User;
+use App\Services\ItadSyncStatsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -14,6 +13,10 @@ use Illuminate\Support\Facades\DB;
 
 class AdminApiController extends Controller
 {
+    public function __construct(private readonly ItadSyncStatsService $statsService)
+    {
+    }
+
     public function users(): JsonResponse
     {
         $users = User::query()
@@ -127,27 +130,11 @@ class AdminApiController extends Controller
             ]);
 
         return [
-            'stores_total' => $this->enabledStoresCount(),
-            'games_total' => $this->activeGamesCount(),
+            'stores_total' => $this->statsService->enabledStoresCount(),
+            'games_total' => $this->statsService->activeGamesCount(),
             'latest_prices_at' => $latestPrices?->finished_at,
             'latest_listings_at' => $latestListings?->finished_at,
             'logs' => $logs,
         ];
-    }
-
-    private function enabledStoresCount(): int
-    {
-        return Store::query()
-            ->where('is_active', true)
-            ->where('sync_enabled', true)
-            ->whereNotNull('itad_shop_id')
-            ->count();
-    }
-
-    private function activeGamesCount(): int
-    {
-        return Game::query()
-            ->where('is_active', true)
-            ->count();
     }
 }
