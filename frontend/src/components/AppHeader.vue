@@ -1,8 +1,9 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { formatDateTime } from '../composables/useDateTimeFormat'
 
 const props = defineProps({
   activePage: { type: String, default: '' },
@@ -20,14 +21,123 @@ const router = useRouter()
 const authStore = useAuthStore()
 const { isLoggedIn, user } = storeToRefs(authStore)
 const isAdmin = computed(() => user.value?.role === 'admin')
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '')
 
 const isMobileMenuOpen = ref(false)
 const isProfileMenuOpen = ref(false)
+const isNotificationsOpen = ref(false)
+const isNotificationsLoading = ref(false)
+const isNotificationsMarking = ref(false)
+const notifications = ref([])
+const unreadCount = ref(0)
 
 const profileWrapperRef = ref(null)
+const notificationsWrapperRef = ref(null)
+
+const visibleNotifications = computed(() => notifications.value.slice(0, 6))
+
+function formatNotificationTime(value) {
+  return formatDateTime(value)
+}
+
+async function loadNotifications() {
+  if (!isLoggedIn.value) {
+    notifications.value = []
+    unreadCount.value = 0
+    return
+  }
+
+  isNotificationsLoading.value = true
+
+  try {
+    const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/notifications` : '/api/notifications', {
+      headers: { Accept: 'application/json' },
+      credentials: 'include',
+    })
+
+    if (response.status === 401) {
+      authStore.clearUser()
+      notifications.value = []
+      unreadCount.value = 0
+      return
+    }
+
+    const data = await response.json().catch(() => null)
+    notifications.value = Array.isArray(data?.notifications) ? data.notifications : []
+    unreadCount.value = Number(data?.unreadCount || 0)
+  } catch {
+    notifications.value = []
+    unreadCount.value = 0
+  } finally {
+    isNotificationsLoading.value = false
+  }
+}
+
+async function markNotificationAsRead(notificationId) {
+  if (!notificationId || isNotificationsMarking.value) {
+    return
+  }
+
+  isNotificationsMarking.value = true
+
+  try {
+    const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/notifications/${notificationId}/read` : `/api/notifications/${notificationId}/read`, {
+      method: 'PATCH',
+      headers: { Accept: 'application/json' },
+      credentials: 'include',
+    })
+
+    if (response.status === 401) {
+      authStore.clearUser()
+      return
+    }
+
+    if (response.ok) {
+      await loadNotifications()
+    }
+  } finally {
+    isNotificationsMarking.value = false
+  }
+}
+
+async function markAllNotificationsAsRead() {
+  if (isNotificationsMarking.value || unreadCount.value === 0) {
+    return
+  }
+
+  isNotificationsMarking.value = true
+
+  try {
+    const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/notifications/read-all` : '/api/notifications/read-all', {
+      method: 'PATCH',
+      headers: { Accept: 'application/json' },
+      credentials: 'include',
+    })
+
+    if (response.status === 401) {
+      authStore.clearUser()
+      return
+    }
+
+    if (response.ok) {
+      await loadNotifications()
+    }
+  } finally {
+    isNotificationsMarking.value = false
+  }
+}
 
 function toggleProfileMenu() {
+  isNotificationsOpen.value = false
   isProfileMenuOpen.value = !isProfileMenuOpen.value
+}
+
+function toggleNotificationsMenu() {
+  isProfileMenuOpen.value = false
+  isNotificationsOpen.value = !isNotificationsOpen.value
+  if (isNotificationsOpen.value && notifications.value.length === 0) {
+    loadNotifications()
+  }
 }
 
 function toggleMobileMenu() {
@@ -60,6 +170,7 @@ function goToProfile() {
   router.push('/profile')
   closeMobileMenu()
   isProfileMenuOpen.value = false
+  isNotificationsOpen.value = false
 }
 
 function goToAdminConsole() {
@@ -83,6 +194,7 @@ function goToRegister() {
 function handleLogout() {
   authStore.clearUser()
   isProfileMenuOpen.value = false
+  isNotificationsOpen.value = false
   closeMobileMenu()
   router.push('/')
 }
@@ -105,6 +217,10 @@ function toggleTheme() {
 }
 
 function handleClickOutside(e) {
+  if (notificationsWrapperRef.value && !notificationsWrapperRef.value.contains(e.target)) {
+    isNotificationsOpen.value = false
+  }
+
   if (profileWrapperRef.value && !profileWrapperRef.value.contains(e.target)) {
     isProfileMenuOpen.value = false
   }
@@ -112,6 +228,56 @@ function handleClickOutside(e) {
 
 onMounted(() => document.addEventListener('click', handleClickOutside))
 onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
+
+watch(isLoggedIn, (loggedIn) => {
+  if (!loggedIn) {
+    notifications.value = []
+    unreadCount.value = 0
+    isNotificationsOpen.value = false
+    return
+  }
+
+  loadNotifications()
+})
+
+onMounted(() => {
+  if (isLoggedIn.value) {
+    loadNotifications()
+  }
+})
+
+function formatCurrency(value) {
+  if (value == null) return ''
+  const num = typeof value === 'number' ? value : Number(String(value).replace(/[^0-9.\-\.]/g, ''))
+  if (Number.isNaN(num)) return String(value)
+  try {
+    return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 }).format(num)
+  } catch (e) {
+    return `€${num.toFixed(2)}`
+  }
+}
+
+function formatNotificationSummary(notification) {
+  if (!notification) return ''
+
+  const marketplace = notification.marketplace || notification.source || notification.vendor || (notification.data && (notification.data.marketplace || notification.data.source))
+  const oldPrice = notification.oldPrice ?? notification.fromPrice ?? (notification.data && (notification.data.oldPrice || notification.data.fromPrice))
+  const newPrice = notification.newPrice ?? notification.toPrice ?? (notification.data && (notification.data.newPrice || notification.data.toPrice))
+
+  if (marketplace && oldPrice != null && newPrice != null) {
+    return `${marketplace} from ${formatCurrency(oldPrice)} to ${formatCurrency(newPrice)}.`
+  }
+
+  let msg = notification.message || ''
+  const gameName = notification.game && notification.game.name
+  if (gameName && msg) {
+    const esc = gameName.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')
+    msg = msg.replace(new RegExp(esc, 'g'), '').replace(/\s{2,}/g, ' ').trim()
+    msg = msg.replace(/^[\s\-:\u2013\u2014:]+/, '')
+  }
+
+  return msg
+}
 </script>
 
 <template>
@@ -133,7 +299,6 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
         </nav>
       </div>
 
-      <!-- Auth buttons + Profile icon (desktop) -->
       <div class="header-right desktop-profile">
         <template v-if="!isLoggedIn">
           <button class="auth-btn login-btn" @click="goToLogin">Log In</button>
@@ -142,8 +307,56 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 
         <button v-if="isAdmin" class="auth-btn login-btn" @click="goToAdminConsole">Console</button>
 
+        <div v-if="isLoggedIn" class="notifications-wrapper" ref="notificationsWrapperRef">
+          <button class="icon-btn notifications-btn" :class="{ active: isNotificationsOpen }" @click="toggleNotificationsMenu" aria-label="Notifications">
+            <svg class="icon notifications-main-icon" width="22" height="22" viewBox="0 0 24 24" focusable="false" aria-hidden="true" role="presentation" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M9.26 21a2 2 0 0 0 3.48 0"/>
+            </svg>
+            <span v-if="unreadCount > 0" class="notifications-badge">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
+          </button>
+
+          <div class="notifications-dropdown" :class="{ 'notifications-dropdown-open': isNotificationsOpen }">
+            <div class="notifications-header">
+              <button class="notifications-clear-btn" :disabled="unreadCount === 0 || isNotificationsMarking" @click="markAllNotificationsAsRead" aria-label="Mark all read">
+                <svg class="notifications-clear-icon" width="800" height="800" viewBox="0 0 64 64" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg">
+                  <title/>
+                  <path d="M52.43 57.43H11.57a5.5 5.5 0 0 1-5.5-5.5V22.1a5.52 5.52 0 0 1 3.08-4.93l20.43-10a5.55 5.55 0 0 1 4.84 0l20.43 10a5.52 5.52 0 0 1 3.08 4.93v29.83a5.5 5.5 0 0 1-5.5 5.5M32 9.57a2.46 2.46 0 0 0-1.1.25l-20.43 10a2.52 2.52 0 0 0-1.4 2.24v29.87a2.5 2.5 0 0 0 2.5 2.5h40.86a2.5 2.5 0 0 0 2.5-2.5V22.1a2.52 2.52 0 0 0-1.4-2.24L33.1 9.82a2.46 2.46 0 0 0-1.1-.25"/>
+                  <path d="M32 32.9a1.5 1.5 0 0 1-.52-.1l-13.4-5a1.5 1.5 0 1 1 1.05-2.8L32 29.8 44.87 25a1.5 1.5 0 0 1 1.05 2.81l-13.4 5a1.5 1.5 0 0 1-.52.09"/>
+                </svg>
+              </button>
+
+              <p class="notifications-title">Notifications</p>
+            </div>
+
+            <div v-if="isNotificationsLoading" class="notifications-state">Loading notifications...</div>
+            <div v-else-if="visibleNotifications.length === 0" class="notifications-state empty">
+              No notifications yet
+            </div>
+
+            <div v-else class="notifications-list">
+              <button
+                v-for="notification in visibleNotifications"
+                :key="notification.id"
+                class="notification-item"
+                :class="{ unread: !notification.readAt }"
+                @click="markNotificationAsRead(notification.id)"
+              >
+                <div class="notification-dot" v-if="!notification.readAt"></div>
+                <div class="notification-content">
+                  <div class="notification-topline">
+                    <span class="notification-game">{{ notification.game?.name || notification.title }}</span>
+                  </div>
+                  <p class="notification-message">{{ formatNotificationSummary(notification) }}</p>
+                  <span class="notification-time">{{ formatNotificationTime(notification.changedAt || notification.createdAt) }}</span>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div class="profile-wrapper" ref="profileWrapperRef">
-          <button class="profile-btn" @click="toggleProfileMenu" aria-label="Profile menu">
+          <button class="icon-btn profile-btn" @click="toggleProfileMenu" aria-label="Profile menu">
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
               <circle cx="12" cy="7" r="4"/>
@@ -400,6 +613,221 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   gap: 0.5rem;
 }
 
+.notifications-wrapper {
+  position: relative;
+}
+
+.icon-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+  padding: 0;
+}
+
+.icon-btn:hover {
+  opacity: 0.7;
+}
+
+.icon-btn .icon {
+  width: 22px;
+  height: 22px;
+}
+
+.notifications-main-icon {
+  width: 22px;
+  height: 22px;
+  transform: translateY(1px);
+}
+
+
+.notifications-badge {
+  position: absolute;
+  top: -3px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--accent-color);
+  color: #fff;
+  font-size: 0.625rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--bg-primary);
+}
+
+.notifications-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(390px, calc(100vw - 1.5rem));
+  min-width: 280px;
+  padding: 0.5rem 0;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: none;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  z-index: 120;
+}
+
+.notifications-dropdown-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.notifications-header {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.5rem 1rem 0.65rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.notifications-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.notifications-clear-btn {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-primary);
+  padding: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.notifications-clear-icon {
+  width: 20px;
+  height: 20px;
+  display: block;
+  fill: currentColor;
+}
+
+.notifications-clear-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.notifications-state {
+  padding: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.notifications-state.empty {
+  text-align: center;
+}
+
+.notifications-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 340px;
+  overflow: auto;
+}
+
+.notification-item {
+  position: relative;
+  display: flex;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.18s ease;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-item:hover {
+  background: var(--hover-bg);
+}
+
+.notification-item.unread {
+  background: transparent;
+}
+
+.notification-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--accent-color);
+  margin-top: 0.4rem;
+  flex-shrink: 0;
+}
+
+.notification-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.notification-topline {
+  display: flex;
+  align-items: center;
+}
+
+.notification-game {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notification-time {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.notification-message {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
 .auth-btn {
   border: none;
   padding: 0.375rem 0.875rem;
@@ -433,29 +861,6 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   position: relative;
 }
 
-.profile-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-primary);
-  width: 40px;
-  height: 40px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: opacity 0.2s ease;
-  padding: 0;
-  border-radius: 50%;
-}
-
-.profile-btn:hover {
-  opacity: 0.7;
-}
-
-.profile-btn .icon {
-  width: 22px;
-  height: 22px;
-}
 
 /* Profile dropdown */
 .profile-dropdown {
