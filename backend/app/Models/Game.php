@@ -32,6 +32,11 @@ class Game extends Model
         ];
     }
 
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
     public function storeListings(): HasMany {return $this->hasMany(GameStoreListing::class); }
     public function priceHistory(): HasManyThrough { return $this->hasManyThrough(GamePrice::class, GameStoreListing::class); }
     public function minPriceHistory(): HasMany { return $this->hasMany(GameMinPrice::class); }

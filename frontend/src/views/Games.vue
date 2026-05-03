@@ -159,8 +159,8 @@ async function fetchGames() {
   }
 }
 
-const goToGame = (id) => {
-  router.push(`/game/${id}`)
+const goToGame = (slug) => {
+  router.push({ name: 'game', params: { slug } })
 }
 
 onMounted(() => {
@@ -293,7 +293,7 @@ onMounted(() => {
                       v-for="game in visibleGames"
                       :key="game.id"
                       class="game-row"
-                      @click="goToGame(game.id)"
+                      @click="goToGame(game.slug)"
                     >
                       <td class="cell-game">
                         <div class="game-info">
