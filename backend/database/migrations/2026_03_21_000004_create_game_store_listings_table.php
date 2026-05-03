@@ -10,14 +10,18 @@ return new class extends Migration
     {
 
         Schema::create('game_store_listings', function (Blueprint $table) {
-            $table->id();
+            $table->increments('id');
 
-            $table->foreignId('game_id')
-                ->constrained('games')
+            $table->unsignedInteger('game_id');
+            $table->foreign('game_id')
+                ->references('id')
+                ->on('games')
                 ->cascadeOnDelete();
 
-            $table->foreignId('store_id')
-                ->constrained('stores')
+            $table->unsignedInteger('store_id');
+            $table->foreign('store_id')
+                ->references('id')
+                ->on('stores')
                 ->cascadeOnDelete();
 
             $table->string('external_game_id', 191);
@@ -29,7 +33,7 @@ return new class extends Migration
 
             $table->decimal('current_price', 10, 2)->nullable();
             $table->decimal('original_price', 10, 2)->nullable();
-            $table->unsignedTinyInteger('discount_percent')->nullable();
+            $table->unsignedInteger('discount_percent')->nullable();
             $table->boolean('is_on_sale')->default(false);
 
             $table->timestamp('last_synced_at')->nullable();

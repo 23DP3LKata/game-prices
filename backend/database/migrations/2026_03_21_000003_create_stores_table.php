@@ -9,14 +9,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('stores', function (Blueprint $table) {
-            $table->id();
+            $table->increments('id');
             $table->string('code', 32)->unique();
             $table->string('name', 120);
             $table->string('website_url', 255)->nullable();
             $table->unsignedInteger('itad_shop_id')->nullable()->unique();
             $table->boolean('is_active')->default(true);
             $table->boolean('sync_enabled')->default(true);
-            $table->unsignedSmallInteger('priority')->default(100);
+            $table->unsignedInteger('priority')->default(100);
             $table->timestamps();
 
             $table->index(['is_active', 'name']);

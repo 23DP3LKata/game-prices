@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('sync_logs', function (Blueprint $table): void {
-            $table->id();
+            $table->increments('id');
             $table->string('sync_type', 20);
             $table->string('status', 20);
             $table->string('command', 80);
