@@ -140,7 +140,7 @@ async function runSync(command) {
 }
 
 function formatDate(value) {
-  return formatDateTime(value) || '-'
+  return formatDateTime(value, undefined, selectedLanguage.value) || '-'
 }
 
 function formatSyncType(value) {

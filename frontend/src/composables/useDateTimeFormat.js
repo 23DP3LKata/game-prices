@@ -12,7 +12,15 @@ const RELEASE_DATE_OPTIONS = {
   timeZone: 'UTC',
 }
 
-export function formatDateTime(value, options = NOTIFICATION_DATE_TIME_OPTIONS) {
+function langToLocale(lang) {
+  if (!lang) return 'en-GB'
+  const upper = String(lang).toUpperCase()
+  if (upper === 'LV' || upper === 'LVL' || upper === 'LATVIA') return 'lv-LV'
+  if (upper === 'ENG' || upper === 'EN') return 'en-GB'
+  return String(lang)
+}
+
+export function formatDateTime(value, options = NOTIFICATION_DATE_TIME_OPTIONS, lang = 'ENG') {
   if (!value) {
     return ''
   }
@@ -22,10 +30,11 @@ export function formatDateTime(value, options = NOTIFICATION_DATE_TIME_OPTIONS) 
     return ''
   }
 
-  return new Intl.DateTimeFormat('en-GB', options).format(parsedDate)
+  const locale = langToLocale(lang)
+  return new Intl.DateTimeFormat(locale, options).format(parsedDate)
 }
 
-export function formatDateOnly(value, options = RELEASE_DATE_OPTIONS) {
+export function formatDateOnly(value, options = RELEASE_DATE_OPTIONS, lang = 'ENG') {
   if (!value) {
     return ''
   }
@@ -35,5 +44,6 @@ export function formatDateOnly(value, options = RELEASE_DATE_OPTIONS) {
     return ''
   }
 
-  return new Intl.DateTimeFormat('en-GB', options).format(parsedDate)
+  const locale = langToLocale(lang)
+  return new Intl.DateTimeFormat(locale, options).format(parsedDate)
 }

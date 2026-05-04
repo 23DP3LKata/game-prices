@@ -310,7 +310,7 @@ onMounted(() => {
                           <div class="game-meta">
                             <span class="game-name">{{ game.name }}</span>
                             <div class="game-badges">
-                              <span v-if="game.releaseDate" class="meta-badge">{{ formatDateOnly(game.releaseDate) || game.releaseDate }}</span>
+                              <span v-if="game.releaseDate" class="meta-badge">{{ formatDateOnly(game.releaseDate, undefined, selectedLanguage) || game.releaseDate }}</span>
                               <span v-if="game.bestPrice !== null && game.bestPrice !== undefined" class="meta-badge">{{ formatPrice(game.bestPrice) }}</span>
                               <span v-if="game.bestDiscount !== null && game.bestDiscount !== undefined" class="meta-badge">
                                 {{ game.bestDiscount }}% off

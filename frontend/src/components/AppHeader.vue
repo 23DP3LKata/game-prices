@@ -37,7 +37,7 @@ const notificationsWrapperRef = ref(null)
 const visibleNotifications = computed(() => notifications.value.slice(0, 6))
 
 function formatNotificationTime(value) {
-  return formatDateTime(value)
+  return formatDateTime(value, undefined, props.selectedLanguage)
 }
 
 async function loadNotifications() {
