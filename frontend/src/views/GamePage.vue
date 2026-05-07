@@ -1,457 +1,220 @@
 <script setup>
-import { computed, ref, provide, onMounted, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { computed, nextTick, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { Chart, registerables } from 'chart.js'
 import AppHeader from '../components/AppHeader.vue'
-import { formatDateOnly, formatDateTime } from '../composables/useDateTimeFormat'
 import { useThemePreference } from '../composables/useThemePreference'
-import { useAuthStore } from '../stores/auth'
+import { formatDateOnly } from '../composables/useDateTimeFormat'
 
-const router = useRouter()
+Chart.register(...registerables)
+
 const route = useRoute()
-const authStore = useAuthStore()
-
+const router = useRouter()
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '')
 const selectedLanguage = ref('ENG')
 const selectedTheme = useThemePreference()
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '')
-const isLoading = ref(true)
-const loadError = ref('')
 
 provide('theme', selectedTheme)
 
-const game = ref({
-  id: null,
-  name: '',
-  description: '',
-  image: '',
-  genre: '',
-  releaseDate: '',
-  developer: '',
-  publisher: '',
+const currencyFormatter = new Intl.NumberFormat('de-DE', {
+  style: 'currency',
+  currency: 'EUR',
 })
 
-const prices = ref([])
+const periodOrder = ['3m', '6m', '1y', 'all']
 
-const priceHistory = ref([])
-const isWishlisted = ref(false)
-const isWishlistBusy = ref(false)
-const wishlistMessage = ref('')
-const wishlistError = ref('')
+const selectedPeriod = ref('all')
+const chartCanvas = ref(null)
+const chartInstance = ref(null)
+const isLoading = ref(true)
+const loadError = ref('')
+const game = ref({
+  title: '',
+  genre: '',
+  developer: '',
+  release_date: '',
+  playtime_min: 0,
+  playtime_max: 0,
+  age_rating: '',
+  languages: [],
+  cover_image: '',
+  platforms: [],
+  tags: [],
+  description: '',
+})
+const stores = ref([])
+const priceHistory = ref({
+  '3m': [],
+  '6m': [],
+  '1y': [],
+  all: [],
+})
 
-const chartLayout = {
-  width: 1000,
-  height: 320,
-  paddingTop: 24,
-  paddingRight: 84,
-  paddingBottom: 48,
-  paddingLeft: 56,
-}
-const PRICE_CHANGE_EPSILON = 0.0001
+const platformPalette = ['#a78bfa', '#7c3aed', '#c4b5fd', '#8b5cf6', '#ddd6fe']
 
-const activeChartPointIndex = ref(null)
+const currentHistory = computed(() => priceHistory.value[selectedPeriod.value] ?? [])
+const allTimeHistory = computed(() => priceHistory.value.all ?? [])
+const sortedStores = computed(() => {
+  return [...stores.value].sort((left, right) => left.current_price_eur - right.current_price_eur)
+})
 
-const toNumber = (value) => {
-  if (value === null || value === undefined || value === '') return null
-  const parsed = Number(value)
-  return Number.isFinite(parsed) ? parsed : null
-}
+const bestStorePrice = computed(() => sortedStores.value[0] ?? null)
 
-function formatChartPrice(value) {
-  return Number(value).toFixed(2)
-}
+const minAllTimePrice = computed(() => {
+  const values = allTimeHistory.value.map((point) => point.price).filter((price) => Number.isFinite(price))
 
-function getNiceIntegerStep(maxValue, targetIntervals = 5) {
-  if (!Number.isFinite(maxValue) || maxValue <= 0) {
-    return 1
+  if (values.length === 0) {
+    return null
   }
 
-  const roughStep = maxValue / targetIntervals
-  const exponent = Math.floor(Math.log10(roughStep))
-  const base = 10 ** exponent
-  const normalized = roughStep / base
+  return Math.min(...values)
+})
 
-  let multiplier = 10
+const displayedCurrentPrice = computed(() => {
+  const history = currentHistory.value
 
-  if (normalized <= 1) {
-    multiplier = 1
-  } else if (normalized <= 2) {
-    multiplier = 2
-  } else if (normalized <= 5) {
-    multiplier = 5
+  if (history.length === 0) {
+    return null
   }
 
-  const step = multiplier * base
-  return Math.max(1, Math.round(step))
-}
+  return history[history.length - 1]?.price ?? null
+})
 
-function formatTooltipDate(value) {
-  return formatDateTime(value) || 'n/a'
-}
+const genreList = computed(() => {
+  const rawGenre = String(game.value.genre || '').trim()
 
-function formatDiscountValue(value) {
-  if (value === null || value === undefined || Number.isNaN(Number(value))) {
-    return '—'
+  if (!rawGenre) {
+    return []
   }
 
-  const parsedValue = Number(value)
-  if (parsedValue <= 0) {
-    return '—'
+  return rawGenre
+    .split(/,|\//)
+    .map((item) => item.trim())
+    .filter(Boolean)
+})
+
+const overviewTags = computed(() => {
+  const customTags = Array.isArray(game.value.tags) ? game.value.tags.filter(Boolean) : []
+  if (customTags.length > 0) {
+    return customTags
   }
 
-  return `-${Math.round(parsedValue)}%`
+  return genreList.value
+})
+
+function formatPrice(value) {
+  return currencyFormatter.format(Number(value) || 0)
 }
 
-function formatStoreValue(value) {
-  if (!value || String(value).trim() === '') {
-    return 'Unknown'
-  }
-
-  return String(value)
-}
-
-function clearWishlistFeedback() {
-  wishlistMessage.value = ''
-  wishlistError.value = ''
-}
-
-const sortedPriceHistory = computed(() => [...priceHistory.value].sort((left, right) => left.date.localeCompare(right.date)))
-
-function normalizeSyncKey(value) {
+function formatReleaseYear(value) {
   if (!value) {
-    return ''
+    return 'n/a'
   }
 
   const parsedDate = new Date(value)
   if (!Number.isNaN(parsedDate.getTime())) {
-    const year = parsedDate.getUTCFullYear()
-    const month = String(parsedDate.getUTCMonth() + 1).padStart(2, '0')
-    const day = String(parsedDate.getUTCDate()).padStart(2, '0')
-    const hours = String(parsedDate.getUTCHours()).padStart(2, '0')
-    const minutes = String(parsedDate.getUTCMinutes()).padStart(2, '0')
-    const seconds = String(parsedDate.getUTCSeconds()).padStart(2, '0')
-
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}Z`
+    return String(parsedDate.getFullYear())
   }
 
-  return String(value)
+  return String(value).slice(0, 4)
 }
 
-const minPricePerSyncHistory = computed(() => {
-  const history = sortedPriceHistory.value
-
-  if (history.length === 0) {
-    return []
+function formatPlaytime(minValue, maxValue) {
+  if (!Number.isFinite(minValue) && !Number.isFinite(maxValue)) {
+    return 'n/a'
   }
 
-  const syncGroupsMap = new Map()
-  const syncOrder = []
+  const formatHours = (minutes) => `${Math.max(1, Math.round(minutes / 60))}h`
 
-  history.forEach((point) => {
-    const syncKey = point.syncKey || normalizeSyncKey(point.date)
+  if (!Number.isFinite(maxValue) || maxValue <= 0) {
+    return formatHours(minValue)
+  }
 
-    if (!syncGroupsMap.has(syncKey)) {
-      syncGroupsMap.set(syncKey, {
-        syncKey,
-        syncDate: point.date,
-        points: [],
-      })
-      syncOrder.push(syncKey)
-    }
+  if (!Number.isFinite(minValue) || minValue <= 0) {
+    return formatHours(maxValue)
+  }
 
-    const group = syncGroupsMap.get(syncKey)
-    group.points.push(point)
+  return `${formatHours(minValue)} - ${formatHours(maxValue)}`
+}
 
-    if (point.date > group.syncDate) {
-      group.syncDate = point.date
-    }
-  })
+function formatDate(value) {
+  if (!value) {
+    return 'n/a'
+  }
 
-  const syncGroups = syncOrder
-    .map((syncKey) => syncGroupsMap.get(syncKey))
-    .sort((left, right) => left.syncDate.localeCompare(right.syncDate))
+  const formatted = formatDateOnly(value, undefined, selectedLanguage.value)
+  return formatted || String(value)
+}
 
-  const latestStoreState = new Map()
-  const result = []
+function getPlatformColor(index) {
+  return platformPalette[index % platformPalette.length]
+}
 
-  syncGroups.forEach((group) => {
-    group.points.forEach((point) => {
-      const storeKey = String(point.store || 'unknown').trim().toLowerCase()
-      const previousPoint = latestStoreState.get(storeKey)
+function getStoreInitial(storeName) {
+  const firstCharacter = String(storeName || '?').trim().charAt(0)
+  return firstCharacter ? firstCharacter.toUpperCase() : '?'
+}
 
-      if (!previousPoint || point.date >= previousPoint.date) {
-        latestStoreState.set(storeKey, point)
-      }
-    })
+function getDiscountTone(discount) {
+  if (discount >= 25) {
+    return 'strong'
+  }
 
-    let minPoint = null
+  if (discount >= 10) {
+    return 'medium'
+  }
 
-    latestStoreState.forEach((point) => {
-      if (!minPoint || point.price < minPoint.price - PRICE_CHANGE_EPSILON) {
-        minPoint = point
-        return
-      }
+  return 'neutral'
+}
 
-      if (Math.abs(point.price - minPoint.price) <= PRICE_CHANGE_EPSILON && point.date > minPoint.date) {
-        minPoint = point
-      }
-    })
+function openStore(url) {
+  if (!url) {
+    return
+  }
 
-    if (!minPoint) {
-      return
-    }
+  window.open(url, '_blank', 'noopener,noreferrer')
+}
 
-    result.push({
-      ...minPoint,
-      date: group.syncDate,
-      syncKey: group.syncKey,
-    })
-  })
+function normalizePeriodHistory(history) {
+  const sortedHistory = [...history].sort((left, right) => left.date.localeCompare(right.date))
 
-  return result
-})
-
-const chartState = computed(() => {
-  const points = minPricePerSyncHistory.value
-
-  if (points.length === 0) {
+  if (sortedHistory.length === 0) {
     return {
-      points: [],
-      ticks: [],
-      path: '',
-      minPrice: 0,
-      maxPrice: 0,
+      '3m': [],
+      '6m': [],
+      '1y': [],
+      all: [],
     }
   }
 
-  const prices = points.map((point) => point.price)
-  const rawMaxPrice = Math.max(...prices)
-  const minPrice = 0
-  const tickStep = getNiceIntegerStep(rawMaxPrice)
-  const maxPrice = Math.max(tickStep, Math.ceil(rawMaxPrice / tickStep) * tickStep)
-  const chartWidth = chartLayout.width - chartLayout.paddingLeft - chartLayout.paddingRight
-  const chartHeight = chartLayout.height - chartLayout.paddingTop - chartLayout.paddingBottom
-  const denominator = Math.max(maxPrice - minPrice, 1)
-  const stepCount = Math.max(points.length - 1, 1)
+  const latestDate = new Date(sortedHistory[sortedHistory.length - 1].date)
 
-  const chartPoints = points.map((point, index) => {
-    const x = chartLayout.paddingLeft + (chartWidth * index) / stepCount
-    const y = chartLayout.paddingTop + chartHeight - ((point.price - minPrice) / denominator) * chartHeight
+  const filterSince = (months) => {
+    const cutoffDate = new Date(latestDate)
+    cutoffDate.setMonth(cutoffDate.getMonth() - months)
 
-    return {
-      ...point,
-      x,
-      y,
-    }
-  })
-
-  let path = ''
-
-  chartPoints.forEach((point, index) => {
-    if (index === 0) {
-      path = `M ${point.x} ${point.y}`
-      return
-    }
-
-    path += ` H ${point.x} V ${point.y}`
-  })
-
-  const changeMarkers = chartPoints
-    .map((point, index) => {
-      if (index === 0) {
-        return null
-      }
-
-      const previousPoint = chartPoints[index - 1]
-      const hasPriceChange = Math.abs(previousPoint.price - point.price) > PRICE_CHANGE_EPSILON
-
-      if (!hasPriceChange) {
-        return null
-      }
-
-      return {
-        key: `${point.date}-${point.price}-${index}`,
-        x: point.x,
-        y1: previousPoint.y,
-        y2: point.y,
-      }
-    })
-    .filter(Boolean)
-
-  const tickCount = Math.max(1, Math.round(maxPrice / tickStep))
-  const ticks = Array.from({ length: tickCount + 1 }, (_, index) => {
-    const value = maxPrice - tickStep * index
-    const ratio = 1 - value / Math.max(maxPrice, 1)
-
-    return {
-      value: Math.round(value),
-      y: chartLayout.paddingTop + chartHeight * ratio,
-    }
-  })
+    return sortedHistory.filter((point) => new Date(point.date) >= cutoffDate)
+  }
 
   return {
-    points: chartPoints,
-    ticks,
-    path,
-    minPrice,
-    maxPrice,
-    chartAreaRight: chartLayout.width - chartLayout.paddingRight,
-    changeMarkers,
-  }
-})
-
-const activeChartPoint = computed(() => {
-  if (activeChartPointIndex.value === null) {
-    return null
-  }
-
-  return chartState.value.points[activeChartPointIndex.value] || null
-})
-
-const activeTooltipStyle = computed(() => {
-  const point = activeChartPoint.value
-
-  if (!point) {
-    return {}
-  }
-
-  const leftPercent = Math.min(92, Math.max(8, (point.x / chartLayout.width) * 100))
-  const topPercent = Math.min(90, Math.max(8, (point.y / chartLayout.height) * 100))
-
-  return {
-    left: `${leftPercent}%`,
-    top: `${topPercent}%`,
-  }
-})
-
-async function loadWishlistState(gameId) {
-  if (!authStore.isLoggedIn) {
-    isWishlisted.value = false
-    return
-  }
-
-  isWishlistBusy.value = true
-
-  try {
-    const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/wishlist/${gameId}/status` : `/api/wishlist/${gameId}/status`, {
-      headers: {
-        Accept: 'application/json',
-      },
-      credentials: 'include',
-    })
-
-    if (response.status === 401) {
-      authStore.clearUser()
-      isWishlisted.value = false
-      return
-    }
-
-    const data = await response.json().catch(() => null)
-    isWishlisted.value = Boolean(data?.isWishlisted)
-  } catch {
-    isWishlisted.value = false
-  } finally {
-    isWishlistBusy.value = false
+    '3m': filterSince(3),
+    '6m': filterSince(6),
+    '1y': filterSince(12),
+    all: sortedHistory,
   }
 }
 
-async function toggleWishlist() {
-  if (!game.value.id) {
-    return
-  }
-
-  if (!authStore.isLoggedIn) {
-    await router.push('/login')
-    return
-  }
-
-  isWishlistBusy.value = true
-  clearWishlistFeedback()
-
-  try {
-    const endpoint = apiBaseUrl ? `${apiBaseUrl}/wishlist/${game.value.id}` : `/api/wishlist/${game.value.id}`
-    const requestOptions = {
-      method: isWishlisted.value ? 'DELETE' : 'POST',
-      credentials: 'include',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-    }
-
-    if (!isWishlisted.value) {
-      requestOptions.body = JSON.stringify({})
-    }
-
-    const response = await fetch(endpoint, {
-      ...requestOptions,
-    })
-
-    if (response.status === 401) {
-      authStore.clearUser()
-      await router.push('/login')
-      return
-    }
-
-    const data = await response.json().catch(() => null)
-
-    if (!response.ok) {
-      throw new Error(data?.message || 'Unable to update wishlist.')
-    }
-
-    isWishlisted.value = !isWishlisted.value
-    wishlistMessage.value = isWishlisted.value ? 'Added to wishlist.' : 'Removed from wishlist.'
-  } catch (err) {
-    wishlistError.value = err instanceof Error ? err.message : 'Unable to update wishlist.'
-  } finally {
-    isWishlistBusy.value = false
-  }
+function getRouteSlug() {
+  const slug = route.params.slug
+  return Array.isArray(slug) ? slug[0] : slug
 }
 
-function handleChartHover(event) {
-  const points = chartState.value.points
-
-  if (points.length === 0) {
-    activeChartPointIndex.value = null
-    return
-  }
-
-  const target = event.currentTarget
-  if (!(target instanceof Element)) {
-    return
-  }
-
-  const rect = target.getBoundingClientRect()
-  if (rect.width <= 0) {
-    return
-  }
-
-  const relativeX = Math.min(Math.max(event.clientX - rect.left, 0), rect.width)
-  const viewBoxX = (relativeX / rect.width) * chartLayout.width
-
-  let nearestIndex = 0
-  let nearestDistance = Number.POSITIVE_INFINITY
-
-  points.forEach((point, index) => {
-    const distance = Math.abs(point.x - viewBoxX)
-    if (distance < nearestDistance) {
-      nearestDistance = distance
-      nearestIndex = index
-    }
-  })
-
-  activeChartPointIndex.value = nearestIndex
-}
-
-function clearChartHover() {
-  activeChartPointIndex.value = null
-}
-
-async function fetchGameData(id) {
+async function fetchGameData(slug) {
   isLoading.value = true
   loadError.value = ''
-  clearWishlistFeedback()
 
   try {
-    const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/games/${encodeURIComponent(id)}` : `/api/games/${encodeURIComponent(id)}`, {
+    const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/games/${encodeURIComponent(slug)}` : `/api/games/${encodeURIComponent(slug)}`, {
       headers: {
         Accept: 'application/json',
       },
@@ -468,93 +231,227 @@ async function fetchGameData(id) {
     }
 
     const payload = data?.game ?? {}
-
     game.value = {
-      id: payload.id ?? null,
-      name: payload.name ?? 'Unknown game',
-      description: payload.description ?? '',
-      image: payload.image ?? '',
+      title: payload.name ?? 'Untitled game',
       genre: payload.genre ?? '',
-      releaseDate: payload.releaseDate ?? '',
       developer: payload.developer ?? '',
-      publisher: payload.publisher ?? '',
+      release_date: payload.releaseDate ?? '',
+      playtime_min: 0,
+      playtime_max: 0,
+      age_rating: '',
+      languages: [],
+      cover_image: payload.image ?? '',
+      platforms: [],
+      tags: [],
+      description: payload.description ?? '',
     }
 
     const rawPrices = Array.isArray(data?.prices) ? data.prices : []
-    prices.value = rawPrices.map((item) => ({
-      store: item?.store?.name || item?.store?.code || 'Unknown',
-      price: toNumber(item?.currentPrice ?? item?.price),
-      originalPrice: toNumber(item?.originalPrice),
-      discount: toNumber(item?.discountPercent ?? item?.discount) ?? 0,
-      onSale: Boolean(item?.isOnSale ?? item?.onSale),
-      url: item?.storeUrl || item?.url || '#',
-      currency: item?.currency || 'EUR',
-    })).filter((item) => item.price !== null)
+    stores.value = rawPrices.map((item) => ({
+      store_name: item?.store?.name || item?.store?.code || 'Unknown',
+      store_slug: String(item?.store?.code || item?.store?.name || 'store').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+      base_price_eur: Number(item?.originalPrice ?? item?.currentPrice ?? 0),
+      current_price_eur: Number(item?.currentPrice ?? 0),
+      discount_percent: Number(item?.discountPercent ?? 0),
+      url: item?.storeUrl || '',
+    })).filter((item) => Number.isFinite(item.current_price_eur))
 
     const rawHistory = Array.isArray(data?.priceHistory) ? data.priceHistory : []
-    priceHistory.value = rawHistory.map((point) => ({
-      price: toNumber(point?.price),
-      date: point?.recordedAt || point?.date || '',
-      store: point?.store?.name || point?.store?.code || 'Unknown',
-      discount: toNumber(point?.discountPercent ?? point?.discount),
-      syncKey: point?.syncLogId
-        || point?.sync_log_id
-        || point?.syncId
-        || point?.sync_id
-        || normalizeSyncKey(point?.recordedAt || point?.date || ''),
-    })).filter((point) => point.price !== null && point.date)
+    const normalizedHistory = rawHistory
+      .map((point) => ({
+        date: point?.recordedAt || '',
+        price: Number(point?.price),
+        store: point?.store?.name || point?.store?.code || 'Unknown',
+      }))
+      .filter((point) => point.date && Number.isFinite(point.price))
 
-    await loadWishlistState(game.value.id)
+    priceHistory.value = normalizePeriodHistory(normalizedHistory)
+
+    await nextTick()
+    buildChart()
   } catch (err) {
     loadError.value = err instanceof Error ? err.message : 'Unable to load game data right now.'
     game.value = {
-      id: null,
-      name: '',
-      description: '',
-      image: '',
+      title: '',
       genre: '',
-      releaseDate: '',
       developer: '',
-      publisher: '',
+      release_date: '',
+      playtime_min: 0,
+      playtime_max: 0,
+      age_rating: '',
+      languages: [],
+      cover_image: '',
+      platforms: [],
+      tags: [],
+      description: '',
     }
-    prices.value = []
-    priceHistory.value = []
-    activeChartPointIndex.value = null
-    isWishlisted.value = false
+    stores.value = []
+    priceHistory.value = {
+      '3m': [],
+      '6m': [],
+      '1y': [],
+      all: [],
+    }
   } finally {
     isLoading.value = false
   }
 }
 
-onMounted(() => {
-  fetchGameData(route.params.id)
+let buildChartTimeout = null
+
+function buildChart() {
+  if (buildChartTimeout) {
+    clearTimeout(buildChartTimeout)
+  }
+
+  buildChartTimeout = setTimeout(() => {
+    if (chartInstance.value) {
+      chartInstance.value.destroy()
+      chartInstance.value = null
+    }
+
+    if (!chartCanvas.value) {
+      return
+    }
+
+    const history = currentHistory.value
+
+    if (history.length === 0) {
+      return
+    }
+
+    const ctx = chartCanvas.value?.getContext('2d')
+    if (!ctx) {
+      return
+    }
+
+    const gradient = ctx.createLinearGradient(0, 0, 0, 200)
+    gradient.addColorStop(0, 'rgba(167, 139, 250, 0.2)')
+    gradient.addColorStop(1, 'rgba(167, 139, 250, 0)')
+    const isDarkTheme = selectedTheme.value === 'dark'
+    const tickColor = isDarkTheme ? '#a1a1aa' : '#6b7280'
+    const gridColor = isDarkTheme ? 'rgba(255, 255, 255, 0.08)' : 'rgba(17, 24, 39, 0.08)'
+    const tooltipBackground = isDarkTheme ? '#18181b' : '#ffffff'
+    const tooltipBorder = isDarkTheme ? 'rgba(255, 255, 255, 0.12)' : 'rgba(17, 24, 39, 0.12)'
+    const tooltipTitle = isDarkTheme ? '#f4f4f5' : '#111827'
+    const tooltipBody = isDarkTheme ? '#f4f4f5' : '#111827'
+
+    chartInstance.value = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: history.map((point) => formatDate(point.date)),
+        datasets: [
+          {
+            data: history.map((point) => point.price),
+            borderColor: '#a78bfa',
+            backgroundColor: gradient,
+            borderWidth: 2,
+            fill: true,
+            tension: 0.35,
+            pointRadius: 4,
+            pointHoverRadius: 5,
+            pointBackgroundColor: '#a78bfa',
+            pointBorderColor: '#a78bfa',
+            pointBorderWidth: 0,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: {
+          duration: 0,
+        },
+        plugins: {
+          legend: {
+            display: false,
+          },
+          tooltip: {
+            enabled: true,
+            backgroundColor: tooltipBackground,
+            borderColor: tooltipBorder,
+            borderWidth: 1,
+            titleColor: tooltipTitle,
+            bodyColor: tooltipBody,
+            displayColors: false,
+            padding: 12,
+            callbacks: {
+              label(context) {
+                return formatPrice(context.parsed.y)
+              },
+              afterBody(items) {
+                const point = history[items?.[0]?.dataIndex]
+                return point?.store ? `Store: ${point.store}` : ''
+              },
+            },
+          },
+        },
+        scales: {
+          x: {
+            grid: {
+              display: false,
+              drawBorder: false,
+            },
+            ticks: {
+              color: tickColor,
+              font: {
+                size: 12,
+              },
+            },
+          },
+          y: {
+            grid: {
+              color: gridColor,
+              drawBorder: false,
+            },
+            ticks: {
+              color: tickColor,
+              font: {
+                size: 12,
+              },
+              callback(value) {
+                return formatPrice(value)
+              },
+            },
+          },
+        },
+      },
+    })
+  }, 0)
+}
+
+watch([selectedPeriod, currentHistory, selectedTheme], async () => {
+  await nextTick()
+  buildChart()
 })
 
-watch(
-  () => route.params.id,
-  (gameId) => {
-    if (gameId) {
-      fetchGameData(gameId)
-    }
-  },
-)
+onMounted(async () => {
+  const slug = getRouteSlug()
 
-const goToGames = () => {
-  router.push('/games')
-}
-
-const getBestPrice = () => {
-  if (prices.value.length === 0) return null
-  return prices.value.reduce((min, p) => p.price < min.price ? p : min, prices.value[0])
-}
-
-function openStore(url) {
-  if (!url || url === '#') {
+  if (typeof slug !== 'string' || slug.trim() === '') {
+    loadError.value = 'Missing game slug.'
+    isLoading.value = false
     return
   }
 
-  window.open(url, '_blank', 'noopener,noreferrer')
-}
+  await fetchGameData(slug)
+})
+
+watch(getRouteSlug, async (slug, previousSlug) => {
+  if (slug && slug !== previousSlug) {
+    await fetchGameData(slug)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (buildChartTimeout) {
+    clearTimeout(buildChartTimeout)
+  }
+  if (chartInstance.value) {
+    chartInstance.value.destroy()
+    chartInstance.value = null
+  }
+})
 </script>
 
 <template>
@@ -565,234 +462,191 @@ function openStore(url) {
       activePage=""
     />
 
-    <main class="main-content">
-      <!-- Loading state -->
+    <main class="page-shell">
       <div v-if="isLoading" class="loading-state">
-        <div class="loading-spinner"></div>
-        <p>Loading game data...</p>
+        <div class="skeleton-chart"></div>
+        <div class="skeleton-row"></div>
       </div>
 
-      <div v-else-if="loadError" class="loading-state">
-        <p>{{ loadError }}</p>
-        <button class="breadcrumb-link" @click="goToGames">Back to games</button>
+      <div v-else-if="loadError" class="empty-state">
+        <div class="skeleton-row"></div>
+        <button type="button" class="store-button primary" @click="router.push('/games')">Back to games</button>
       </div>
 
-      <!-- Game content -->
-      <div v-else class="content-wrapper">
-        <!-- Breadcrumb -->
-        <nav class="breadcrumb">
-          <button class="breadcrumb-link" @click="goToGames">Games</button>
-          <span class="breadcrumb-separator">/</span>
-          <span class="breadcrumb-current">{{ game.name }}</span>
-        </nav>
-
-        <!-- Game Hero Section -->
-        <div class="game-hero">
-          <div class="game-image-container">
-            <img 
-              v-if="game.image" 
-              :src="game.image" 
-              :alt="game.name" 
-              class="game-image" 
-            />
-            <div v-else class="game-image-placeholder">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                <circle cx="8.5" cy="8.5" r="1.5"/>
-                <polyline points="21 15 16 10 5 21"/>
-              </svg>
-            </div>
+      <template v-else>
+        <section class="hero-card">
+          <img v-if="game.cover_image" :src="game.cover_image" :alt="game.title" class="hero-image" />
+          <div v-else class="hero-skeleton">
+            <div class="skeleton-line skeleton-title"></div>
+            <div class="skeleton-line skeleton-subtitle"></div>
           </div>
 
-          <div class="game-details">
-            <h1 class="game-title">{{ game.name }}</h1>
-            
-            <div class="game-meta">
-              <div class="meta-item" v-if="game.genre">
-                <span class="meta-label">Genre</span>
-                <span class="meta-value">{{ game.genre }}</span>
-              </div>
-              <div class="meta-item" v-if="game.developer">
-                <span class="meta-label">Developer</span>
-                <span class="meta-value">{{ game.developer }}</span>
-              </div>
-              <div class="meta-item" v-if="game.publisher">
-                <span class="meta-label">Publisher</span>
-                <span class="meta-value">{{ game.publisher }}</span>
-              </div>
-              <div class="meta-item" v-if="game.releaseDate">
-                <span class="meta-label">Release Date</span>
-                <span class="meta-value">{{ formatDateOnly(game.releaseDate) || game.releaseDate }}</span>
-              </div>
-            </div>
-
-            <div class="best-price-badge" v-if="getBestPrice()">
-              <span class="best-price-label">Best price</span>
-              <span class="best-price-value">€{{ getBestPrice().price.toFixed(2) }}</span>
-              <span class="best-price-store">on {{ getBestPrice().store }}</span>
-            </div>
-
-            <div class="wishlist-panel">
-              <button
-                type="button"
-                class="wishlist-btn"
-                :class="{ active: isWishlisted }"
-                :disabled="isWishlistBusy"
-                @click="toggleWishlist"
-              >
-                {{ isWishlisted ? 'Remove from wishlist' : 'Add to wishlist' }}
-              </button>
-
-              <p v-if="wishlistMessage" class="wishlist-feedback success">{{ wishlistMessage }}</p>
-              <p v-if="wishlistError" class="wishlist-feedback error">{{ wishlistError }}</p>
-            </div>
+          <div class="hero-content" v-if="game.cover_image">
+            <h1 class="game-title">{{ game?.title || 'Untitled game' }}</h1>
+            <p class="hero-meta">
+              <span>{{ formatPlaytime(game?.playtime_min, game?.playtime_max) }}</span>
+              <span>{{ game?.developer || 'n/a' }}</span>
+              <span>{{ formatReleaseYear(game?.release_date) }}</span>
+            </p>
           </div>
-        </div>
-
-        <!-- Description -->
-        <section class="section">
-          <h2 class="section-title">About this game</h2>
-          <p class="game-description">{{ game.description }}</p>
         </section>
 
-        <!-- Price Comparison Table -->
-        <section class="section">
-          <h2 class="section-title">Price Comparison</h2>
-          <div class="table-container">
-            <table class="prices-table">
+        <section class="details-grid">
+          <article class="card description-card">
+            <span class="section-label">Overview</span>
+            <p v-if="game?.description" class="description-text">{{ game.description }}</p>
+            <div v-else class="skeleton-blocks">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line short"></div>
+            </div>
+
+            <div class="tag-list" v-if="overviewTags.length">
+              <span v-for="tag in overviewTags" :key="tag" class="tag-pill">{{ tag }}</span>
+            </div>
+            <div v-else class="tag-list tag-list-empty">
+              <span class="tag-pill skeleton-tag"></span>
+              <span class="tag-pill skeleton-tag"></span>
+              <span class="tag-pill skeleton-tag"></span>
+            </div>
+          </article>
+
+          <aside class="card facts-card">
+            <span class="section-label">Details</span>
+
+            <div class="fact-row">
+              <span class="fact-key">Developer</span>
+              <span class="fact-value">{{ game?.developer || 'n/a' }}</span>
+            </div>
+            <div class="fact-row">
+              <span class="fact-key">Release date</span>
+              <span class="fact-value">{{ formatDate(game?.release_date) }}</span>
+            </div>
+            <div class="fact-row">
+              <span class="fact-key">Platforms</span>
+              <span class="fact-value platform-value">
+                <span v-if="game?.platforms?.length" class="platform-list">
+                  <span v-for="(platform, index) in game.platforms" :key="platform" class="platform-item">
+                    <span class="platform-dot" :style="{ backgroundColor: getPlatformColor(index) }"></span>
+                    {{ platform }}
+                  </span>
+                </span>
+                <span v-else>n/a</span>
+              </span>
+            </div>
+            <div class="fact-row">
+              <span class="fact-key">Age rating</span>
+              <span class="fact-value">{{ game?.age_rating || 'n/a' }}</span>
+            </div>
+            <div class="fact-row">
+              <span class="fact-key">Languages</span>
+              <span class="fact-value">{{ game?.languages?.length ? game.languages.join(', ') : 'n/a' }}</span>
+            </div>
+          </aside>
+        </section>
+
+        <section class="card stores-card">
+          <div class="section-head">
+            <div>
+              <span class="section-label">Stores</span>
+              <h2 class="section-title">Where to buy</h2>
+            </div>
+            <div class="price-highlight" v-if="bestStorePrice">
+              <span>Best current price</span>
+              <strong>{{ formatPrice(bestStorePrice.current_price_eur) }}</strong>
+            </div>
+          </div>
+
+          <div v-if="stores?.length" class="table-wrap">
+            <table class="stores-table">
               <thead>
                 <tr>
-                  <th class="col-store">Store</th>
-                  <th class="col-price">Price</th>
-                  <th class="col-discount">Discount</th>
+                  <th>Store</th>
+                  <th>Base price</th>
+                  <th>Discount</th>
+                  <th>Final price</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
                 <tr
-                  v-for="(item, index) in prices"
-                  :key="index"
-                  :class="{ 'best-row': getBestPrice() && item.price === getBestPrice().price }"
-                  class="price-row"
-                  role="link"
-                  tabindex="0"
-                  @click="openStore(item.url)"
-                  @keydown.enter.prevent="openStore(item.url)"
-                  @keydown.space.prevent="openStore(item.url)"
+                  v-for="store in sortedStores"
+                  :key="store.store_slug"
+                  :class="{ 'best-row': bestStorePrice && Math.abs(store.current_price_eur - bestStorePrice.current_price_eur) < 0.0001 }"
                 >
-                  <td class="cell-store">{{ item.store }}</td>
-                  <td class="cell-price" :class="{ 'on-sale': item.onSale }">
-                    €{{ item.price.toFixed(2) }}
+                  <td>
+                    <div class="store-cell">
+                      <span class="store-icon">{{ getStoreInitial(store.store_name) }}</span>
+                      <div>
+                        <div class="store-name">{{ store.store_name }}</div>
+                        <div class="store-subtitle">{{ store.store_slug }}</div>
+                      </div>
+                    </div>
                   </td>
-                  <td class="cell-discount">
-                    <span v-if="item.discount > 0" class="discount-badge">-{{ item.discount }}%</span>
-                    <span v-else class="no-discount">—</span>
+                  <td>{{ formatPrice(store.base_price_eur) }}</td>
+                  <td>
+                    <span class="discount-pill" :class="getDiscountTone(store.discount_percent)">
+                      {{ store.discount_percent > 0 ? `-${store.discount_percent}%` : '0%' }}
+                    </span>
                   </td>
-                </tr>
-                <tr v-if="prices.length === 0">
-                  <td colspan="3" class="empty-state">No price data available</td>
+                  <td class="final-price">{{ formatPrice(store.current_price_eur) }}</td>
+                  <td class="store-action-cell">
+                    <button
+                      type="button"
+                      class="store-button"
+                      :class="{ primary: bestStorePrice && Math.abs(store.current_price_eur - bestStorePrice.current_price_eur) < 0.0001 }"
+                      @click="openStore(store.url)"
+                    >
+                      Visit
+                    </button>
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
+
+          <div v-else class="empty-state">
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row"></div>
+            <div class="skeleton-row short"></div>
+          </div>
         </section>
 
-        <!-- Price History Chart -->
-        <section class="section">
-          <h2 class="section-title">Price History</h2>
-          <div class="chart-container">
-            <div v-if="chartState.points.length > 0" class="chart-placeholder">
-              <div class="chart-svg-wrap">
-                <svg
-                  class="price-chart"
-                  viewBox="0 0 1000 320"
-                  role="img"
-                  aria-label="Price history chart"
-                  preserveAspectRatio="none"
-                  @mousemove="handleChartHover"
-                  @mouseleave="clearChartHover"
-                >
-                  <g v-for="tick in chartState.ticks" :key="tick.value">
-                    <line
-                      class="chart-grid-line"
-                      :x1="chartLayout.paddingLeft"
-                      :x2="chartState.chartAreaRight"
-                      :y1="tick.y"
-                      :y2="tick.y"
-                    />
-                    <text class="chart-grid-label" :x="chartState.chartAreaRight + 8" :y="tick.y + 4" text-anchor="start">
-                      {{ tick.value }}
-                    </text>
-                  </g>
-
-                  <path class="chart-line" :d="chartState.path" />
-
-                  <line
-                    v-for="marker in chartState.changeMarkers"
-                    :key="marker.key"
-                    class="chart-change-marker"
-                    :x1="marker.x"
-                    :x2="marker.x"
-                    :y1="marker.y1"
-                    :y2="marker.y2"
-                  />
-
-                  <line
-                    v-if="activeChartPoint"
-                    class="chart-hover-line"
-                    :x1="activeChartPoint.x"
-                    :x2="activeChartPoint.x"
-                    :y1="chartLayout.paddingTop"
-                    :y2="chartLayout.height - chartLayout.paddingBottom"
-                  />
-
-                  <circle
-                    v-for="point in chartState.points"
-                    :key="`${point.date}-${point.price}`"
-                    class="chart-point"
-                    :cx="point.x"
-                    :cy="point.y"
-                    r="4.5"
-                  />
-
-                  <circle
-                    v-if="activeChartPoint"
-                    class="chart-point-active"
-                    :cx="activeChartPoint.x"
-                    :cy="activeChartPoint.y"
-                    r="7"
-                  />
-                </svg>
-
-                <div v-if="activeChartPoint" class="chart-tooltip" :style="activeTooltipStyle">
-                  <div class="chart-tooltip-row">
-                    <span class="chart-tooltip-label">Store</span>
-                    <span>{{ formatStoreValue(activeChartPoint.store) }}</span>
-                  </div>
-                  <div class="chart-tooltip-row">
-                    <span class="chart-tooltip-label">Date</span>
-                    <span>{{ formatTooltipDate(activeChartPoint.date) }}</span>
-                  </div>
-                  <div class="chart-tooltip-row">
-                    <span class="chart-tooltip-label">Price</span>
-                    <span>€{{ formatChartPrice(activeChartPoint.price) }}</span>
-                  </div>
-                  <div class="chart-tooltip-row">
-                    <span class="chart-tooltip-label">Discount</span>
-                    <span>{{ formatDiscountValue(activeChartPoint.discount) }}</span>
-                  </div>
-                </div>
+        <section class="card chart-card">
+          <div class="chart-head">
+            <div>
+              <span class="section-label">History</span>
+              <div class="chart-pricing">
+                <strong>{{ displayedCurrentPrice !== null ? formatPrice(displayedCurrentPrice) : 'n/a' }}</strong>
+                <span v-if="minAllTimePrice !== null">All time low: {{ formatPrice(minAllTimePrice) }}</span>
               </div>
-
             </div>
-            <div v-else class="chart-empty">
-              <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-              </svg>
-              <p>No price history available yet</p>
+
+            <div class="period-switcher">
+              <button
+                v-for="period in periodOrder"
+                :key="period"
+                type="button"
+                class="period-button"
+                :class="{ active: selectedPeriod === period }"
+                @click="selectedPeriod = period"
+              >
+                {{ period }}
+              </button>
+            </div>
+          </div>
+
+          <div class="chart-frame">
+            <div v-if="currentHistory.length" class="chart-canvas-wrap">
+              <canvas ref="chartCanvas" class="price-chart"></canvas>
+            </div>
+
+            <div v-else class="chart-empty-state">
+              <div class="skeleton-chart"></div>
             </div>
           </div>
         </section>
-      </div>
+      </template>
     </main>
 
     <footer class="footer">
@@ -805,541 +659,522 @@ function openStore(url) {
 
 <style scoped>
 * {
-  margin: 0;
-  padding: 0;
   box-sizing: border-box;
 }
 
 .game-page {
+  --bg-primary: #f4f4f5;
+  --bg-secondary: #ececf0;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --border-color: rgba(15, 23, 42, 0.08);
+  --hover-bg: rgba(99, 102, 241, 0.05);
+  --accent-color: #a78bfa;
+  --page-bg: #f4f4f5;
+  --card-bg: #ffffff;
+  --card-border: rgba(15, 23, 42, 0.08);
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --muted-bg: #f3f4f6;
+  --table-head-bg: #f9fafb;
+  --table-hover-bg: rgba(99, 102, 241, 0.05);
+  --skeleton-bg: #e5e7eb;
+  --footer-bg: #ececf0;
+  --footer-border: rgba(24, 24, 27, 0.08);
+  --accent: #a78bfa;
+  --accent-strong: #7c3aed;
+
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  transition: background-color 0.3s ease, color 0.3s ease;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
-}
-
-.game-page.light {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f5f5f7;
-  --text-primary: #1d1d1f;
-  --text-secondary: #86868b;
-  --border-color: #d2d2d7;
-  --hover-bg: #f5f5f7;
-  --accent-color: #0071e3;
+  background: var(--page-bg);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .game-page.dark {
-  --bg-primary: #1b1d21;
-  --bg-secondary: #25282e;
-  --text-primary: #f5f5f7;
-  --text-secondary: #a6aab3;
-  --border-color: #545a65;
-  --hover-bg: #2f333b;
-  --accent-color: #2997ff;
+  --bg-primary: #111218;
+  --bg-secondary: #18181b;
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --hover-bg: rgba(255, 255, 255, 0.03);
+  --accent-color: #8b5cf6;
+  --page-bg: #111218;
+  --card-bg: #18181b;
+  --card-border: rgba(255, 255, 255, 0.08);
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --muted-bg: #27272a;
+  --table-head-bg: #111113;
+  --table-hover-bg: rgba(255, 255, 255, 0.03);
+  --skeleton-bg: #27272a;
+  --footer-bg: #101217;
+  --footer-border: rgba(255, 255, 255, 0.08);
 }
 
-.game-page {
-  background: var(--bg-primary);
-  color: var(--text-primary);
-}
-
-/* loading */
-.loading-state {
+.page-shell {
+  flex: 1;
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 24px 20px 48px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 6rem 2rem;
-  gap: 1.5rem;
+  gap: 24px;
 }
 
-.loading-spinner {
-  width: 36px;
-  height: 36px;
-  border: 3px solid var(--border-color);
-  border-top-color: var(--accent-color);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+.card,
+.hero-card {
+  background: var(--card-bg);
+  border: 0.5px solid var(--card-border);
+  border-radius: 20px;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.loading-state p {
-  font-size: 1rem;
-  color: var(--text-secondary);
-}
-
-/* main */
-.main-content {
-  flex: 1;
-  padding: 2rem 2rem 4rem;
-}
-
-.content-wrapper {
-  max-width: 980px;
-  margin: 0 auto;
-}
-
-/* breadcrumb */
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 2rem;
-  font-size: 0.875rem;
-}
-
-.breadcrumb-link {
-  background: none;
-  border: none;
-  color: var(--accent-color);
-  cursor: pointer;
-  font-size: 0.875rem;
-  padding: 0;
-  transition: opacity 0.2s ease;
-}
-
-.breadcrumb-link:hover {
-  opacity: 0.7;
-}
-
-.breadcrumb-separator {
-  color: var(--text-secondary);
-}
-
-.breadcrumb-current {
-  color: var(--text-secondary);
-}
-
-/* game hero */
-.game-hero {
-  display: grid;
-  grid-template-columns: minmax(360px, 460px) 1fr;
-  gap: 2.5rem;
-  margin-bottom: 3rem;
-}
-
-.game-image-container {
-  aspect-ratio: 16 / 9;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.hero-card {
   position: relative;
-  border-radius: 12px;
   overflow: hidden;
-  border: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.12);
 }
 
-.game-image-container::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.12), transparent 55%);
-}
-
-.game-image {
+.hero-image {
+  display: block;
   width: 100%;
-  height: 100%;
-  object-fit: contain;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
   object-position: center;
   image-rendering: auto;
   transform: translateZ(0);
 }
 
-.game-image-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary);
-  opacity: 0.4;
-}
-
-.game-image-placeholder svg {
-  width: 64px;
-  height: 64px;
-}
-
-.game-details {
+.hero-skeleton {
+  min-height: 340px;
+  padding: 28px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  gap: 1.5rem;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.description-card,
+.facts-card,
+.stores-card,
+.chart-card {
+  padding: 24px;
 }
 
 .game-title {
-  font-size: 2.5rem;
-  font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: -0.5px;
-  color: var(--text-primary);
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.1;
+  color: #ffffff;
+  letter-spacing: -0.03em;
 }
 
-.game-meta {
+.hero-content {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 20px;
+  z-index: 1;
+}
+
+.hero-meta {
+  margin-top: 12px;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 13px;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45);
+}
+
+.hero-meta span:not(:last-child)::after {
+  content: '•';
+  margin-left: 14px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.details-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  grid-template-columns: 1fr 280px;
+  gap: 1.5rem;
 }
 
-.meta-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.meta-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-secondary);
+.section-label {
+  display: inline-block;
+  margin-bottom: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: var(--text-secondary);
 }
 
-.meta-value {
-  font-size: 0.9375rem;
-  color: var(--text-primary);
+.description-text {
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.75;
 }
 
-.best-price-badge {
+.tag-list {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag-pill {
   display: inline-flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  width: fit-content;
-}
-
-.best-price-label {
-  font-size: 0.75rem;
-  font-weight: 600;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--muted-bg);
   color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 12px;
+  line-height: 1;
 }
 
-.best-price-value {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--accent-color);
+.tag-list-empty .tag-pill,
+.skeleton-tag {
+  width: 72px;
+  height: 30px;
 }
 
-.best-price-store {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
-
-.wishlist-panel {
+.facts-card {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 0.5rem;
+  gap: 14px;
 }
 
-.wishlist-btn {
-  border: 1px solid var(--border-color);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  border-radius: 999px;
-  padding: 0.7rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+.fact-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 0.5px solid var(--card-border);
 }
 
-.wishlist-btn:hover {
-  transform: translateY(-1px);
-  border-color: var(--accent-color);
+.fact-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
-.wishlist-btn.active {
-  background: color-mix(in srgb, var(--accent-color) 12%, var(--bg-secondary));
-  border-color: var(--accent-color);
-}
-
-.wishlist-btn:disabled {
-  opacity: 0.65;
-  cursor: wait;
-  transform: none;
-}
-
-.wishlist-feedback {
-  font-size: 0.8125rem;
-}
-
-.wishlist-feedback.success {
-  color: var(--accent-color);
-}
-
-.wishlist-feedback.error {
+.fact-key {
   color: var(--text-secondary);
+  font-size: 13px;
+  flex: 0 0 auto;
 }
 
-/* sections */
-.section {
-  margin-bottom: 3rem;
+.fact-value {
+  color: var(--text-primary);
+  font-size: 13px;
+  text-align: right;
+}
+
+.platform-value {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.platform-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.platform-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-primary);
+}
+
+.platform-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.section-head,
+.chart-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
 }
 
 .section-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 1.25rem;
+  font-size: 20px;
   color: var(--text-primary);
-  letter-spacing: -0.25px;
+  letter-spacing: -0.02em;
 }
 
-.game-description {
-  font-size: 1.0625rem;
+.price-highlight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
   color: var(--text-secondary);
-  line-height: 1.7;
+  font-size: 12px;
 }
 
-/* price table */
-.table-container {
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  overflow: hidden;
+.price-highlight strong {
+  color: #22c55e;
+  font-size: 18px;
 }
 
-.prices-table {
+.table-wrap {
+  margin-top: 18px;
+  overflow: auto;
+  border-radius: 18px;
+  border: 0.5px solid var(--card-border);
+}
+
+.stores-table {
   width: 100%;
+  min-width: 720px;
   border-collapse: collapse;
-}
-
-.prices-table thead {
-  background: var(--bg-secondary);
-}
-
-.prices-table th {
-  padding: 0.875rem 1.5rem;
-  text-align: left;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.prices-table td {
-  padding: 1rem 1.5rem;
-  font-size: 0.9375rem;
   color: var(--text-primary);
-  border-bottom: 1px solid var(--border-color);
 }
 
-.prices-table tbody tr:last-child td {
+.stores-table thead {
+  background: var(--table-head-bg);
+}
+
+.stores-table th,
+.stores-table td {
+  padding: 16px 18px;
+  text-align: left;
+  border-bottom: 0.5px solid var(--card-border);
+}
+
+.stores-table th {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.stores-table tbody tr:hover {
+  background: var(--table-hover-bg);
+}
+
+.stores-table tbody tr:last-child td {
   border-bottom: none;
 }
 
-.prices-table tbody tr:hover {
-  background: var(--hover-bg);
+.store-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.price-row {
-  cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.2s ease;
-}
-
-.price-row:focus-visible {
-  outline: 2px solid var(--accent-color);
-  outline-offset: -2px;
-}
-
-.price-row:hover {
-  transform: translateY(-1px);
-}
-
-.best-row {
-  background: var(--hover-bg);
-}
-
-.col-store {
-  width: 35%;
-}
-
-.col-price {
-  width: 25%;
-}
-
-.col-discount {
-  width: 20%;
-}
-
-.cell-store {
-  font-weight: 500;
-}
-
-.cell-price.on-sale {
-  color: var(--accent-color);
-  font-weight: 600;
-}
-
-.discount-badge {
-  display: inline-block;
-  background: var(--accent-color);
-  color: white;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-}
-
-.no-discount {
-  color: var(--text-secondary);
-}
-
-.empty-state {
-  text-align: center;
-  padding: 3rem 1.5rem !important;
-  color: var(--text-secondary);
-}
-
-/* price history chart */
-.chart-container {
-  border: 1px solid var(--border-color);
+.store-icon {
+  width: 34px;
+  height: 34px;
   border-radius: 12px;
-  padding: 2rem;
-  background: var(--bg-secondary);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  color: var(--accent-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
 }
 
-.chart-placeholder {
+.store-name {
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.store-subtitle {
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.discount-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.discount-pill.strong {
+  background: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+}
+
+.discount-pill.medium {
+  background: rgba(249, 115, 22, 0.12);
+  color: #ea580c;
+}
+
+.discount-pill.neutral {
+  background: var(--muted-bg);
+  color: var(--text-secondary);
+}
+
+.final-price {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.store-action-cell {
+  width: 92px;
+}
+
+.store-button {
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: var(--muted-bg);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.store-button.primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.store-button:hover {
+  background: color-mix(in srgb, var(--muted-bg) 82%, #4b5563);
+}
+
+.store-button.primary:hover {
+  background: var(--accent-strong);
+}
+
+.chart-pricing {
+  margin-top: 8px;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 4px;
 }
 
-.chart-svg-wrap {
-  position: relative;
-  width: 100%;
-  height: 320px;
+.chart-pricing strong {
+  font-size: 28px;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.chart-pricing span {
+  color: #16a34a;
+  font-size: 13px;
+}
+
+.period-switcher {
+  display: inline-flex;
+  gap: 6px;
+  padding: 4px;
+  background: var(--muted-bg);
+  border-radius: 12px;
+  border: 0.5px solid var(--card-border);
+}
+
+.period-button {
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.period-button:hover {
+  color: var(--text-primary);
+}
+
+.period-button.active {
+  background: var(--card-bg);
+  color: var(--text-primary);
+}
+
+.chart-frame {
+  margin-top: 18px;
+}
+
+.chart-canvas-wrap {
+  height: 200px;
 }
 
 .price-chart {
   width: 100%;
   height: 100%;
-  overflow: visible;
 }
 
-.chart-grid-line {
-  stroke: color-mix(in srgb, var(--text-secondary) 25%, transparent);
-  stroke-width: 1;
-  stroke-dasharray: 5 6;
-}
-
-.chart-grid-label {
-  fill: var(--text-secondary);
-  font-size: 12px;
-  letter-spacing: 0.01em;
-}
-
-.chart-line {
-  fill: none;
-  stroke: var(--accent-color);
-  stroke-width: 3.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.chart-change-marker {
-  stroke: color-mix(in srgb, var(--accent-color) 82%, #ff7a59);
-  stroke-width: 4;
-  stroke-linecap: round;
-}
-
-.chart-hover-line {
-  stroke: color-mix(in srgb, var(--accent-color) 55%, transparent);
-  stroke-width: 1.5;
-  stroke-dasharray: 4 5;
-}
-
-.chart-point {
-  fill: var(--bg-secondary);
-  stroke: var(--accent-color);
-  stroke-width: 3;
-}
-
-.chart-point-active {
-  fill: color-mix(in srgb, var(--accent-color) 25%, var(--bg-secondary));
-  stroke: var(--accent-color);
-  stroke-width: 3;
-}
-
-.chart-tooltip {
-  position: absolute;
-  transform: translate(-50%, calc(-100% - 14px));
-  background: color-mix(in srgb, var(--bg-primary) 84%, var(--bg-secondary));
-  border: 1px solid var(--border-color);
-  border-radius: 10px;
-  padding: 0.6rem 0.7rem;
-  min-width: 180px;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
-  pointer-events: none;
-  z-index: 3;
-}
-
-.chart-tooltip-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.8rem;
-  font-size: 0.75rem;
-  color: var(--text-primary);
-}
-
-.chart-tooltip-row + .chart-tooltip-row {
-  margin-top: 0.35rem;
-}
-
-.chart-tooltip-label {
-  color: var(--text-secondary);
-}
-
-.chart-note {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
-  text-align: center;
-  font-style: italic;
-}
-
-.chart-empty {
+.chart-empty-state,
+.empty-state,
+.loading-state {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-  padding: 3rem;
+  gap: 12px;
 }
 
-.chart-empty .empty-icon {
-  width: 48px;
-  height: 48px;
-  color: var(--text-secondary);
-  opacity: 0.5;
+.skeleton-line,
+.skeleton-row,
+.skeleton-chart,
+.skeleton-title,
+.skeleton-subtitle {
+  background: var(--skeleton-bg);
+  border-radius: 12px;
+  animation: pulse 1.4s ease-in-out infinite;
 }
 
-.chart-empty p {
-  font-size: 1rem;
-  color: var(--text-secondary);
+.skeleton-line {
+  width: 100%;
+  height: 14px;
 }
 
-/* footer */
+.skeleton-line.short,
+.skeleton-row.short {
+  width: 60%;
+}
+
+.skeleton-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-row {
+  width: 100%;
+  height: 20px;
+}
+
+.skeleton-chart {
+  width: 100%;
+  height: 200px;
+}
+
+.skeleton-title {
+  width: 180px;
+  height: 30px;
+}
+
+.skeleton-subtitle {
+  width: 240px;
+  height: 18px;
+}
+
 .footer {
-  background: var(--bg-secondary);
-  border-top: 1px solid var(--border-color);
+  background: var(--footer-bg);
+  border-top: 1px solid var(--footer-border);
   padding: 1rem 2rem;
-  margin-top: auto;
 }
 
 .footer-container {
-  max-width: 1280px;
+  max-width: 1180px;
   margin: 0 auto;
   display: flex;
   justify-content: center;
@@ -1351,44 +1186,78 @@ function openStore(url) {
   color: var(--text-secondary);
 }
 
-/* responsive */
-@media (max-width: 980px) {
-  .game-hero {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.5;
   }
 
-  .game-image-container {
-    max-width: min(100%, 720px);
-    margin: 0 auto;
-  }
-
-  .game-title {
-    font-size: 2rem;
+  50% {
+    opacity: 0.9;
   }
 }
 
-@media (max-width: 640px) {
-  .main-content {
-    padding: 1.5rem 1.5rem 3rem;
-  }
-
-  .game-title {
-    font-size: 1.75rem;
-  }
-
-  .game-meta {
+@media (max-width: 960px) {
+  .details-grid {
     grid-template-columns: 1fr;
   }
 
-  .section-title {
-    font-size: 1.25rem;
+  .section-head,
+  .chart-head {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 720px) {
+  .page-shell {
+    padding: 18px 14px 40px;
+    gap: 16px;
   }
 
-  .prices-table th,
-  .prices-table td {
-    padding: 0.75rem 1rem;
-    font-size: 0.8125rem;
+  .description-card,
+  .facts-card,
+  .stores-card,
+  .chart-card {
+    padding: 16px;
+  }
+
+  .hero-skeleton {
+    min-height: 230px;
+  }
+
+  .hero-image {
+    aspect-ratio: 16 / 10;
+  }
+
+  .game-title {
+    font-size: 28px;
+  }
+
+  .hero-content {
+    left: 14px;
+    right: 14px;
+    bottom: 12px;
+  }
+
+  .hero-meta {
+    gap: 10px;
+  }
+
+  .stores-table {
+    min-width: 640px;
+  }
+
+  .stores-table th,
+  .stores-table td {
+    padding: 12px;
+  }
+
+  .store-action-cell {
+    width: 78px;
+  }
+
+  .footer {
+    padding: 0.9rem 1rem;
   }
 }
 </style>
