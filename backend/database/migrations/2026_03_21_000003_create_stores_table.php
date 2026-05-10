@@ -15,7 +15,6 @@ return new class extends Migration
             $table->unsignedInteger('itad_shop_id')->nullable()->unique();
             $table->boolean('is_active')->default(true);
             $table->boolean('sync_enabled')->default(true);
-            $table->unsignedInteger('priority')->default(100);
             $table->timestamps();
 
             $table->index(['is_active', 'name']);

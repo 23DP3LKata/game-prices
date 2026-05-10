@@ -19,7 +19,6 @@ class Store extends Model
         'itad_shop_id',
         'is_active',
         'sync_enabled',
-        'priority',
     ];
 
     /**
@@ -30,7 +29,6 @@ class Store extends Model
         return [
             'is_active' => 'boolean',
             'sync_enabled' => 'boolean',
-            'priority' => 'integer',
             'itad_shop_id' => 'integer',
         ];
     }
