@@ -25,7 +25,6 @@ return new class extends Migration
                 ->cascadeOnDelete();
 
             $table->string('external_game_id', 191);
-            $table->string('title_in_store', 255)->nullable();
             $table->string('external_url', 500)->nullable();
 
             $table->boolean('is_active')->default(true);

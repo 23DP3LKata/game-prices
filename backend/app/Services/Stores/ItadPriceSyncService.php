@@ -104,7 +104,6 @@ class ItadPriceSyncService
                         ],
                         [
                             'external_game_id' => $shopGameId,
-                            'title_in_store' => $game->name,
                             'is_active' => true,
                             'is_available' => true,
                         ],

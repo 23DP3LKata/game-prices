@@ -12,7 +12,6 @@ return new class extends Migration
             $table->increments('id');
             $table->string('code', 32)->unique();
             $table->string('name', 120);
-            $table->string('website_url', 255)->nullable();
             $table->unsignedInteger('itad_shop_id')->nullable()->unique();
             $table->boolean('is_active')->default(true);
             $table->boolean('sync_enabled')->default(true);

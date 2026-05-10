@@ -18,7 +18,6 @@ class GameStoreListing extends Model
         'game_id',
         'store_id',
         'external_game_id',
-        'title_in_store',
         'external_url',
         'is_active',
         'is_available',

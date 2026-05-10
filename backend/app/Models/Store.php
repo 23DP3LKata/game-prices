@@ -16,7 +16,6 @@ class Store extends Model
     protected $fillable = [
         'code',
         'name',
-        'website_url',
         'itad_shop_id',
         'is_active',
         'sync_enabled',
