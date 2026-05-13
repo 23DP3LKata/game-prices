@@ -14,10 +14,10 @@ class RegisterUserTest extends TestCase
     public function test_user_can_register_via_api(): void
     {
         $response = $this->postJson('/api/register', [
-            'nickname' => 'player_one',
+            'nickname' => 'playerone',
             'email' => 'player@example.com',
-            'password' => 'secret123',
-            'password_confirmation' => 'secret123',
+            'password' => 'Secret123!',
+            'password_confirmation' => 'Secret123!',
         ]);
 
         $response
@@ -27,14 +27,14 @@ class RegisterUserTest extends TestCase
             ->assertJsonPath('user.role', 'user');
 
         $this->assertDatabaseHas('users', [
-            'nickname' => 'player_one',
+            'nickname' => 'playerone',
             'email' => 'player@example.com',
             'role' => 'user',
         ]);
 
         $user = User::where('email', 'player@example.com')->firstOrFail();
 
-        $this->assertTrue(Hash::check('secret123', $user->password));
+        $this->assertTrue(Hash::check('Secret123!', $user->password));
     }
 
     public function test_registration_requires_unique_email(): void
@@ -44,14 +44,75 @@ class RegisterUserTest extends TestCase
         ]);
 
         $response = $this->postJson('/api/register', [
-            'nickname' => 'another_player',
+            'nickname' => 'anotherplayer',
             'email' => 'player@example.com',
-            'password' => 'secret123',
-            'password_confirmation' => 'secret123',
+            'password' => 'Secret123!',
+            'password_confirmation' => 'Secret123!',
         ]);
 
         $response
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['email']);
+    }
+
+    public function test_registration_requires_complex_password(): void
+    {
+        $response = $this->postJson('/api/register', [
+            'nickname' => 'weak_player',
+            'email' => 'weak@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['password']);
+    }
+
+    public function test_registration_requires_valid_email_format(): void
+    {
+        $response = $this->postJson('/api/register', [
+            'nickname' => 'playerone',
+            'email' => 'invalid-email',
+            'password' => 'Secret123!',
+            'password_confirmation' => 'Secret123!',
+        ]);
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.email.0', 'Please enter a valid email.');
+    }
+
+    public function test_registration_requires_alphanumeric_username(): void
+    {
+        $response = $this->postJson('/api/register', [
+            'nickname' => 'player_one',
+            'email' => 'player2@example.com',
+            'password' => 'Secret123!',
+            'password_confirmation' => 'Secret123!',
+        ]);
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.nickname.0', 'Usernames must only contain alphanumeric characters.');
+    }
+
+    public function test_registration_requires_username_to_be_available(): void
+    {
+        User::factory()->create([
+            'nickname' => 'playerone',
+            'email' => 'existing@example.com',
+        ]);
+
+        $response = $this->postJson('/api/register', [
+            'nickname' => 'playerone',
+            'email' => 'player2@example.com',
+            'password' => 'Secret123!',
+            'password_confirmation' => 'Secret123!',
+        ]);
+
+        $response
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.nickname.0', 'This username is unavailable.');
     }
 }

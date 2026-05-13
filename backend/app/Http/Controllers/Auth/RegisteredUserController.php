@@ -7,16 +7,29 @@ use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rules\Password;
 
 class RegisteredUserController extends Controller
 {
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'nickname' => ['required', 'string', 'max:100'],
+            'nickname' => ['required', 'string', 'min:4', 'max:100', 'regex:/^[A-Za-z0-9]+$/', 'unique:users,nickname'],
             'email' => ['required', 'string', 'email', 'max:100', 'unique:users,email'],
-            'password' => ['required', 'confirmed', Password::min(8)],
+            'password' => [
+                'required',
+                'confirmed',
+                'string',
+                'min:8',
+                'regex:/^(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$/',
+            ],
+        ], [
+            'nickname.min' => 'Usernames must be between 4 and 100 characters.',
+            'nickname.max' => 'Usernames must be between 4 and 100 characters.',
+            'nickname.regex' => 'Usernames must only contain alphanumeric characters.',
+            'nickname.unique' => 'This username is unavailable.',
+            'email.email' => 'Please enter a valid email.',
+            'password.min' => 'Use at least 8 characters, uppercase letter, number, special character.',
+            'password.regex' => 'Use at least 8 characters, uppercase letter, number, special character.',
         ]);
 
         $user = User::create([
