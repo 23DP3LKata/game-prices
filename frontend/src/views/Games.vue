@@ -14,7 +14,8 @@ const loadError = ref('')
 const selectedStores = ref([])
 const selectedPrice = ref('')
 const selectedDiscount = ref('')
-const selectedReleaseSort = ref('newest')
+const selectedSortField = ref('releaseDate')
+const selectedSortDirection = ref('desc')
 const searchQuery = ref('')
 
 provide('theme', selectedTheme)
@@ -39,20 +40,40 @@ const discountOptions = [
   { value: '90', label: 'At least 90% off' },
 ]
 
-const releaseSortOptions = [
-  { value: 'newest', label: 'Newest first' },
-  { value: 'oldest', label: 'Oldest first' },
+const tableHeaders = [
+  { key: 'name', label: 'Game', className: 'col-game', sortable: true },
+  { key: 'genre', label: 'Genre', className: 'col-genre', sortable: false },
+  { key: 'releaseDate', label: 'Release', className: 'col-release', sortable: true },
+  { key: 'bestPrice', label: 'Price', className: 'col-price', sortable: true },
+  { key: 'bestDiscount', label: 'Discount', className: 'col-discount', sortable: true },
 ]
 
 const hasActiveFilters = computed(() =>
+  searchQuery.value.trim() !== '' ||
   selectedStores.value.length > 0 ||
   selectedPrice.value !== '' ||
   selectedDiscount.value !== '' ||
-  selectedReleaseSort.value !== 'newest'
+  selectedSortField.value !== 'releaseDate' ||
+  selectedSortDirection.value !== 'desc'
 )
 
 const filteredGames = computed(() => {
-  const items = games.value.filter((game) => {
+  const query = searchQuery.value.trim().toLowerCase()
+
+  return games.value.filter((game) => {
+    const queryMatches = !query || [
+      game.name,
+      game.genre,
+      game.developer,
+      game.publisher,
+      game.releaseDate,
+      game.bestPrice !== null && game.bestPrice !== undefined ? String(game.bestPrice) : '',
+      game.bestDiscount !== null && game.bestDiscount !== undefined ? String(game.bestDiscount) : '',
+      ...(Array.isArray(game.stores) ? game.stores.flatMap((store) => [store.code, store.name]) : []),
+    ]
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase().includes(query))
+
     const storeMatches =
       selectedStores.value.length === 0 ||
       (Array.isArray(game.stores) && game.stores.some((store) => selectedStores.value.includes(store.code)))
@@ -67,47 +88,67 @@ const filteredGames = computed(() => {
       discountLimit === null ||
       (typeof game.bestDiscount === 'number' && game.bestDiscount >= discountLimit)
 
-    return storeMatches && priceMatches && discountMatches
+    return queryMatches && storeMatches && priceMatches && discountMatches
   })
+})
 
-  return items.sort((left, right) => {
-    const leftDate = left.releaseDate || ''
-    const rightDate = right.releaseDate || ''
+const sortedGames = computed(() => {
+  const direction = selectedSortDirection.value === 'asc' ? 1 : -1
 
-    if (!leftDate && !rightDate) {
-      return 0
+  const compareNullableNumbers = (leftValue, rightValue) => {
+    if (leftValue === null || leftValue === undefined) {
+      return rightValue === null || rightValue === undefined ? 0 : 1
     }
 
-    if (!leftDate) {
-      return 1
-    }
-
-    if (!rightDate) {
+    if (rightValue === null || rightValue === undefined) {
       return -1
     }
 
-    return selectedReleaseSort.value === 'oldest'
-      ? leftDate.localeCompare(rightDate)
-      : rightDate.localeCompare(leftDate)
-  })
-})
-
-const searchedGames = computed(() => {
-  const query = searchQuery.value.trim().toLowerCase()
-
-  if (!query) {
-    return games.value
+    return Number(leftValue) - Number(rightValue)
   }
 
-  return games.value.filter((game) => {
-    const gameName = (game.name || '').toLowerCase()
-    const gameGenre = (game.genre || '').toLowerCase()
+  const compareNullableDates = (leftValue, rightValue) => {
+    if (!leftValue && !rightValue) {
+      return 0
+    }
 
-    return gameName.includes(query) || gameGenre.includes(query)
+    if (!leftValue) {
+      return 1
+    }
+
+    if (!rightValue) {
+      return -1
+    }
+
+    return String(leftValue).localeCompare(String(rightValue))
+  }
+
+  const collator = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true })
+
+  return [...filteredGames.value].sort((left, right) => {
+    let comparison = 0
+
+    switch (selectedSortField.value) {
+      case 'name':
+        comparison = collator.compare(left.name || '', right.name || '')
+        break
+      case 'bestPrice':
+        comparison = compareNullableNumbers(left.bestPrice, right.bestPrice)
+        break
+      case 'bestDiscount':
+        comparison = compareNullableNumbers(left.bestDiscount, right.bestDiscount)
+        break
+      case 'releaseDate':
+      default:
+        comparison = compareNullableDates(left.releaseDate, right.releaseDate)
+        break
+    }
+
+    return comparison * direction
   })
 })
 
-const visibleGames = computed(() => (searchQuery.value.trim() ? searchedGames.value : filteredGames.value))
+const visibleGames = computed(() => sortedGames.value)
 
 function toggleStore(code) {
   if (selectedStores.value.includes(code)) {
@@ -122,7 +163,27 @@ function resetFilters() {
   selectedStores.value = []
   selectedPrice.value = ''
   selectedDiscount.value = ''
-  selectedReleaseSort.value = 'newest'
+  selectedSortField.value = 'releaseDate'
+  selectedSortDirection.value = 'desc'
+  searchQuery.value = ''
+}
+
+function sortBy(field) {
+  if (selectedSortField.value === field) {
+    selectedSortDirection.value = selectedSortDirection.value === 'asc' ? 'desc' : 'asc'
+    return
+  }
+
+  selectedSortField.value = field
+  selectedSortDirection.value = 'asc'
+}
+
+function getSortIndicator(field) {
+  if (selectedSortField.value !== field) {
+    return '▲'
+  }
+
+  return selectedSortDirection.value === 'asc' ? '▲' : '▼'
 }
 
 function formatPrice(value) {
@@ -130,7 +191,7 @@ function formatPrice(value) {
     return 'n/a'
   }
 
-  return `${Number(value).toFixed(2)} €`
+  return `€${Number(value).toFixed(2)}`
 }
 
 async function fetchGames() {
@@ -192,9 +253,6 @@ onMounted(() => {
               autocomplete="off"
             />
           </label>
-          <button v-if="hasActiveFilters" type="button" class="reset-button" @click="resetFilters">
-            Reset
-          </button>
         </div>
 
         <div class="layout-shell">
@@ -254,23 +312,14 @@ onMounted(() => {
               </label>
             </section>
 
-            <section class="filter-group">
-              <h3>Release date</h3>
-              <label
-                v-for="option in releaseSortOptions"
-                :key="option.value"
-                class="choice-row choice-radio"
-                :class="{ active: selectedReleaseSort === option.value }"
-              >
-                <input
-                  v-model="selectedReleaseSort"
-                  type="radio"
-                  name="release-sort"
-                  :value="option.value"
-                />
-                <span>{{ option.label }}</span>
-              </label>
-            </section>
+            <button
+              type="button"
+              class="reset-button-panel"
+              :disabled="!hasActiveFilters"
+              @click="resetFilters"
+            >
+              Reset
+            </button>
           </aside>
 
           <section class="results-panel">
@@ -283,8 +332,19 @@ onMounted(() => {
               <table class="games-table">
                 <thead>
                   <tr>
-                    <th class="col-game">Game</th>
-                    <th class="col-genre">Genre</th>
+                    <th
+                      v-for="header in tableHeaders"
+                      :key="header.key"
+                      :class="[header.className, { sortable: header.sortable }]"
+                      @click="header.sortable && sortBy(header.key)"
+                    >
+                      {{ header.label }}
+                      <span
+                        v-if="header.sortable"
+                        class="sort-indicator"
+                        :class="{ active: selectedSortField === header.key }"
+                      >{{ getSortIndicator(header.key) }}</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -309,22 +369,29 @@ onMounted(() => {
                           </div>
                           <div class="game-meta">
                             <span class="game-name">{{ game.name }}</span>
-                            <div class="game-badges">
-                              <span v-if="game.releaseDate" class="meta-badge">{{ formatDateOnly(game.releaseDate, undefined, selectedLanguage) || game.releaseDate }}</span>
-                              <span v-if="game.bestPrice !== null && game.bestPrice !== undefined" class="meta-badge">{{ formatPrice(game.bestPrice) }}</span>
-                              <span v-if="game.bestDiscount !== null && game.bestDiscount !== undefined" class="meta-badge">
-                                {{ game.bestDiscount }}% off
-                              </span>
-                            </div>
                           </div>
                         </div>
                       </td>
-                      <td class="cell-genre">{{ game.genre || 'Unknown' }}</td>
+                        <td class="cell-genre">{{ game.genre || 'Unknown' }}</td>
+                        <td class="cell-release">{{ game.releaseDate ? formatDateOnly(game.releaseDate, undefined, selectedLanguage) : 'n/a' }}</td>
+                        <td class="cell-price">{{ game.bestPrice !== null && game.bestPrice !== undefined ? formatPrice(game.bestPrice) : 'n/a' }}</td>
+                        <td class="cell-discount">
+                          <span
+                            class="discount-pill"
+                            :class="{
+                              strong: Number(game.bestDiscount) >= 25,
+                              medium: Number(game.bestDiscount) >= 10 && Number(game.bestDiscount) < 25,
+                              neutral: !Number(game.bestDiscount) || Number(game.bestDiscount) < 10,
+                            }"
+                          >
+                            {{ game.bestDiscount !== null && game.bestDiscount !== undefined ? `${game.bestDiscount}%` : '—' }}
+                          </span>
+                        </td>
                     </tr>
                   </template>
 
                   <tr v-if="isLoading">
-                    <td colspan="2" class="empty-state">
+                    <td colspan="5" class="empty-state">
                       <div class="empty-content">
                         <p>Loading games...</p>
                       </div>
@@ -332,7 +399,7 @@ onMounted(() => {
                   </tr>
 
                   <tr v-else-if="loadError">
-                    <td colspan="2" class="empty-state">
+                    <td colspan="5" class="empty-state">
                       <div class="empty-content">
                         <p>{{ loadError }}</p>
                       </div>
@@ -340,7 +407,7 @@ onMounted(() => {
                   </tr>
 
                   <tr v-else-if="games.length === 0">
-                    <td colspan="2" class="empty-state">
+                    <td colspan="5" class="empty-state">
                       <div class="empty-content">
                         <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                           <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
@@ -353,12 +420,12 @@ onMounted(() => {
                   </tr>
 
                   <tr v-else-if="visibleGames.length === 0">
-                    <td colspan="2" class="empty-state">
+                    <td colspan="5" class="empty-state">
                       <div class="empty-content">
                         <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                           <path d="M20 20V14M17 17H23M4 20V4m0 0 4 4m-4-4-4 4" />
                         </svg>
-                        <p>{{ searchQuery.trim() ? 'No games match your search' : 'No games match the selected filters' }}</p>
+                        <p>{{ searchQuery.trim() ? 'No games match your search and filters' : 'No games match the selected filters' }}</p>
                       </div>
                     </td>
                   </tr>
@@ -421,18 +488,18 @@ onMounted(() => {
 /* main */
 .main-content {
   flex: 1;
-  padding: 3rem 2rem;
+  padding: 24px 20px 48px;
 }
 
 .content-wrapper {
-  max-width: 1280px;
+  max-width: 1180px;
   margin: 0 auto;
 }
 
 .layout-shell {
   display: grid;
   grid-template-columns: 280px minmax(0, 1fr);
-  gap: 1.5rem;
+  gap: 24px;
   align-items: start;
 }
 
@@ -440,8 +507,8 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: 12px;
+  margin-bottom: 24px;
   min-height: 2.4rem;
 }
 
@@ -501,34 +568,65 @@ onMounted(() => {
 .filters-panel {
   position: sticky;
   top: 1.25rem;
-  padding: 1.25rem;
-  border: 1px solid var(--border-color);
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--bg-primary) 88%, var(--bg-secondary));
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  border: 0.5px solid var(--border-color);
+  border-radius: 20px;
+  background: var(--bg-primary);
+  box-shadow: none;
 }
 
 .reset-button {
-  border: 1px solid var(--border-color);
-  background: transparent;
+  border: 0.5px solid var(--border-color);
+  background: var(--bg-secondary);
   color: var(--text-primary);
-  border-radius: 999px;
-  padding: 0.55rem 0.85rem;
-  font-size: 0.8rem;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .reset-button:hover {
-  transform: translateY(-1px);
-  border-color: var(--accent-color);
-  background: color-mix(in srgb, var(--accent-color) 10%, transparent);
+  background: color-mix(in srgb, var(--bg-secondary) 82%, var(--accent-color));
+  border-color: color-mix(in srgb, var(--border-color) 70%, var(--accent-color));
+}
+
+.reset-button-panel {
+  width: 100%;
+  margin-top: 10px;
+  border: 0.5px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.reset-button-panel:hover {
+  background: color-mix(in srgb, var(--bg-secondary) 82%, var(--accent-color));
+  border-color: color-mix(in srgb, var(--border-color) 70%, var(--accent-color));
+}
+
+.reset-button-panel:disabled {
+  cursor: not-allowed;
+  background: color-mix(in srgb, var(--bg-secondary) 92%, var(--text-secondary));
+  color: var(--text-secondary);
+  border-color: color-mix(in srgb, var(--border-color) 85%, var(--text-secondary));
+  opacity: 0.7;
+}
+
+.reset-button-panel:disabled:hover {
+  background: color-mix(in srgb, var(--bg-secondary) 92%, var(--text-secondary));
+  border-color: color-mix(in srgb, var(--border-color) 85%, var(--text-secondary));
 }
 
 .filter-group {
-  padding: 1rem 0;
-  border-top: 1px solid var(--border-color);
+  padding: 12px 0;
+  border-top: 0.5px solid var(--border-color);
 }
 
 .filter-group:first-of-type {
@@ -537,25 +635,54 @@ onMounted(() => {
 }
 
 .filter-group h3 {
-  margin-bottom: 0.85rem;
-  font-size: 0.9rem;
-  font-weight: 700;
+  margin-bottom: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.field-label {
+  display: block;
+  margin: 8px 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.sort-select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 0.5px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 13px;
+  font: inherit;
+}
+
+.sort-select:focus {
+  outline: 2px solid color-mix(in srgb, var(--accent-color) 35%, transparent);
+  outline-offset: 2px;
 }
 
 .choice-row {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.65rem 0.75rem;
+  gap: 8px;
+  padding: 8px 8px;
   border-radius: 12px;
   color: var(--text-primary);
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.2s ease;
+  transition: background-color 0.2s ease;
+  font-size: 13px;
 }
 
 .choice-row:hover {
-  background: var(--hover-bg);
-  transform: translateX(2px);
+  background: var(--bg-secondary);
 }
 
 .choice-row.active {
@@ -587,19 +714,19 @@ onMounted(() => {
 .results-summary {
   display: flex;
   justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.85rem;
-  padding: 0 0.25rem;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 0;
   color: var(--text-secondary);
-  font-size: 0.85rem;
+  font-size: 12px;
 }
 
 /* table */
 .table-container {
-  border: 1px solid var(--border-color);
-  border-radius: 18px;
+  border: 0.5px solid var(--border-color);
+  border-radius: 20px;
   overflow: hidden;
-  background: color-mix(in srgb, var(--bg-primary) 96%, var(--bg-secondary));
+  background: var(--bg-primary);
 }
 
 .games-table {
@@ -612,21 +739,42 @@ onMounted(() => {
 }
 
 .games-table th {
-  padding: 0.875rem 1.5rem;
+  padding: 14px 18px;
   text-align: left;
-  font-size: 0.75rem;
+  font-size: 11px;
   font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border-bottom: 1px solid var(--border-color);
+  letter-spacing: 0.14em;
+  border-bottom: 0.5px solid var(--border-color);
+  background: var(--bg-secondary);
+  white-space: nowrap;
+}
+
+.games-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sort-indicator {
+  display: inline-block;
+  width: 12px;
+  font-size: 11px;
+  margin-left: 8px;
+  color: var(--text-secondary);
+  text-align: center;
+  visibility: hidden;
+}
+
+.sort-indicator.active {
+  visibility: visible;
 }
 
 .games-table td {
-  padding: 1rem 1.5rem;
-  font-size: 0.9375rem;
+  padding: 14px 18px;
+  font-size: 13px;
   color: var(--text-primary);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 0.5px solid var(--border-color);
 }
 
 .games-table tbody tr:last-child td {
@@ -647,13 +795,30 @@ onMounted(() => {
 }
 
 .col-genre {
-  width: 40%;
+  width: 34%;
+}
+
+.col-release {
+  width: 10%;
+  padding: 14px 8px;
+}
+
+.col-price {
+  width: 8%;
+  text-align: right;
+  padding: 14px 8px;
+}
+
+.col-discount {
+  width: 8%;
+  text-align: center;
+  padding: 14px 8px;
 }
 
 .game-info {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 12px;
 }
 
 .game-meta {
@@ -675,7 +840,7 @@ onMounted(() => {
   height: 48px;
   border-radius: 8px;
   background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  border: 0.5px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -704,12 +869,37 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  padding: 0.24rem 0.55rem;
-  font-size: 0.72rem;
+  padding: 6px 10px;
+  font-size: 12px;
   line-height: 1;
   color: var(--text-secondary);
   background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  border: 0.5px solid var(--border-color);
+}
+
+.discount-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.discount-pill.strong {
+  background: rgba(34, 197, 94, 0.08);
+  color: #16a34a;
+}
+
+.discount-pill.medium {
+  background: rgba(249, 115, 22, 0.08);
+  color: #ea580c;
+}
+
+.discount-pill.neutral {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
 }
 
 .cell-genre {
@@ -718,7 +908,7 @@ onMounted(() => {
 
 .empty-state {
   text-align: center;
-  padding: 4rem 1.5rem !important;
+  padding: 48px 18px !important;
 }
 
 .empty-content {
@@ -736,20 +926,20 @@ onMounted(() => {
 }
 
 .empty-content p {
-  font-size: 1rem;
+  font-size: 13px;
   color: var(--text-secondary);
 }
 
 /* footer */
 .footer {
   background: var(--bg-secondary);
-  border-top: 1px solid var(--border-color);
+  border-top: 0.5px solid var(--border-color);
   padding: 1rem 2rem;
   margin-top: auto;
 }
 
 .footer-container {
-  max-width: 1280px;
+  max-width: 1180px;
   margin: 0 auto;
   display: flex;
   justify-content: center;
@@ -757,7 +947,7 @@ onMounted(() => {
 }
 
 .footer-text {
-  font-size: 0.75rem;
+  font-size: 12px;
   color: var(--text-secondary);
 }
 
@@ -774,7 +964,7 @@ onMounted(() => {
 
 @media (max-width: 640px) {
   .main-content {
-    padding: 2rem 1.5rem;
+    padding: 18px 14px 40px;
   }
 
   .layout-actions {
@@ -794,7 +984,7 @@ onMounted(() => {
 
   .games-table th,
   .games-table td {
-    padding: 0.75rem 1rem;
+    padding: 12px;
   }
 
   .game-logo {
@@ -804,12 +994,12 @@ onMounted(() => {
   }
 
   .game-info {
-    gap: 0.75rem;
+    gap: 10px;
   }
 
   .results-summary {
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 4px;
   }
 }
 </style>
