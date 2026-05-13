@@ -159,6 +159,14 @@ function toggleStore(code) {
   selectedStores.value = [...selectedStores.value, code]
 }
 
+function togglePriceFilter(value) {
+  selectedPrice.value = selectedPrice.value === value ? '' : value
+}
+
+function toggleDiscountFilter(value) {
+  selectedDiscount.value = selectedDiscount.value === value ? '' : value
+}
+
 function resetFilters() {
   selectedStores.value = []
   selectedPrice.value = ''
@@ -278,38 +286,32 @@ onMounted(() => {
 
             <section class="filter-group">
               <h3>Price</h3>
-              <label
+              <button
                 v-for="option in priceOptions"
                 :key="option.value"
-                class="choice-row choice-radio"
+                type="button"
+                class="choice-row choice-toggle"
                 :class="{ active: selectedPrice === option.value }"
+                @click="togglePriceFilter(option.value)"
+                :aria-pressed="selectedPrice === option.value"
               >
-                <input
-                  v-model="selectedPrice"
-                  type="radio"
-                  name="price-filter"
-                  :value="option.value"
-                />
                 <span>{{ option.label }}</span>
-              </label>
+              </button>
             </section>
 
             <section class="filter-group">
               <h3>Discount</h3>
-              <label
+              <button
                 v-for="option in discountOptions"
                 :key="option.value"
-                class="choice-row choice-radio"
+                type="button"
+                class="choice-row choice-toggle"
                 :class="{ active: selectedDiscount === option.value }"
+                @click="toggleDiscountFilter(option.value)"
+                :aria-pressed="selectedDiscount === option.value"
               >
-                <input
-                  v-model="selectedDiscount"
-                  type="radio"
-                  name="discount-filter"
-                  :value="option.value"
-                />
                 <span>{{ option.label }}</span>
-              </label>
+              </button>
             </section>
 
             <button
@@ -675,6 +677,11 @@ onMounted(() => {
   gap: 8px;
   padding: 8px 8px;
   border-radius: 12px;
+  border: none;
+  width: 100%;
+  background: transparent;
+  text-align: left;
+  font: inherit;
   color: var(--text-primary);
   cursor: pointer;
   transition: background-color 0.2s ease;
