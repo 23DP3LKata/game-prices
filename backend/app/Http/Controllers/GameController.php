@@ -5,40 +5,62 @@ namespace App\Http\Controllers;
 use App\Models\Game;
 use App\Models\GameMinPrice;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Collection;
 
 class GameController extends Controller
 {
     public function index(): JsonResponse
     {
         $games = Game::query()
-            ->where('is_active', true)
-            ->with([
-                'storeListings' => function ($query) {
-                    $query->where('is_active', true)->with('store');
-                },
+            ->where('games.is_active', true)
+            ->leftJoin('game_store_listings as gsl', function ($join) {
+                $join->on('gsl.game_id', '=', 'games.id')
+                    ->where('gsl.is_active', true);
+            })
+            ->leftJoin('stores as s', function ($join) {
+                $join->on('s.id', '=', 'gsl.store_id')
+                    ->where('s.is_active', true);
+            })
+            ->select([
+                'games.id',
+                'games.name',
+                'games.slug',
+                'games.genre',
+                'games.image_url',
+                'games.release_date',
+                'games.developer',
+                'games.publisher',
+                'gsl.current_price as listing_price',
+                'gsl.discount_percent as listing_discount_percent',
+                's.code as store_code',
+                's.name as store_name',
             ])
-            ->orderBy('name')
-            ->get(['id', 'name', 'slug', 'genre', 'image_url', 'release_date'])
-            ->map(function (Game $game) {
-                $storeListings = $game->storeListings;
+            ->orderBy('games.name')
+            ->get()
+            ->groupBy('id')
+            ->map(function (Collection $rows) {
+                /** @var Game $game */
+                $game = $rows->first();
 
-                $stores = $storeListings
-                    ->map(fn ($listing) => [
-                        'code' => $listing->store?->code,
-                        'name' => $listing->store?->name,
+                $stores = $rows
+                    ->filter(fn ($row) => filled($row->store_code))
+                    ->map(fn ($row) => [
+                        'code' => $row->store_code,
+                        'name' => $row->store_name,
                     ])
-                    ->filter(fn (array $store) => filled($store['code']))
                     ->unique('code')
                     ->values();
 
-                $bestPrice = $storeListings
-                    ->map(fn ($listing) => $listing->current_price !== null ? (float) $listing->current_price : null)
+                $bestPrice = $rows
+                    ->pluck('listing_price')
                     ->filter(fn ($price) => $price !== null)
+                    ->map(fn ($price) => (float) $price)
                     ->min();
 
-                $bestDiscount = $storeListings
-                    ->map(fn ($listing) => $listing->discount_percent !== null ? (int) $listing->discount_percent : null)
+                $bestDiscount = $rows
+                    ->pluck('listing_discount_percent')
                     ->filter(fn ($discount) => $discount !== null)
+                    ->map(fn ($discount) => (int) $discount)
                     ->max();
 
                 return [
@@ -46,13 +68,16 @@ class GameController extends Controller
                     'name' => $game->name,
                     'slug' => $game->slug,
                     'genre' => $game->genre,
+                    'developer' => $game->developer,
+                    'publisher' => $game->publisher,
                     'logo' => $game->image_url,
                     'releaseDate' => optional($game->release_date)->toDateString(),
                     'stores' => $stores,
                     'bestPrice' => $bestPrice !== null ? round((float) $bestPrice, 2) : null,
                     'bestDiscount' => $bestDiscount !== null ? (int) $bestDiscount : null,
                 ];
-            });
+            })
+            ->values();
 
         return response()->json([
             'games' => $games,
