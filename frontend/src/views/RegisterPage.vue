@@ -1,5 +1,5 @@
 <script setup>
-import { ref, provide } from 'vue'
+import { reactive, ref, provide } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import { useThemePreference } from '../composables/useThemePreference'
@@ -24,6 +24,151 @@ const errorMessage = ref('')
 const verifyDialogOpen = ref(false)
 const registeredEmail = ref('')
 
+const fieldErrors = reactive({
+  nickname: '',
+  email: '',
+  password: '',
+})
+
+const fieldFocused = reactive({
+  nickname: false,
+  email: false,
+  password: false,
+})
+
+let nicknameCheckTimeout = null
+
+const nicknameHint = 'This is the name people will know you by. You can always change it later.'
+const emailHint = 'We will use this email to send your verification link.'
+const passwordHint = 'Use at least 8 characters, uppercase letter, number, special character.'
+
+const passwordPattern = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/
+
+function clearFieldErrors() {
+  fieldErrors.nickname = ''
+  fieldErrors.email = ''
+  fieldErrors.password = ''
+}
+
+function resetFieldFocus() {
+  fieldFocused.nickname = false
+  fieldFocused.email = false
+  fieldFocused.password = false
+}
+
+function validateNickname(value) {
+  const trimmedValue = value.trim()
+
+  if (!trimmedValue) {
+    return ''
+  }
+
+  if (trimmedValue.length < 4 || trimmedValue.length > 100) {
+    return 'Usernames must be between 4 and 100 characters.'
+  }
+
+  if (!/^[A-Za-z0-9]+$/.test(trimmedValue)) {
+    return 'Usernames must only contain alphanumeric characters.'
+  }
+
+  return ''
+}
+
+async function checkNicknameAvailability(value) {
+  const trimmedValue = value.trim()
+  const formatError = validateNickname(trimmedValue)
+
+  if (formatError) {
+    fieldErrors.nickname = formatError
+    return
+  }
+
+  if (!trimmedValue) {
+    fieldErrors.nickname = ''
+    return
+  }
+
+  try {
+    const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/check-nickname` : '/api/check-nickname', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ nickname: trimmedValue }),
+    })
+
+    const data = await response.json().catch(() => null)
+
+    if (!response.ok || data?.available === false) {
+      fieldErrors.nickname = 'This username is already taken.'
+      return
+    }
+
+    fieldErrors.nickname = ''
+  } catch (err) {
+    fieldErrors.nickname = ''
+  }
+}
+
+function validateEmail(value) {
+  const trimmedValue = value.trim()
+
+  if (!trimmedValue) {
+    return ''
+  }
+
+  if (/\s/.test(trimmedValue)) {
+    return 'Please enter a valid email.'
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)) {
+    return 'Please enter a valid email.'
+  }
+
+  return ''
+}
+
+function validatePassword(value) {
+  if (!value) {
+    return ''
+  }
+
+  if (!passwordPattern.test(value)) {
+    return 'Use at least 8 characters, uppercase letter, number, special character.'
+  }
+
+  return ''
+}
+
+function setServerFieldErrors(errors) {
+  fieldErrors.nickname = errors?.nickname?.[0] || ''
+  fieldErrors.email = errors?.email?.[0] || ''
+  fieldErrors.password = errors?.password?.[0] || ''
+}
+
+function handleFieldFocus(field) {
+  fieldFocused[field] = true
+}
+
+function handleFieldBlur(field, validator, value) {
+  fieldFocused[field] = false
+  if (field !== 'nickname') {
+    fieldErrors[field] = validator(value)
+  }
+}
+
+function handleFieldInput(field, validator, value) {
+  fieldErrors[field] = validator(value)
+
+  if (field === 'nickname') {
+    clearTimeout(nicknameCheckTimeout)
+    nicknameCheckTimeout = setTimeout(() => {
+      checkNicknameAvailability(value)
+    }, 600)
+  }
+}
+
 function getErrorMessage(payload) {
   if (!payload) {
     return 'Registration failed.'
@@ -44,6 +189,7 @@ function getErrorMessage(payload) {
 
 async function handleRegister() {
   errorMessage.value = ''
+  clearFieldErrors()
 
   const trimmedNickname = nickname.value.trim()
   const trimmedEmail = email.value.trim()
@@ -53,13 +199,25 @@ async function handleRegister() {
     return
   }
 
+  fieldFocused.nickname = true
+  fieldFocused.email = true
+  fieldFocused.password = true
+
+  fieldErrors.nickname = validateNickname(trimmedNickname)
+  fieldErrors.email = validateEmail(trimmedEmail)
+  fieldErrors.password = validatePassword(password.value)
+
+  if (fieldErrors.nickname || fieldErrors.email || fieldErrors.password) {
+    return
+  }
+
   if (password.value !== passwordConfirm.value) {
     errorMessage.value = 'Passwords do not match.'
     return
   }
 
-  if (password.value.length < 8) {
-    errorMessage.value = 'Password must be at least 8 characters.'
+  if (!passwordPattern.test(password.value)) {
+    errorMessage.value = 'Password must be at least 8 characters and include one uppercase letter, one number, and one special character.'
     return
   }
 
@@ -83,6 +241,12 @@ async function handleRegister() {
     const data = await response.json().catch(() => null)
 
     if (!response.ok) {
+      if (data?.errors) {
+        setServerFieldErrors(data.errors)
+        errorMessage.value = ''
+        return
+      }
+
       throw new Error(getErrorMessage(data))
     }
 
@@ -90,6 +254,8 @@ async function handleRegister() {
     email.value = ''
     password.value = ''
     passwordConfirm.value = ''
+    clearFieldErrors()
+    resetFieldFocus()
     registeredEmail.value = trimmedEmail
     verifyDialogOpen.value = true
   } catch (err) {
@@ -124,115 +290,141 @@ async function goToLogin() {
 
     <main class="main-content">
       <div class="content-wrapper">
-        <header class="page-header">
-          <h1>Sign Up</h1>
-          <p class="subtitle">Create your Game Prices account</p>
-        </header>
+        <section class="form-panel">
+          <form class="register-card" novalidate @submit.prevent="handleRegister">
+            <header class="page-header compact-header">
+              <h2>Sign up</h2>
+              <p class="subtitle">Sign up to start tracking game prices</p>
+            </header>
 
-        <form class="register-card" @submit.prevent="handleRegister">
-          <div v-if="errorMessage" class="error-banner">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-            <span>{{ errorMessage }}</span>
-          </div>
-
-          <div class="form-group">
-            <label for="nickname">Nickname</label>
-            <input
-              id="nickname"
-              v-model="nickname"
-              type="text"
-              placeholder="Your nickname"
-              autocomplete="username"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input
-              id="email"
-              v-model="email"
-              type="email"
-              placeholder="your@email.com"
-              autocomplete="email"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="password">Password</label>
-            <div class="password-input-wrapper">
-              <input
-                id="password"
-                v-model="password"
-                :type="showPassword ? 'text' : 'password'"
-                placeholder="At least 8 characters"
-                autocomplete="new-password"
-              />
-              <button
-                type="button"
-                class="password-toggle"
-                :aria-label="showPassword ? 'Hide password' : 'Show password'"
-                :aria-pressed="showPassword"
-                @click="showPassword = !showPassword"
-              >
-                <svg v-if="showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/>
-                  <circle cx="12" cy="12" r="2.75"/>
-                </svg>
-                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 3l18 18"/>
-                  <path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6.4 0 10 6 10 6a17.6 17.6 0 0 1-4.1 4.7"/>
-                  <path d="M6.7 6.7C4.2 8.3 2.6 11 2 12c0 0 3.6 6 10 6 1.6 0 3-.4 4.2-1"/>
-                  <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
-                </svg>
-              </button>
+            <div v-if="errorMessage" class="error-banner" role="alert">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span>{{ errorMessage }}</span>
             </div>
-          </div>
 
-          <div class="form-group">
-            <label for="password-confirm">Confirm Password</label>
-            <div class="password-input-wrapper">
+            <div class="form-group">
+              <label for="nickname">Username</label>
               <input
-                id="password-confirm"
-                v-model="passwordConfirm"
-                :type="showPasswordConfirm ? 'text' : 'password'"
-                placeholder="Repeat your password"
-                autocomplete="new-password"
+                id="nickname"
+                v-model="nickname"
+                type="text"
+                autocomplete="username"
+                :aria-invalid="Boolean(fieldErrors.nickname)"
+                @focus="handleFieldFocus('nickname')"
+                @blur="fieldFocused.nickname = false"
+                @input="handleFieldInput('nickname', validateNickname, nickname)"
               />
-              <button
-                type="button"
-                class="password-toggle"
-                :aria-label="showPasswordConfirm ? 'Hide password confirmation' : 'Show password confirmation'"
-                :aria-pressed="showPasswordConfirm"
-                @click="showPasswordConfirm = !showPasswordConfirm"
-              >
-                <svg v-if="showPasswordConfirm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/>
-                  <circle cx="12" cy="12" r="2.75"/>
-                </svg>
-                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 3l18 18"/>
-                  <path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6.4 0 10 6 10 6a17.6 17.6 0 0 1-4.1 4.7"/>
-                  <path d="M6.7 6.7C4.2 8.3 2.6 11 2 12c0 0 3.6 6 10 6 1.6 0 3-.4 4.2-1"/>
-                  <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
-                </svg>
-              </button>
+
+              <transition name="field-message">
+                <p v-if="fieldErrors.nickname" class="field-error">{{ fieldErrors.nickname }}</p>
+                <p v-else-if="fieldFocused.nickname" class="field-hint">{{ nicknameHint }}</p>
+              </transition>
             </div>
-          </div>
 
-          <button type="submit" class="register-btn" :disabled="isLoading">
-            <span v-if="!isLoading">Create Account</span>
-            <span v-else class="spinner"></span>
-          </button>
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input
+                id="email"
+                v-model="email"
+                type="text"
+                autocomplete="email"
+                inputmode="email"
+                spellcheck="false"
+                :aria-invalid="Boolean(fieldErrors.email)"
+                @focus="handleFieldFocus('email')"
+                @blur="handleFieldBlur('email', validateEmail, email)"
+                @input="handleFieldInput('email', validateEmail, email)"
+              />
 
-          <p class="login-link">
-            Already have an account?
-            <router-link to="/login">Log In</router-link>
-          </p>
-        </form>
+              <transition name="field-message">
+                <p v-if="fieldErrors.email" class="field-error">{{ fieldErrors.email }}</p>
+                <p v-else-if="fieldFocused.email" class="field-hint">{{ emailHint }}</p>
+              </transition>
+            </div>
+
+            <div class="form-group">
+              <label for="password">Password</label>
+              <div class="password-input-wrapper">
+                <input
+                  id="password"
+                  v-model="password"
+                  :type="showPassword ? 'text' : 'password'"
+                  autocomplete="new-password"
+                  :aria-invalid="Boolean(fieldErrors.password)"
+                  @focus="handleFieldFocus('password')"
+                  @blur="handleFieldBlur('password', validatePassword, password)"
+                  @input="handleFieldInput('password', validatePassword, password)"
+                />
+                <button
+                  type="button"
+                  class="password-toggle"
+                  :aria-label="showPassword ? 'Hide password' : 'Show password'"
+                  :aria-pressed="showPassword"
+                  @click="showPassword = !showPassword"
+                >
+                  <svg v-if="showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/>
+                    <circle cx="12" cy="12" r="2.75"/>
+                  </svg>
+                  <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 3l18 18"/>
+                    <path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6.4 0 10 6 10 6a17.6 17.6 0 0 1-4.1 4.7"/>
+                    <path d="M6.7 6.7C4.2 8.3 2.6 11 2 12c0 0 3.6 6 10 6 1.6 0 3-.4 4.2-1"/>
+                    <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
+                  </svg>
+                </button>
+              </div>
+
+              <transition name="field-message">
+                <p v-if="fieldErrors.password" class="field-error">{{ fieldErrors.password }}</p>
+                <p v-else-if="fieldFocused.password" class="field-hint">{{ passwordHint }}</p>
+              </transition>
+            </div>
+
+            <div class="form-group">
+              <label for="password-confirm">Confirm Password</label>
+              <div class="password-input-wrapper">
+                <input
+                  id="password-confirm"
+                  v-model="passwordConfirm"
+                  :type="showPasswordConfirm ? 'text' : 'password'"
+                  autocomplete="new-password"
+                />
+                <button
+                  type="button"
+                  class="password-toggle"
+                  :aria-label="showPasswordConfirm ? 'Hide password confirmation' : 'Show password confirmation'"
+                  :aria-pressed="showPasswordConfirm"
+                  @click="showPasswordConfirm = !showPasswordConfirm"
+                >
+                  <svg v-if="showPasswordConfirm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/>
+                    <circle cx="12" cy="12" r="2.75"/>
+                  </svg>
+                  <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 3l18 18"/>
+                    <path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6.4 0 10 6 10 6a17.6 17.6 0 0 1-4.1 4.7"/>
+                    <path d="M6.7 6.7C4.2 8.3 2.6 11 2 12c0 0 3.6 6 10 6 1.6 0 3-.4 4.2-1"/>
+                    <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" class="register-btn" :disabled="isLoading">
+              <span v-if="!isLoading">Sign up</span>
+              <span v-else class="spinner"></span>
+            </button>
+
+            <button type="button" class="login-link-btn" @click="$router.push('/login')">
+              Have an account? Log In
+            </button>
+          </form>
+        </section>
       </div>
     </main>
 
@@ -276,8 +468,8 @@ async function goToLogin() {
   --text-secondary: #86868b;
   --border-color: #d2d2d7;
   --hover-bg: #f5f5f7;
-  --accent-color: #0071e3;
-  --accent-hover: #0077ed;
+  --accent-color: #7c3aed;
+  --accent-hover: #6d28d9;
   --input-bg: #ffffff;
   --error-bg: #fef2f2;
   --error-color: #dc3545;
@@ -291,8 +483,8 @@ async function goToLogin() {
   --text-secondary: #a6aab3;
   --border-color: #545a65;
   --hover-bg: #2f333b;
-  --accent-color: #2997ff;
-  --accent-hover: #40a9ff;
+  --accent-color: #a78bfa;
+  --accent-hover: #8b5cf6;
   --input-bg: #2a2f37;
   --error-bg: #442d2d;
   --error-color: #ff8b8b;
@@ -313,8 +505,21 @@ async function goToLogin() {
 }
 
 .content-wrapper {
-  max-width: 420px;
-  width: 100%;
+  width: min(480px, 100%);
+}
+
+.form-panel {
+  padding: 0;
+}
+
+.register-card {
+  height: 100%;
+  border-radius: 12px;
+  padding: 2rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .page-header {
@@ -322,11 +527,11 @@ async function goToLogin() {
   text-align: center;
 }
 
-.page-header h1 {
-  font-size: 2.5rem;
+.compact-header h2 {
+  font-size: 2rem;
   font-weight: 600;
   line-height: 1.1;
-  letter-spacing: -1px;
+  letter-spacing: -0.5px;
   color: var(--text-primary);
   margin-bottom: 0.5rem;
 }
@@ -334,13 +539,6 @@ async function goToLogin() {
 .subtitle {
   font-size: 1rem;
   color: var(--text-secondary);
-}
-
-.register-card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 2rem;
 }
 
 .error-banner {
@@ -367,6 +565,21 @@ async function goToLogin() {
   margin-bottom: 1.25rem;
 }
 
+.field-hint,
+.field-error {
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.field-hint {
+  color: var(--text-secondary);
+}
+
+.field-error {
+  color: var(--error-color);
+}
+
 .form-group label {
   display: block;
   font-size: 0.8125rem;
@@ -377,7 +590,7 @@ async function goToLogin() {
 
 .form-group input {
   width: 100%;
-  padding: 0.625rem 0.875rem;
+  padding: 0.5rem 0.875rem;
   font-size: 0.9375rem;
   border: 1px solid var(--border-color);
   border-radius: 8px;
@@ -398,12 +611,16 @@ async function goToLogin() {
   border-color: var(--accent-color);
 }
 
+.form-group input[aria-invalid='true'] {
+  border-color: var(--error-color);
+}
+
 .password-input-wrapper {
   position: relative;
 }
 
 .password-input-wrapper input {
-  padding-right: 3rem;
+  padding-right: 3.2rem;
 }
 
 .password-toggle {
@@ -427,7 +644,7 @@ async function goToLogin() {
 
 .password-toggle:hover {
   color: var(--text-primary);
-  background: rgba(134, 134, 139, 0.08);
+  background: rgba(134, 134, 139, 0.12);
 }
 
 .password-toggle:focus-visible {
@@ -442,7 +659,7 @@ async function goToLogin() {
 
 .register-btn {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.625rem;
   font-size: 0.9375rem;
   font-weight: 500;
   border: none;
@@ -455,10 +672,16 @@ async function goToLogin() {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
+  min-height: 40px;
+  margin-top: 0.5rem;
+  box-shadow: none;
 }
 
 .register-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.register-btn:active:not(:disabled) {
   background: var(--accent-hover);
 }
 
@@ -484,17 +707,64 @@ async function goToLogin() {
   text-align: center;
   font-size: 0.875rem;
   color: var(--text-secondary);
-  margin-top: 1.25rem;
+  margin-top: 1rem;
 }
 
 .login-link a {
   color: var(--accent-color);
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .login-link a:hover {
   text-decoration: underline;
+}
+
+.login-link-btn {
+  width: 100%;
+  padding: 0.625rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  margin-top: 0.5rem;
+  box-shadow: none;
+}
+
+.login-link-btn:hover {
+  background: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.field-message-enter-active {
+  transition: opacity 1s ease, transform 1s ease, max-height 1s ease;
+}
+
+.field-message-leave-active {
+  transition: opacity 0s ease, transform 0s ease, max-height 0s ease;
+}
+
+.field-message-enter-from,
+.field-message-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+  max-height: 0;
+}
+
+.field-message-enter-to,
+.field-message-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+  max-height: 64px;
 }
 
 .footer {
@@ -502,6 +772,19 @@ async function goToLogin() {
   border-top: 1px solid var(--border-color);
   padding: 1rem 2rem;
   margin-top: auto;
+}
+
+.footer-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.footer-text {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
 }
 
 .modal-backdrop {
@@ -520,7 +803,7 @@ async function goToLogin() {
   max-width: 430px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 18px;
   padding: 1.5rem;
 }
 
@@ -542,30 +825,27 @@ async function goToLogin() {
   justify-content: flex-end;
 }
 
-.footer-container {
-  max-width: 1280px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.footer-text {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
+@media (max-width: 960px) {
+  .content-wrapper {
+    width: min(760px, 100%);
+  }
 }
 
 @media (max-width: 640px) {
   .main-content {
-    padding: 2rem 1.5rem;
+    padding: 1.25rem 0.85rem 2rem;
   }
 
-  .page-header h1 {
-    font-size: 2rem;
+  .form-panel {
+    border-radius: 20px;
   }
 
   .register-card {
-    padding: 1.5rem;
+    padding: 1.1rem;
+  }
+
+  .compact-header h2 {
+    font-size: 1.75rem;
   }
 }
 </style>
