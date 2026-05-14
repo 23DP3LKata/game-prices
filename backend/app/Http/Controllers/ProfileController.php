@@ -29,33 +29,42 @@ class ProfileController extends Controller
                 'nickname' => $user->nickname,
                 'email' => $user->email,
                 'role' => $user->role,
+                'email_verified_at' => $user->email_verified_at,
             ],
         ]);
     }
 
     public function updateEmail(Request $request): JsonResponse
     {
-        $user = $request->user();
-
         $validated = $request->validate([
             'email' => [
                 'required',
                 'string',
                 'email',
                 'max:100',
-                Rule::unique('users', 'email')->ignore($user->id),
+                Rule::unique('users', 'email')->ignore($request->user()->id),
             ],
+            'current_password' => ['required', 'string'],
         ]);
 
+        $user = $request->user();
+
+        if (! $user->hasVerifiedEmail()) {
+            return response()->json([
+                'message' => 'Please verify your account before changing your email address.',
+                'errors' => [
+                    'email' => ['Please verify your account before changing your email address.'],
+                ],
+            ], 403);
+        }
+
+        if ($response = $this->currentPasswordErrorResponse($validated['current_password'], $user->password)) {
+            return $response;
+        }
+
         $normalizedEmail = strtolower(trim($validated['email']));
-        $emailChanged = $normalizedEmail !== $user->email;
 
         $user->email = $normalizedEmail;
-
-        // Email is no longer considered verified after a real change.
-        if ($emailChanged) {
-            $user->email_verified_at = null;
-        }
 
         $user->save();
 
@@ -66,6 +75,7 @@ class ProfileController extends Controller
                 'nickname' => $user->nickname,
                 'email' => $user->email,
                 'role' => $user->role,
+                'email_verified_at' => $user->email_verified_at,
             ],
         ]);
     }
@@ -93,6 +103,7 @@ class ProfileController extends Controller
                 'nickname' => $user->nickname,
                 'email' => $user->email,
                 'role' => $user->role,
+                'email_verified_at' => $user->email_verified_at,
             ],
         ]);
     }

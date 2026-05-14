@@ -26,6 +26,7 @@ class LoginController extends Controller
                 'nickname' => $user->nickname,
                 'email'    => $user->email,
                 'role'     => $user->role,
+                'email_verified_at' => $user->email_verified_at,
             ],
         ]);
     }
@@ -78,6 +79,7 @@ class LoginController extends Controller
                 'nickname' => $user->nickname,
                 'email'    => $user->email,
                 'role'     => $user->role,
+                'email_verified_at' => $user->email_verified_at,
             ],
         ]);
     }

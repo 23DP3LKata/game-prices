@@ -21,7 +21,22 @@ const profileData = ref({
 
 const activeEditField = ref('')
 const isSaving = ref(false)
-const fieldError = ref('')
+const fieldErrors = ref({
+  nickname: '',
+  email: '',
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: '',
+  deleteAccountPassword: '',
+})
+const fieldFocused = ref({
+  nickname: false,
+  email: false,
+  currentPassword: false,
+  newPassword: false,
+  confirmPassword: false,
+  deleteAccountPassword: false,
+})
 const statusType = ref('')
 const statusMessage = ref('')
 
@@ -30,7 +45,6 @@ const isEmailVisible = ref(false)
 const editDraft = ref({
   nickname: '',
   email: '',
-  confirmEmail: '',
   currentPassword: '',
   newPassword: '',
   confirmPassword: '',
@@ -50,13 +64,17 @@ const displayedEmail = computed(() => {
 })
 
 const displayedPassword = computed(() => maskPassword())
+const isEmailChangeAllowed = computed(() => Boolean(authStore.user?.email_verified_at))
 
-const isEmailConfirmationMatched = computed(() => {
-  const nextEmail = editDraft.value.email.trim().toLowerCase()
-  const confirmEmail = editDraft.value.confirmEmail.trim().toLowerCase()
+const nicknameHint = computed(() => i18n.t('profile.hint.update_nickname'))
+const emailHint = computed(() => i18n.t('profile.hint.update_email'))
+const emailVerificationHint = computed(() => i18n.t('profile.hint.email_verification_required'))
+const currentPasswordHint = computed(() => i18n.t('profile.hint.current_password'))
+const newPasswordHint = computed(() => i18n.t('profile.hint.new_password'))
+const confirmPasswordHint = computed(() => i18n.t('profile.hint.confirm_password'))
+const deleteAccountHint = computed(() => i18n.t('profile.hint.delete_account_password'))
 
-  return nextEmail.length > 0 && nextEmail === confirmEmail
-})
+const passwordPattern = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/
 
 function syncProfileDataFromStore() {
   profileData.value = {
@@ -76,8 +94,45 @@ function clearStatus() {
   statusMessage.value = ''
 }
 
+function clearFieldErrors() {
+  fieldErrors.value = {
+    nickname: '',
+    email: '',
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+    deleteAccountPassword: '',
+  }
+}
+
+function resetFieldFocus() {
+  fieldFocused.value = {
+    nickname: false,
+    email: false,
+    currentPassword: false,
+    newPassword: false,
+    confirmPassword: false,
+    deleteAccountPassword: false,
+  }
+}
+
 function clearRowState() {
-  fieldError.value = ''
+  clearFieldErrors()
+  resetFieldFocus()
+}
+
+function setFieldError(fieldName, message) {
+  fieldErrors.value = {
+    ...fieldErrors.value,
+    [fieldName]: message,
+  }
+}
+
+function setFieldFocus(fieldName, isFocused) {
+  fieldFocused.value = {
+    ...fieldFocused.value,
+    [fieldName]: isFocused,
+  }
 }
 
 function maskSegment(value, prefixLength, suffixLength = 0) {
@@ -121,6 +176,95 @@ function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 }
 
+function validateNickname(value) {
+  const nextNickname = value.trim()
+
+  if (!nextNickname) {
+    return ''
+  }
+
+  if (nextNickname.length < 4 || nextNickname.length > 100) {
+    return i18n.t('register.errors.nickname_length')
+  }
+
+  if (!/^[A-Za-z0-9]+$/.test(nextNickname)) {
+    return i18n.t('register.errors.nickname_format')
+  }
+
+  return ''
+}
+
+function validateEmail(value) {
+  const nextEmail = value.trim()
+
+  if (!nextEmail) {
+    return ''
+  }
+
+  if (!isValidEmail(nextEmail)) {
+    return i18n.t('messages.valid_email')
+  }
+
+  return ''
+}
+
+function validateCurrentPassword(value) {
+  if (!value.trim()) {
+    return ''
+  }
+
+  return ''
+}
+
+function validateNewPassword(value) {
+  if (!value) {
+    return ''
+  }
+
+  if (!passwordPattern.test(value)) {
+    return i18n.t('register.hint.password')
+  }
+
+  return ''
+}
+
+function validateConfirmPassword(value) {
+  if (!value) {
+    return ''
+  }
+
+  if (value !== editDraft.value.newPassword) {
+    return i18n.t('profile.errors.passwords_no_match')
+  }
+
+  return ''
+}
+
+function validateDeleteAccountPassword(value) {
+  if (!value.trim()) {
+    return ''
+  }
+
+  return ''
+}
+
+function handleFieldFocus(fieldName) {
+  setFieldFocus(fieldName, true)
+}
+
+function handleFieldBlur(fieldName, validator, value) {
+  setFieldFocus(fieldName, false)
+  setFieldError(fieldName, validator(value))
+}
+
+function handleFieldInput(fieldName, validator, value) {
+  setFieldError(fieldName, validator(value))
+
+  if (fieldName === 'newPassword') {
+    setFieldError('confirmPassword', validateConfirmPassword(editDraft.value.confirmPassword))
+  }
+}
+
 function startEdit(fieldName) {
   if (activeEditField.value === fieldName) {
     cancelEdit()
@@ -137,7 +281,7 @@ function startEdit(fieldName) {
 
   if (fieldName === 'email') {
     editDraft.value.email = profileData.value.email
-    editDraft.value.confirmEmail = ''
+    editDraft.value.currentPassword = ''
   }
 
   if (fieldName === 'password') {
@@ -165,17 +309,19 @@ async function saveNickname() {
   const nextNickname = editDraft.value.nickname.trim()
 
   if (!nextNickname) {
-    fieldError.value = i18n.t('profile.errors.nickname_empty')
+    setFieldError('nickname', i18n.t('profile.errors.nickname_empty'))
     return
   }
 
-  if (nextNickname.length > 100) {
-    fieldError.value = i18n.t('profile.errors.nickname_too_long')
+  const nicknameValidation = validateNickname(nextNickname)
+
+  if (nicknameValidation) {
+    setFieldError('nickname', nicknameValidation)
     return
   }
 
   isSaving.value = true
-  fieldError.value = ''
+  setFieldError('nickname', '')
 
   try {
     const result = await request('/profile/nickname', {
@@ -204,7 +350,7 @@ async function saveNickname() {
     cancelEdit()
     setStatus('success', i18n.t('profile.success.nickname_updated'))
   } catch (err) {
-    fieldError.value = err instanceof Error ? err.message : i18n.t('profile.errors.unable_update_nickname')
+    setFieldError('nickname', err instanceof Error ? err.message : i18n.t('profile.errors.unable_update_nickname'))
   } finally {
     isSaving.value = false
   }
@@ -212,36 +358,38 @@ async function saveNickname() {
 
 async function saveEmail() {
   const nextEmail = editDraft.value.email.trim().toLowerCase()
-  const confirmEmail = editDraft.value.confirmEmail.trim().toLowerCase()
+  const currentPassword = editDraft.value.currentPassword.trim()
+
+  if (!isEmailChangeAllowed.value) {
+    setFieldError('currentPassword', i18n.t('profile.errors.email_change_requires_verified_account'))
+    return
+  }
 
   if (!nextEmail) {
-    fieldError.value = i18n.t('profile.errors.email_empty')
+    setFieldError('email', i18n.t('profile.errors.email_empty'))
     return
   }
 
-  if (!confirmEmail) {
-    fieldError.value = i18n.t('profile.errors.email_confirm_required')
-    return
-  }
-
-  if (nextEmail !== confirmEmail) {
-    fieldError.value = i18n.t('profile.errors.emails_do_not_match')
+  if (!currentPassword) {
+    setFieldError('currentPassword', i18n.t('profile.errors.enter_current_password'))
     return
   }
 
   if (!isValidEmail(nextEmail)) {
-    fieldError.value = i18n.t('profile.errors.invalid_email')
+    setFieldError('email', i18n.t('profile.errors.invalid_email'))
     return
   }
 
   isSaving.value = true
-  fieldError.value = ''
+  setFieldError('email', '')
+  setFieldError('currentPassword', '')
 
   try {
     const result = await request('/profile/email', {
       method: 'PATCH',
       body: JSON.stringify({
         email: nextEmail,
+        current_password: currentPassword,
       }),
     })
 
@@ -252,7 +400,14 @@ async function saveEmail() {
     const { response, data } = result
 
     if (!response.ok) {
-      throw new Error(data?.errors?.email?.[0] || data?.message || i18n.t('profile.errors.unable_update_email'))
+      const emailError = data?.errors?.email?.[0]
+      const currentPasswordError = data?.errors?.current_password?.[0]
+
+      if (currentPasswordError) {
+        throw new Error(currentPasswordError)
+      }
+
+      throw new Error(emailError || data?.message || i18n.t('profile.errors.unable_update_email'))
     }
 
     profileData.value.email = data.user.email
@@ -265,7 +420,7 @@ async function saveEmail() {
     cancelEdit()
     setStatus('success', i18n.t('profile.success.email_updated'))
   } catch (err) {
-    fieldError.value = err instanceof Error ? err.message : i18n.t('profile.errors.unable_update_email')
+    setFieldError('email', err instanceof Error ? err.message : i18n.t('profile.errors.unable_update_email'))
   } finally {
     isSaving.value = false
   }
@@ -277,22 +432,26 @@ async function savePassword() {
   const confirmPassword = editDraft.value.confirmPassword
 
   if (!currentPassword) {
-    fieldError.value = i18n.t('profile.errors.enter_current_password')
+    setFieldError('currentPassword', i18n.t('profile.errors.enter_current_password'))
     return
   }
 
-  if (newPassword.length < 8) {
-    fieldError.value = i18n.t('profile.errors.password_too_short')
+  const passwordValidation = validateNewPassword(newPassword)
+
+  if (passwordValidation) {
+    setFieldError('newPassword', passwordValidation)
     return
   }
 
   if (newPassword !== confirmPassword) {
-    fieldError.value = i18n.t('profile.errors.passwords_no_match')
+    setFieldError('confirmPassword', i18n.t('profile.errors.passwords_no_match'))
     return
   }
 
   isSaving.value = true
-  fieldError.value = ''
+  setFieldError('currentPassword', '')
+  setFieldError('newPassword', '')
+  setFieldError('confirmPassword', '')
 
   try {
     const result = await request('/profile/password', {
@@ -322,7 +481,7 @@ async function savePassword() {
     cancelEdit()
     setStatus('success', i18n.t('profile.success.password_updated'))
   } catch (err) {
-    fieldError.value = err instanceof Error ? err.message : i18n.t('profile.errors.unable_update_password')
+    setFieldError('currentPassword', err instanceof Error ? err.message : i18n.t('profile.errors.unable_update_password'))
   } finally {
     isSaving.value = false
   }
@@ -332,12 +491,12 @@ async function deleteAccount() {
   const currentPassword = editDraft.value.deleteAccountPassword.trim()
 
   if (!currentPassword) {
-    fieldError.value = i18n.t('profile.errors.enter_current_password')
+    setFieldError('deleteAccountPassword', i18n.t('profile.errors.enter_current_password'))
     return
   }
 
   isSaving.value = true
-  fieldError.value = ''
+  setFieldError('deleteAccountPassword', '')
 
   try {
     const result = await request('/profile/account', {
@@ -361,7 +520,7 @@ async function deleteAccount() {
 
     await router.push('/login')
   } catch (err) {
-    fieldError.value = err instanceof Error ? err.message : i18n.t('profile.errors.unable_delete_account')
+    setFieldError('deleteAccountPassword', err instanceof Error ? err.message : i18n.t('profile.errors.unable_delete_account'))
   } finally {
     isSaving.value = false
   }
@@ -453,16 +612,23 @@ onMounted(() => {
                     </div>
 
                     <div v-else key="nickname-edit" class="setting-edit">
-                      <p class="setting-hint">{{ i18n.t('profile.hint.update_nickname') }}</p>
                       <input
                         v-model="editDraft.nickname"
                         type="text"
                         class="setting-input"
-                        :placeholder="i18n.t('profile.placeholder.nickname')"
                         autocomplete="nickname"
+                        :aria-invalid="Boolean(fieldErrors.nickname)"
+                        @focus="handleFieldFocus('nickname')"
+                        @blur="handleFieldBlur('nickname', validateNickname, editDraft.nickname)"
+                        @input="handleFieldInput('nickname', validateNickname, editDraft.nickname)"
                         @keyup.enter="saveField('nickname')"
                         @keyup.esc="cancelEdit"
                       />
+
+                      <transition name="field-message">
+                        <p v-if="fieldErrors.nickname" class="field-error">{{ fieldErrors.nickname }}</p>
+                        <p v-else-if="fieldFocused.nickname" class="field-hint">{{ nicknameHint }}</p>
+                      </transition>
 
                       <div class="edit-actions">
                         <button type="button" class="action-btn save-btn" :disabled="isSaving" @click="saveField('nickname')">
@@ -473,7 +639,6 @@ onMounted(() => {
                         </button>
                       </div>
 
-                      <p v-if="fieldError" class="field-error">{{ fieldError }}</p>
                     </div>
                   </Transition>
                 </div>
@@ -501,31 +666,53 @@ onMounted(() => {
                     </div>
 
                     <div v-else key="email-edit" class="setting-edit">
-                      <p class="setting-hint">{{ i18n.t('profile.hint.email_linked') }}</p>
                       <input
                         v-model="editDraft.email"
                         type="email"
                         class="setting-input"
-                        :placeholder="i18n.t('profile.placeholder.email')"
                         autocomplete="email"
+                        :aria-invalid="Boolean(fieldErrors.email)"
+                        @focus="handleFieldFocus('email')"
+                        @blur="handleFieldBlur('email', validateEmail, editDraft.email)"
+                        @input="handleFieldInput('email', validateEmail, editDraft.email)"
                         @keyup.esc="cancelEdit"
                       />
 
-                      <input
-                        v-model="editDraft.confirmEmail"
-                        type="email"
-                        class="setting-input"
-                        :placeholder="i18n.t('profile.placeholder.confirm_email')"
-                        autocomplete="email"
-                        @keyup.enter="saveField('email')"
-                        @keyup.esc="cancelEdit"
-                      />
+                      <transition name="field-message">
+                        <p v-if="fieldErrors.email" class="field-error">{{ fieldErrors.email }}</p>
+                        <p v-else-if="fieldFocused.email" class="field-hint">{{ emailHint }}</p>
+                      </transition>
+
+                      <div class="field-stack">
+                        <label class="input-label" for="email-current-password">{{ i18n.t('profile.label.enter_current_password') }}</label>
+                        <div class="password-input-wrapper">
+                          <input
+                            id="email-current-password"
+                            v-model="editDraft.currentPassword"
+                            type="password"
+                            class="setting-input"
+                            autocomplete="current-password"
+                            :aria-invalid="Boolean(fieldErrors.currentPassword)"
+                            @focus="handleFieldFocus('currentPassword')"
+                            @blur="handleFieldBlur('currentPassword', validateCurrentPassword, editDraft.currentPassword)"
+                            @input="handleFieldInput('currentPassword', validateCurrentPassword, editDraft.currentPassword)"
+                            @keyup.enter="saveField('email')"
+                            @keyup.esc="cancelEdit"
+                          />
+                        </div>
+
+                        <transition name="field-message">
+                          <p v-if="fieldErrors.currentPassword" class="field-error">{{ fieldErrors.currentPassword }}</p>
+                          <p v-else-if="fieldFocused.currentPassword" class="field-hint">{{ currentPasswordHint }}</p>
+                          <p v-else-if="!isEmailChangeAllowed" class="field-hint">{{ emailVerificationHint }}</p>
+                        </transition>
+                      </div>
 
                       <div class="edit-actions">
                         <button
                           type="button"
                           class="action-btn save-btn"
-                          :disabled="!isEmailConfirmationMatched || isSaving"
+                          :disabled="isSaving || !isEmailChangeAllowed || Boolean(fieldErrors.email) || Boolean(fieldErrors.currentPassword) || !editDraft.email.trim() || !editDraft.currentPassword.trim()"
                           @click="saveField('email')"
                         >
                           {{ i18n.t('profile.save') }}
@@ -535,7 +722,6 @@ onMounted(() => {
                         </button>
                       </div>
 
-                      <p v-if="fieldError" class="field-error">{{ fieldError }}</p>
                     </div>
                   </Transition>
                 </div>
@@ -590,10 +776,18 @@ onMounted(() => {
                             v-model="editDraft.currentPassword"
                             type="password"
                             class="setting-input"
-                            :placeholder="i18n.t('profile.placeholder.current_password')"
                             autocomplete="current-password"
+                            :aria-invalid="Boolean(fieldErrors.currentPassword)"
+                            @focus="handleFieldFocus('currentPassword')"
+                            @blur="handleFieldBlur('currentPassword', validateCurrentPassword, editDraft.currentPassword)"
+                            @input="handleFieldInput('currentPassword', validateCurrentPassword, editDraft.currentPassword)"
                           />
                         </div>
+
+                        <transition name="field-message">
+                          <p v-if="fieldErrors.currentPassword" class="field-error">{{ fieldErrors.currentPassword }}</p>
+                          <p v-else-if="fieldFocused.currentPassword" class="field-hint">{{ currentPasswordHint }}</p>
+                        </transition>
                       </div>
 
                       <div class="field-stack">
@@ -604,10 +798,18 @@ onMounted(() => {
                             v-model="editDraft.newPassword"
                             type="password"
                             class="setting-input"
-                            :placeholder="i18n.t('profile.placeholder.new_password')"
                             autocomplete="new-password"
+                            :aria-invalid="Boolean(fieldErrors.newPassword)"
+                            @focus="handleFieldFocus('newPassword')"
+                            @blur="handleFieldBlur('newPassword', validateNewPassword, editDraft.newPassword)"
+                            @input="handleFieldInput('newPassword', validateNewPassword, editDraft.newPassword)"
                           />
                         </div>
+
+                        <transition name="field-message">
+                          <p v-if="fieldErrors.newPassword" class="field-error">{{ fieldErrors.newPassword }}</p>
+                          <p v-else-if="fieldFocused.newPassword" class="field-hint">{{ newPasswordHint }}</p>
+                        </transition>
                       </div>
 
                       <div class="field-stack">
@@ -618,24 +820,35 @@ onMounted(() => {
                             v-model="editDraft.confirmPassword"
                             type="password"
                             class="setting-input"
-                            :placeholder="i18n.t('profile.placeholder.confirm_password')"
                             autocomplete="new-password"
+                            :aria-invalid="Boolean(fieldErrors.confirmPassword)"
+                            @focus="handleFieldFocus('confirmPassword')"
+                            @blur="handleFieldBlur('confirmPassword', validateConfirmPassword, editDraft.confirmPassword)"
+                            @input="handleFieldInput('confirmPassword', validateConfirmPassword, editDraft.confirmPassword)"
                             @keyup.enter="saveField('password')"
                             @keyup.esc="cancelEdit"
                           />
                         </div>
+
+                        <transition name="field-message">
+                          <p v-if="fieldErrors.confirmPassword" class="field-error">{{ fieldErrors.confirmPassword }}</p>
+                          <p v-else-if="fieldFocused.confirmPassword" class="field-hint">{{ confirmPasswordHint }}</p>
+                        </transition>
                       </div>
 
                       <div class="edit-actions">
-                        <button type="button" class="action-btn save-btn" :disabled="isSaving" @click="saveField('password')">
+                        <button
+                          type="button"
+                          class="action-btn save-btn"
+                          :disabled="isSaving || Boolean(fieldErrors.currentPassword) || Boolean(fieldErrors.newPassword) || Boolean(fieldErrors.confirmPassword) || !editDraft.currentPassword.trim() || !editDraft.newPassword || !editDraft.confirmPassword"
+                          @click="saveField('password')"
+                        >
                           {{ i18n.t('profile.save') }}
                         </button>
                         <button type="button" class="action-btn cancel-btn" :disabled="isSaving" @click="cancelEdit">
                           {{ i18n.t('buttons.cancel') }}
                         </button>
                       </div>
-
-                      <p v-if="fieldError" class="field-error">{{ fieldError }}</p>
                     </div>
                   </Transition>
                 </div>
@@ -663,30 +876,39 @@ onMounted(() => {
                     </div>
 
                     <div v-else key="delete-account-edit" class="setting-edit danger-edit">
-                      <p class="setting-hint">{{ i18n.t('profile.delete_account_confirm_hint') }}</p>
-
                       <div class="password-input-wrapper">
                         <input
                           v-model="editDraft.deleteAccountPassword"
                           type="password"
                           class="setting-input"
-                          :placeholder="i18n.t('profile.placeholder.current_password')"
                           autocomplete="current-password"
+                          :aria-invalid="Boolean(fieldErrors.deleteAccountPassword)"
+                          @focus="handleFieldFocus('deleteAccountPassword')"
+                          @blur="handleFieldBlur('deleteAccountPassword', validateDeleteAccountPassword, editDraft.deleteAccountPassword)"
+                          @input="handleFieldInput('deleteAccountPassword', validateDeleteAccountPassword, editDraft.deleteAccountPassword)"
                           @keyup.enter="saveField('delete-account')"
                           @keyup.esc="cancelEdit"
                         />
                       </div>
 
+                      <transition name="field-message">
+                        <p v-if="fieldErrors.deleteAccountPassword" class="field-error">{{ fieldErrors.deleteAccountPassword }}</p>
+                        <p v-else-if="fieldFocused.deleteAccountPassword" class="field-hint">{{ deleteAccountHint }}</p>
+                      </transition>
+
                       <div class="edit-actions">
-                        <button type="button" class="action-btn danger-btn" :disabled="isSaving" @click="saveField('delete-account')">
+                        <button
+                          type="button"
+                          class="action-btn danger-btn"
+                          :disabled="isSaving || Boolean(fieldErrors.deleteAccountPassword) || !editDraft.deleteAccountPassword.trim()"
+                          @click="saveField('delete-account')"
+                        >
                           {{ i18n.t('profile.delete_account_action') }}
                         </button>
                         <button type="button" class="action-btn cancel-btn" :disabled="isSaving" @click="cancelEdit">
                           {{ i18n.t('buttons.cancel') }}
                         </button>
                       </div>
-
-                      <p v-if="fieldError" class="field-error">{{ fieldError }}</p>
                     </div>
                   </Transition>
                 </div>
@@ -727,13 +949,13 @@ onMounted(() => {
   --text-primary: #1d1d1f;
   --text-secondary: #86868b;
   --border-color: #d2d2d7;
-  --hover-bg: #efeff2;
-  --accent-color: #0071e3;
-  --accent-hover: #0077ed;
-  --accent-soft: rgba(0, 113, 227, 0.1);
+  --hover-bg: #f5f5f7;
+  --accent-color: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-soft: rgba(124, 58, 237, 0.1);
   --input-bg: #ffffff;
-  --status-info-bg: rgba(0, 113, 227, 0.08);
-  --status-info-text: #005bb5;
+  --status-info-bg: rgba(124, 58, 237, 0.08);
+  --status-info-text: #5b21b6;
   --status-success-bg: rgba(22, 163, 74, 0.1);
   --status-success-text: #18753a;
   --error-color: #c53636;
@@ -750,12 +972,12 @@ onMounted(() => {
   --text-secondary: #a6aab3;
   --border-color: #545a65;
   --hover-bg: #2f333b;
-  --accent-color: #2997ff;
-  --accent-hover: #40a9ff;
-  --accent-soft: rgba(41, 151, 255, 0.14);
+  --accent-color: #a78bfa;
+  --accent-hover: #8b5cf6;
+  --accent-soft: rgba(167, 139, 250, 0.14);
   --input-bg: #2a2f37;
-  --status-info-bg: rgba(41, 151, 255, 0.14);
-  --status-info-text: #b8ddff;
+  --status-info-bg: rgba(167, 139, 250, 0.14);
+  --status-info-text: #e9d5ff;
   --status-success-bg: rgba(34, 197, 94, 0.14);
   --status-success-text: #9ae6b4;
   --error-color: #ff8b8b;
@@ -992,6 +1214,47 @@ onMounted(() => {
   opacity: 0.75;
 }
 
+.setting-input[aria-invalid='true'] {
+  border-color: var(--error-color);
+}
+
+.field-hint,
+.field-error {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.field-hint {
+  color: var(--text-secondary);
+}
+
+.field-error {
+  color: var(--error-color);
+}
+
+.field-message-enter-active {
+  transition: opacity 1s ease, transform 1s ease, max-height 1s ease;
+}
+
+.field-message-leave-active {
+  transition: opacity 0s ease, transform 0s ease, max-height 0s ease;
+}
+
+.field-message-enter-from,
+.field-message-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+  max-height: 0;
+}
+
+.field-message-enter-to,
+.field-message-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+  max-height: 64px;
+}
+
 .password-input-wrapper {
   position: relative;
 }
@@ -1101,12 +1364,6 @@ onMounted(() => {
 
 .icon-btn:active {
   transform: scale(0.96);
-}
-
-.field-error {
-  margin: 0;
-  font-size: 0.84rem;
-  color: var(--error-color);
 }
 
 .setting-swap-enter-active,
