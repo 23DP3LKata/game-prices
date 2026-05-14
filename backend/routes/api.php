@@ -17,6 +17,7 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [RegisteredUserController::class, 'store'])->name('api.register');
+Route::post('/check-nickname', [RegisteredUserController::class, 'checkNickname'])->name('api.check-nickname');
 Route::post('/login', [LoginController::class, 'store'])
 	->middleware([
 		EncryptCookies::class,
@@ -24,6 +25,20 @@ Route::post('/login', [LoginController::class, 'store'])
 		StartSession::class,
 	])
 	->name('api.login');
+Route::get('/me', [LoginController::class, 'me'])
+	->middleware([
+		EncryptCookies::class,
+		AddQueuedCookiesToResponse::class,
+		StartSession::class,
+	])
+	->name('api.auth.me');
+Route::post('/logout', [LoginController::class, 'destroy'])
+	->middleware([
+		EncryptCookies::class,
+		AddQueuedCookiesToResponse::class,
+		StartSession::class,
+	])
+	->name('api.logout');
 Route::post('/email/verification-notification', [EmailVerificationController::class, 'send'])
 	->name('api.verification.send');
 Route::post('/forgot-password', [ForgotPasswordController::class, 'store'])

@@ -51,4 +51,17 @@ class RegisteredUserController extends Controller
             ],
         ], 201);
     }
+
+    public function checkNickname(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'nickname' => ['required', 'string', 'min:4', 'max:100', 'regex:/^[A-Za-z0-9]+$/'],
+        ]);
+
+        $exists = User::where('nickname', $validated['nickname'])->exists();
+
+        return response()->json([
+            'available' => !$exists,
+        ]);
+    }
 }
