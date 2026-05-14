@@ -1,14 +1,16 @@
 <script setup>
-import { computed, provide, ref } from 'vue'
+import { computed, provide, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import { useThemePreference } from '../composables/useThemePreference'
+import { useI18nStore } from '../stores/i18n'
 
 const route = useRoute()
 const router = useRouter()
 
-const selectedLanguage = ref('ENG')
+const selectedLanguage = ref('LV')
 const selectedTheme = useThemePreference()
+const i18n = useI18nStore()
 
 provide('theme', selectedTheme)
 
@@ -23,26 +25,68 @@ const isLoading = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
 
+const fieldErrors = reactive({
+  password: '',
+})
+
+const fieldFocused = reactive({
+  password: false,
+})
+
+const passwordHint = i18n.t('register.hint.password')
+const passwordPattern = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/
+
 function getApiUrl(path) {
   return apiBaseUrl ? `${apiBaseUrl}${path}` : `/api${path}`
+}
+
+function validatePassword(value) {
+  if (!value) {
+    return ''
+  }
+
+  if (!passwordPattern.test(value)) {
+    return i18n.t('register.hint.password')
+  }
+
+  return ''
+}
+
+function handleFieldFocus(field) {
+  fieldFocused[field] = true
+}
+
+function handleFieldBlur(field, validator, value) {
+  fieldFocused[field] = false
+  fieldErrors[field] = validator(value)
+}
+
+function handleFieldInput(field, validator, value) {
+  fieldErrors[field] = validator(value)
 }
 
 async function handleResetPassword() {
   errorMessage.value = ''
   successMessage.value = ''
+  fieldErrors.password = validatePassword(password.value)
 
   if (!token.value) {
-    errorMessage.value = 'Invalid password reset token.'
+    errorMessage.value = i18n.t('messages.invalid_token')
     return
   }
 
   if (!email.value.trim() || !password.value || !passwordConfirmation.value) {
-    errorMessage.value = 'Please fill in all fields.'
+    errorMessage.value = i18n.t('messages.fill_all_fields')
+    return
+  }
+
+  if (fieldErrors.password) {
+    errorMessage.value = fieldErrors.password
     return
   }
 
   if (password.value !== passwordConfirmation.value) {
-    errorMessage.value = 'Passwords do not match.'
+    errorMessage.value = i18n.t('messages.passwords_no_match')
     return
   }
 
@@ -66,16 +110,16 @@ async function handleResetPassword() {
     const data = await response.json().catch(() => null)
 
     if (!response.ok) {
-      throw new Error(data?.message || 'Failed to reset password.')
+      throw new Error(data?.message || i18n.t('reset.errors.failed'))
     }
 
-    successMessage.value = data?.message || 'Password was reset successfully.'
+    successMessage.value = data?.message || i18n.t('reset.success')
     password.value = ''
     passwordConfirmation.value = ''
   } catch (err) {
     errorMessage.value = err instanceof Error
       ? err.message
-      : 'Something went wrong. Please try again.'
+      : i18n.t('messages.something_went_wrong')
   } finally {
     isLoading.value = false
   }
@@ -87,7 +131,7 @@ async function goToLogin() {
 </script>
 
 <template>
-  <div class="login-page" :class="selectedTheme">
+  <div class="reset-page" :class="selectedTheme">
     <AppHeader
       v-model:selectedTheme="selectedTheme"
       v-model:selectedLanguage="selectedLanguage"
@@ -96,111 +140,118 @@ async function goToLogin() {
 
     <main class="main-content">
       <div class="content-wrapper">
-        <header class="page-header">
-          <h1>Set New Password</h1>
-          <p class="subtitle">Enter your email and choose a new password</p>
-        </header>
+        <section class="form-panel">
+          <form class="reset-card" @submit.prevent="handleResetPassword">
+            <header class="page-header compact-header">
+              <h2>{{ i18n.t('reset.title') }}</h2>
+              <p class="subtitle">{{ i18n.t('reset.subtitle') }}</p>
+            </header>
 
-        <div v-if="errorMessage" class="error-banner">{{ errorMessage }}</div>
-        <div v-if="successMessage" class="info-banner">{{ successMessage }}</div>
-
-        <form class="login-card" @submit.prevent="handleResetPassword">
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input
-              id="email"
-              v-model="email"
-              type="email"
-              placeholder="your@email.com"
-              autocomplete="email"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="password">New password</label>
-            <div class="password-input-wrapper">
-              <input
-                id="password"
-                v-model="password"
-                :type="showPassword ? 'text' : 'password'"
-                placeholder="At least 8 characters"
-                autocomplete="new-password"
-              />
-              <button
-                type="button"
-                class="password-toggle"
-                :aria-label="showPassword ? 'Hide password' : 'Show password'"
-                :aria-pressed="showPassword"
-                @click="showPassword = !showPassword"
-              >
-                <svg v-if="showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/>
-                  <circle cx="12" cy="12" r="2.75"/>
-                </svg>
-                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 3l18 18"/>
-                  <path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6.4 0 10 6 10 6a17.6 17.6 0 0 1-4.1 4.7"/>
-                  <path d="M6.7 6.7C4.2 8.3 2.6 11 2 12c0 0 3.6 6 10 6 1.6 0 3-.4 4.2-1"/>
-                  <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
-                </svg>
-              </button>
+            <div v-if="errorMessage" class="error-banner" role="alert">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span>{{ errorMessage }}</span>
             </div>
-          </div>
 
-          <div class="form-group">
-            <label for="password-confirmation">Confirm password</label>
-            <div class="password-input-wrapper">
-              <input
-                id="password-confirmation"
-                v-model="passwordConfirmation"
-                :type="showPasswordConfirmation ? 'text' : 'password'"
-                placeholder="Repeat your new password"
-                autocomplete="new-password"
-              />
-              <button
-                type="button"
-                class="password-toggle"
-                :aria-label="showPasswordConfirmation ? 'Hide password confirmation' : 'Show password confirmation'"
-                :aria-pressed="showPasswordConfirmation"
-                @click="showPasswordConfirmation = !showPasswordConfirmation"
-              >
-                <svg v-if="showPasswordConfirmation" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/>
-                  <circle cx="12" cy="12" r="2.75"/>
-                </svg>
-                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 3l18 18"/>
-                  <path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6.4 0 10 6 10 6a17.6 17.6 0 0 1-4.1 4.7"/>
-                  <path d="M6.7 6.7C4.2 8.3 2.6 11 2 12c0 0 3.6 6 10 6 1.6 0 3-.4 4.2-1"/>
-                  <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
-                </svg>
-              </button>
+            <div v-if="successMessage" class="info-banner" role="status">
+              {{ successMessage }}
             </div>
-          </div>
 
-          <button type="submit" class="login-btn" :disabled="isLoading">
-            <span v-if="!isLoading">Save Password</span>
-            <span v-else class="spinner"></span>
-          </button>
+            <div class="form-group">
+              <label for="password">{{ i18n.t('reset.new_password') }}</label>
+              <div class="password-input-wrapper">
+                <input
+                  id="password"
+                  v-model="password"
+                  :type="showPassword ? 'text' : 'password'"
+                  autocomplete="new-password"
+                  :aria-invalid="Boolean(fieldErrors.password)"
+                  @focus="handleFieldFocus('password')"
+                  @blur="handleFieldBlur('password', validatePassword, password)"
+                  @input="handleFieldInput('password', validatePassword, password)"
+                />
+                <button
+                  type="button"
+                  class="password-toggle"
+                  :aria-label="showPassword ? i18n.t('password.hide') : i18n.t('password.show')"
+                  :aria-pressed="showPassword"
+                  @click="showPassword = !showPassword"
+                >
+                  <svg v-if="showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/>
+                    <circle cx="12" cy="12" r="2.75"/>
+                  </svg>
+                  <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 3l18 18"/>
+                    <path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6.4 0 10 6 10 6a17.6 17.6 0 0 1-4.1 4.7"/>
+                    <path d="M6.7 6.7C4.2 8.3 2.6 11 2 12c0 0 3.6 6 10 6 1.6 0 3-.4 4.2-1"/>
+                    <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
+                  </svg>
+                </button>
+              </div>
 
-          <p class="register-link">
-            Back to
-            <button type="button" class="inline-link" @click="goToLogin">Log In</button>
-          </p>
-        </form>
+              <transition name="field-message">
+                <p v-if="fieldErrors.password" class="field-error">{{ fieldErrors.password }}</p>
+                <p v-else-if="fieldFocused.password" class="field-hint">{{ passwordHint }}</p>
+              </transition>
+            </div>
+
+            <div class="form-group">
+              <label for="password-confirmation">{{ i18n.t('reset.confirm_password') }}</label>
+              <div class="password-input-wrapper">
+                <input
+                  id="password-confirmation"
+                  v-model="passwordConfirmation"
+                  :type="showPasswordConfirmation ? 'text' : 'password'"
+                  autocomplete="new-password"
+                />
+                <button
+                  type="button"
+                  class="password-toggle"
+                  :aria-label="showPasswordConfirmation ? i18n.t('password.hide_confirmation') : i18n.t('password.show_confirmation')"
+                  :aria-pressed="showPasswordConfirmation"
+                  @click="showPasswordConfirmation = !showPasswordConfirmation"
+                >
+                  <svg v-if="showPasswordConfirmation" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/>
+                    <circle cx="12" cy="12" r="2.75"/>
+                  </svg>
+                  <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 3l18 18"/>
+                    <path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6.4 0 10 6 10 6a17.6 17.6 0 0 1-4.1 4.7"/>
+                    <path d="M6.7 6.7C4.2 8.3 2.6 11 2 12c0 0 3.6 6 10 6 1.6 0 3-.4 4.2-1"/>
+                    <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" class="login-btn" :disabled="isLoading || !password || !passwordConfirmation">
+              <span v-if="!isLoading">{{ i18n.t('reset.save') }}</span>
+              <span v-else class="spinner"></span>
+            </button>
+
+            <button type="button" class="login-link-btn" @click="goToLogin">
+              {{ i18n.t('reset.back_to_login') }}
+            </button>
+          </form>
+        </section>
       </div>
     </main>
 
     <footer class="footer">
       <div class="footer-container">
-        <span class="footer-text">&copy; 2025 Game Prices</span>
+        <span class="footer-text">{{ i18n.t('footer.brand') }}</span>
       </div>
     </footer>
   </div>
 </template>
 
 <style scoped>
-.login-page {
+.reset-page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -208,15 +259,15 @@ async function goToLogin() {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
 }
 
-.login-page.light {
+.reset-page.light {
   --bg-primary: #ffffff;
   --bg-secondary: #f5f5f7;
   --text-primary: #1d1d1f;
   --text-secondary: #86868b;
   --border-color: #d2d2d7;
   --hover-bg: #f5f5f7;
-  --accent-color: #0071e3;
-  --accent-hover: #0077ed;
+  --accent-color: #7c3aed;
+  --accent-hover: #6d28d9;
   --input-bg: #ffffff;
   --error-bg: #fef2f2;
   --error-color: #dc3545;
@@ -226,14 +277,15 @@ async function goToLogin() {
   --info-border: #c7def8;
 }
 
-.login-page.dark {
+.reset-page.dark {
   --bg-primary: #1b1d21;
   --bg-secondary: #25282e;
   --text-primary: #f5f5f7;
   --text-secondary: #a6aab3;
   --border-color: #545a65;
-  --accent-color: #2997ff;
-  --accent-hover: #40a9ff;
+  --hover-bg: #2f333b;
+  --accent-color: #a78bfa;
+  --accent-hover: #8b5cf6;
   --input-bg: #2a2f37;
   --error-bg: #442d2d;
   --error-color: #ff8b8b;
@@ -243,7 +295,7 @@ async function goToLogin() {
   --info-border: #39556f;
 }
 
-.login-page {
+.reset-page {
   background: var(--bg-primary);
   color: var(--text-primary);
 }
@@ -257,20 +309,33 @@ async function goToLogin() {
 }
 
 .content-wrapper {
-  max-width: 420px;
-  width: 100%;
+  width: min(480px, 100%);
+}
+
+.form-panel {
+  padding: 0;
+}
+
+.reset-card {
+  height: 100%;
+  border-radius: 12px;
+  padding: 2rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .page-header {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   text-align: center;
 }
 
-.page-header h1 {
-  font-size: 2.5rem;
+.compact-header h2 {
+  font-size: 2rem;
   font-weight: 600;
   line-height: 1.1;
-  letter-spacing: -1px;
+  letter-spacing: -0.5px;
   color: var(--text-primary);
   margin-bottom: 0.5rem;
 }
@@ -280,11 +345,49 @@ async function goToLogin() {
   color: var(--text-secondary);
 }
 
-.login-card {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 2rem;
+.field-hint,
+.field-error {
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.field-hint {
+  color: var(--text-secondary);
+}
+
+.field-error {
+  color: var(--error-color);
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  color: var(--error-color);
+  font-size: 0.875rem;
+}
+
+.error-banner svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  stroke: var(--error-color);
+}
+
+.info-banner {
+  background: var(--info-bg);
+  border: 1px solid var(--info-border);
+  color: var(--info-color);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
 }
 
 .form-group {
@@ -301,7 +404,7 @@ async function goToLogin() {
 
 .form-group input {
   width: 100%;
-  padding: 0.625rem 0.875rem;
+  padding: 0.5rem 0.875rem;
   font-size: 0.9375rem;
   border: 1px solid var(--border-color);
   border-radius: 8px;
@@ -313,32 +416,12 @@ async function goToLogin() {
   box-sizing: border-box;
 }
 
-.form-group input::placeholder {
-  color: var(--text-secondary);
-  opacity: 0.6;
-}
-
 .form-group input:focus {
   border-color: var(--accent-color);
 }
 
-.error-banner {
-  background: var(--error-bg);
-  border: 1px solid var(--error-border);
-  color: var(--error-color);
-  border-radius: 8px;
-  padding: 0.7rem;
-  margin-bottom: 0.75rem;
-}
-
-.info-banner {
-  background: var(--info-bg);
-  border: 1px solid var(--info-border);
-  color: var(--info-color);
-  border-radius: 8px;
-  padding: 0.7rem;
-  margin-bottom: 1rem;
-  font-size: 0.875rem;
+.form-group input[aria-invalid='true'] {
+  border-color: var(--error-color);
 }
 
 .password-input-wrapper {
@@ -346,7 +429,7 @@ async function goToLogin() {
 }
 
 .password-input-wrapper input {
-  padding-right: 3rem;
+  padding-right: 3.2rem;
 }
 
 .password-toggle {
@@ -370,7 +453,7 @@ async function goToLogin() {
 
 .password-toggle:hover {
   color: var(--text-primary);
-  background: rgba(134, 134, 139, 0.08);
+  background: rgba(134, 134, 139, 0.12);
 }
 
 .password-toggle:focus-visible {
@@ -385,23 +468,29 @@ async function goToLogin() {
 
 .login-btn {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.625rem;
   font-size: 0.9375rem;
   font-weight: 500;
   border: none;
   border-radius: 8px;
   background: var(--accent-color);
-  color: #fff;
+  color: #ffffff;
   cursor: pointer;
   transition: background-color 0.2s ease;
   font-family: inherit;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
+  min-height: 40px;
+  margin-top: 0.5rem;
+  box-shadow: none;
 }
 
 .login-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.login-btn:active:not(:disabled) {
   background: var(--accent-hover);
 }
 
@@ -423,25 +512,58 @@ async function goToLogin() {
   to { transform: rotate(360deg); }
 }
 
+.login-link-btn {
+  width: 100%;
+  padding: 0.625rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--accent-color);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  margin-top: 0.5rem;
+  box-shadow: none;
+}
+
+.login-link-btn:hover {
+  background: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.field-message-enter-active {
+  transition: opacity 1s ease, transform 1s ease, max-height 1s ease;
+}
+
+.field-message-leave-active {
+  transition: opacity 0s ease, transform 0s ease, max-height 0s ease;
+}
+
+.field-message-enter-from,
+.field-message-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+  max-height: 0;
+}
+
+.field-message-enter-to,
+.field-message-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+  max-height: 50px;
+}
+
 .register-link {
   text-align: center;
   font-size: 0.875rem;
   color: var(--text-secondary);
-  margin-top: 1.25rem;
-}
-
-.inline-link {
-  border: none;
-  background: transparent;
-  color: var(--accent-color);
-  font-size: inherit;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 0;
-}
-
-.inline-link:hover {
-  text-decoration: underline;
+  margin-top: 1rem;
 }
 
 .footer {
@@ -469,11 +591,11 @@ async function goToLogin() {
     padding: 2rem 1.5rem;
   }
 
-  .page-header h1 {
+  .compact-header h2 {
     font-size: 2rem;
   }
 
-  .login-card {
+  .reset-card {
     padding: 1.5rem;
   }
 }
