@@ -191,8 +191,8 @@ function goToRegister() {
   isProfileMenuOpen.value = false
 }
 
-function handleLogout() {
-  authStore.clearUser()
+async function handleLogout() {
+  await authStore.logout()
   isProfileMenuOpen.value = false
   isNotificationsOpen.value = false
   closeMobileMenu()

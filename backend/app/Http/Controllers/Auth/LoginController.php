@@ -10,6 +10,26 @@ use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
 {
+    public function me(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($user === null) {
+            return response()->json([
+                'message' => 'Unauthenticated.',
+            ], 401);
+        }
+
+        return response()->json([
+            'user' => [
+                'id'       => $user->id,
+                'nickname' => $user->nickname,
+                'email'    => $user->email,
+                'role'     => $user->role,
+            ],
+        ]);
+    }
+
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -59,6 +79,18 @@ class LoginController extends Controller
                 'email'    => $user->email,
                 'role'     => $user->role,
             ],
+        ]);
+    }
+
+    public function destroy(Request $request): JsonResponse
+    {
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return response()->json([
+            'message' => 'Logged out successfully.',
         ]);
     }
 }
