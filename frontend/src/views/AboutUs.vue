@@ -1,24 +1,26 @@
 <script setup>
-import { ref, provide } from 'vue'
+import { computed, ref, provide } from 'vue'
 import AppHeader from '../components/AppHeader.vue'
 import { useThemePreference } from '../composables/useThemePreference'
+import { useI18nStore } from '../stores/i18n'
 
-const selectedLanguage = ref('ENG')
+const selectedLanguage = ref('LV')
 const selectedTheme = useThemePreference()
+const i18n = useI18nStore()
 
 provide('theme', selectedTheme)
 
-const sections = [
-  { id: 'what-is', title: 'What is GamePrices?' },
-  { id: 'why', title: 'Why this project exists' },
-  { id: 'data', title: 'Where the data comes from' },
-  { id: 'safety', title: 'Are the shops safe?' },
-  { id: 'audience', title: 'Who it is for' },
-  { id: 'features', title: 'What registered users get' },
-  { id: 'history', title: 'Why price history matters' },
-  { id: 'sync', title: 'How often data updates' },
-  { id: 'mission', title: 'What we are learning here' }
-]
+const sections = computed(() => [
+  { id: 'what-is', title: i18n.t('about.sections.what_is') },
+  { id: 'why', title: i18n.t('about.sections.why') },
+  { id: 'data', title: i18n.t('about.sections.data') },
+  { id: 'safety', title: i18n.t('about.sections.safety') },
+  { id: 'audience', title: i18n.t('about.sections.audience') },
+  { id: 'features', title: i18n.t('about.sections.features') },
+  { id: 'history', title: i18n.t('about.sections.history') },
+  { id: 'sync', title: i18n.t('about.sections.sync') },
+  { id: 'mission', title: i18n.t('about.sections.mission') },
+])
 </script>
 
 <template>
@@ -33,66 +35,64 @@ const sections = [
       <div class="content-layout">
         <article class="about-article">
           <header class="section-header">
-            <h1>About Game Prices</h1>
-            <p class="section-subtitle">A temporary educational project built to explore APIs, databases, background syncs, and the small product decisions that make data feel useful.</p>
+            <h1>{{ i18n.t('about.title') }}</h1>
+            <p class="section-subtitle">{{ i18n.t('about.subtitle') }}</p>
             <div class="project-note">
-              <p>
-                This is not a commercial store. It is a learning project focused on building a realistic price-tracking experience while keeping the codebase simple, testable, and honest about what it does.
-              </p>
+              <p>{{ i18n.t('about.note') }}</p>
             </div>
           </header>
 
           <div class="article-content">
             <section id="what-is">
-              <h2>What is GamePrices?</h2>
-              <p>GamePrices is a small price-comparison demo for games. It gathers store offers, shows current pricing, and keeps a record of how those prices change over time so the interface feels like a real product rather than a static mockup.</p>
+              <h2>{{ i18n.t('about.what_is.title') }}</h2>
+              <p>{{ i18n.t('about.what_is.body') }}</p>
             </section>
 
             <section id="why">
-              <h2>Why does this project exist?</h2>
-              <p>The main goal was learning. GamePrices was created as a temporary non-commercial project to practice working with external APIs, a relational database, scheduled updates, notifications, and the kind of data modeling that turns raw responses into something readable.</p>
+              <h2>{{ i18n.t('about.why.title') }}</h2>
+              <p>{{ i18n.t('about.why.body') }}</p>
             </section>
 
             <section id="data">
-              <h2>Where does the data come from?</h2>
-              <p>One of the main sources is <a href="https://isthereanydeal.com/" target="_blank" rel="noreferrer">IsThereAnyDeal</a>. Their API helps provide store and price information that can be normalized into a single place, which is ideal for this project because it lets me focus on integration logic instead of inventing fake data.</p>
+              <h2>{{ i18n.t('about.data.title') }}</h2>
+              <p>{{ i18n.t('about.data.body') }}</p>
             </section>
 
             <section id="safety">
-              <h2>Are the shops safe?</h2>
-              <p>The platform only highlights stores that are considered authorized or otherwise trustworthy sources. The point is not to sell keys directly, but to help users see where a game is offered and what the price looks like before they decide where to buy it.</p>
+              <h2>{{ i18n.t('about.safety.title') }}</h2>
+              <p>{{ i18n.t('about.safety.body') }}</p>
             </section>
 
             <section id="audience">
-              <h2>Who is GamePrices for?</h2>
-              <p>It is useful for visitors who just want a quick comparison, for registered users who like saving games and following price drops, and for anyone who wants to study how a small product can be built around live data without turning into a full e-commerce platform.</p>
+              <h2>{{ i18n.t('about.audience.title') }}</h2>
+              <p>{{ i18n.t('about.audience.body') }}</p>
             </section>
 
             <section id="features">
-              <h2>What do registered users get?</h2>
-              <p>Registered users can bookmark games, keep a wishlist, receive alerts when prices change, and use a more personalized view of the platform. That makes the app feel closer to a real service while still staying inside the scope of a learning project.</p>
+              <h2>{{ i18n.t('about.features.title') }}</h2>
+              <p>{{ i18n.t('about.features.body') }}</p>
             </section>
 
             <section id="history">
-              <h2>Why keep price history?</h2>
-              <p>Current prices are useful, but price history is what makes patterns visible. By keeping past values, the project can show whether a discount is new, repeated, or just part of a normal cycle.</p>
+              <h2>{{ i18n.t('about.history.title') }}</h2>
+              <p>{{ i18n.t('about.history.body') }}</p>
             </section>
 
             <section id="sync">
-              <h2>How often does the data update?</h2>
-              <p>The sync runs every 12 hours once the app is deployed on the server. Right now, during development, updates are triggered manually.</p>
+              <h2>{{ i18n.t('about.sync.title') }}</h2>
+              <p>{{ i18n.t('about.sync.body') }}</p>
             </section>
 
             <section id="mission">
-              <h2>What are we trying to learn here?</h2>
-              <p>The mission is to make the app useful as a study project: learn how APIs are shaped, how data is stored, how relations between games and stores are modeled, and how a simple interface can still communicate something credible.</p>
+              <h2>{{ i18n.t('about.mission.title') }}</h2>
+              <p>{{ i18n.t('about.mission.body') }}</p>
             </section>
           </div>
         </article>
 
         <aside class="sidebar desktop-sidebar">
           <div class="sidebar-content">
-            <h3>On this page</h3>
+            <h3>{{ i18n.t('about.sidebar_title') }}</h3>
             <nav class="sidebar-nav">
               <ul>
                 <li v-for="section in sections" :key="section.id">
@@ -107,7 +107,7 @@ const sections = [
 
     <footer class="footer">
       <div class="footer-container">
-        <span class="footer-text">&copy; 2025 Game Prices</span>
+        <span class="footer-text">{{ i18n.t('footer.brand') }}</span>
       </div>
     </footer>
   </div>

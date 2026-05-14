@@ -5,12 +5,13 @@ import AppHeader from '../components/AppHeader.vue'
 import { useAuthStore } from '../stores/auth'
 import { useProfileApi } from '../composables/useProfileApi'
 import { useThemePreference } from '../composables/useThemePreference'
+import { useI18nStore } from '../stores/i18n'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const { request } = useProfileApi()
 
-const selectedLanguage = ref('ENG')
+const selectedLanguage = ref('LV')
 const selectedTheme = useThemePreference()
 
 const profileData = ref({
@@ -38,9 +39,11 @@ const editDraft = ref({
 
 provide('theme', selectedTheme)
 
+const i18n = useI18nStore()
+
 const displayedEmail = computed(() => {
   if (!profileData.value.email) {
-    return 'Email not set'
+    return i18n.t('profile.email_not_set')
   }
 
   return isEmailVisible.value ? profileData.value.email : maskEmail(profileData.value.email)
@@ -98,7 +101,7 @@ function maskSegment(value, prefixLength, suffixLength = 0) {
 
 function maskEmail(value) {
   if (!value || !value.includes('@')) {
-    return 'Email not set'
+    return i18n.t('profile.email_not_set')
   }
 
   const [localPart, domainPart] = value.split('@')
@@ -162,12 +165,12 @@ async function saveNickname() {
   const nextNickname = editDraft.value.nickname.trim()
 
   if (!nextNickname) {
-    fieldError.value = 'Nickname cannot be empty.'
+    fieldError.value = i18n.t('profile.errors.nickname_empty')
     return
   }
 
   if (nextNickname.length > 100) {
-    fieldError.value = 'Nickname is too long.'
+    fieldError.value = i18n.t('profile.errors.nickname_too_long')
     return
   }
 
@@ -189,7 +192,7 @@ async function saveNickname() {
     const { response, data } = result
 
     if (!response.ok) {
-      throw new Error(data?.errors?.nickname?.[0] || data?.message || 'Unable to update nickname.')
+      throw new Error(data?.errors?.nickname?.[0] || data?.message || i18n.t('profile.errors.unable_update_nickname'))
     }
 
     profileData.value.nickname = data.user.nickname
@@ -199,9 +202,9 @@ async function saveNickname() {
     })
 
     cancelEdit()
-    setStatus('success', 'Nickname updated successfully.')
+    setStatus('success', i18n.t('profile.success.nickname_updated'))
   } catch (err) {
-    fieldError.value = err instanceof Error ? err.message : 'Unable to update nickname.'
+    fieldError.value = err instanceof Error ? err.message : i18n.t('profile.errors.unable_update_nickname')
   } finally {
     isSaving.value = false
   }
@@ -212,22 +215,22 @@ async function saveEmail() {
   const confirmEmail = editDraft.value.confirmEmail.trim().toLowerCase()
 
   if (!nextEmail) {
-    fieldError.value = 'Email cannot be empty.'
+    fieldError.value = i18n.t('profile.errors.email_empty')
     return
   }
 
   if (!confirmEmail) {
-    fieldError.value = 'Please confirm your new email address.'
+    fieldError.value = i18n.t('profile.errors.email_confirm_required')
     return
   }
 
   if (nextEmail !== confirmEmail) {
-    fieldError.value = 'Email addresses do not match.'
+    fieldError.value = i18n.t('profile.errors.emails_do_not_match')
     return
   }
 
   if (!isValidEmail(nextEmail)) {
-    fieldError.value = 'Enter a valid email address.'
+    fieldError.value = i18n.t('profile.errors.invalid_email')
     return
   }
 
@@ -249,7 +252,7 @@ async function saveEmail() {
     const { response, data } = result
 
     if (!response.ok) {
-      throw new Error(data?.errors?.email?.[0] || data?.message || 'Unable to update email.')
+      throw new Error(data?.errors?.email?.[0] || data?.message || i18n.t('profile.errors.unable_update_email'))
     }
 
     profileData.value.email = data.user.email
@@ -260,9 +263,9 @@ async function saveEmail() {
 
     isEmailVisible.value = false
     cancelEdit()
-    setStatus('success', 'Email updated successfully.')
+    setStatus('success', i18n.t('profile.success.email_updated'))
   } catch (err) {
-    fieldError.value = err instanceof Error ? err.message : 'Unable to update email.'
+    fieldError.value = err instanceof Error ? err.message : i18n.t('profile.errors.unable_update_email')
   } finally {
     isSaving.value = false
   }
@@ -274,17 +277,17 @@ async function savePassword() {
   const confirmPassword = editDraft.value.confirmPassword
 
   if (!currentPassword) {
-    fieldError.value = 'Enter your current account password.'
+    fieldError.value = i18n.t('profile.errors.enter_current_password')
     return
   }
 
   if (newPassword.length < 8) {
-    fieldError.value = 'New password must be at least 8 characters.'
+    fieldError.value = i18n.t('profile.errors.password_too_short')
     return
   }
 
   if (newPassword !== confirmPassword) {
-    fieldError.value = 'Passwords do not match.'
+    fieldError.value = i18n.t('profile.errors.passwords_no_match')
     return
   }
 
@@ -317,9 +320,9 @@ async function savePassword() {
     }
 
     cancelEdit()
-    setStatus('success', 'Password updated successfully.')
+    setStatus('success', i18n.t('profile.success.password_updated'))
   } catch (err) {
-    fieldError.value = err instanceof Error ? err.message : 'Unable to update password.'
+    fieldError.value = err instanceof Error ? err.message : i18n.t('profile.errors.unable_update_password')
   } finally {
     isSaving.value = false
   }
@@ -329,7 +332,7 @@ async function deleteAccount() {
   const currentPassword = editDraft.value.deleteAccountPassword.trim()
 
   if (!currentPassword) {
-    fieldError.value = 'Enter your current account password.'
+    fieldError.value = i18n.t('profile.errors.enter_current_password')
     return
   }
 
@@ -351,14 +354,14 @@ async function deleteAccount() {
     const { response, data } = result
 
     if (!response.ok) {
-      throw new Error(data?.errors?.current_password?.[0] || data?.message || 'Unable to delete account.')
+      throw new Error(data?.errors?.current_password?.[0] || data?.message || i18n.t('profile.errors.unable_delete_account'))
     }
 
     authStore.clearUser()
 
     await router.push('/login')
   } catch (err) {
-    fieldError.value = err instanceof Error ? err.message : 'Unable to delete account.'
+    fieldError.value = err instanceof Error ? err.message : i18n.t('profile.errors.unable_delete_account')
   } finally {
     isSaving.value = false
   }
@@ -413,9 +416,9 @@ onMounted(() => {
     <main class="main-content">
       <div class="content-wrapper">
         <header class="page-header">
-          <h1>Settings</h1>
+          <h1>{{ i18n.t('profile.settings') }}</h1>
           <p class="subtitle">
-            Change your account details
+            {{ i18n.t('profile.subtitle') }}
           </p>
         </header>
 
@@ -440,22 +443,22 @@ onMounted(() => {
               <div class="setting-row" :class="{ editing: activeEditField === 'nickname' }">
                 <div class="setting-main">
                   <div class="setting-copy">
-                    <p class="setting-label">Username</p>
+                    <p class="setting-label">{{ i18n.t('profile.label.nickname') }}</p>
                   </div>
 
                   <Transition name="setting-swap" mode="out-in">
                     <div v-if="activeEditField !== 'nickname'" key="nickname-display" class="setting-display">
                       <p class="setting-value">{{ profileData.nickname }}</p>
-                      <p class="setting-hint">You may update your username.</p>
+                      <p class="setting-hint">{{ i18n.t('profile.hint.update_nickname') }}</p>
                     </div>
 
                     <div v-else key="nickname-edit" class="setting-edit">
-                      <p class="setting-hint">You may update your username.</p>
+                      <p class="setting-hint">{{ i18n.t('profile.hint.update_nickname') }}</p>
                       <input
                         v-model="editDraft.nickname"
                         type="text"
                         class="setting-input"
-                        placeholder="Enter a new nickname"
+                        :placeholder="i18n.t('profile.placeholder.nickname')"
                         autocomplete="nickname"
                         @keyup.enter="saveField('nickname')"
                         @keyup.esc="cancelEdit"
@@ -463,10 +466,10 @@ onMounted(() => {
 
                       <div class="edit-actions">
                         <button type="button" class="action-btn save-btn" :disabled="isSaving" @click="saveField('nickname')">
-                          Save
+                          {{ i18n.t('profile.save') }}
                         </button>
                         <button type="button" class="action-btn cancel-btn" :disabled="isSaving" @click="cancelEdit">
-                          Cancel
+                          {{ i18n.t('buttons.cancel') }}
                         </button>
                       </div>
 
@@ -488,22 +491,22 @@ onMounted(() => {
               <div class="setting-row" :class="{ editing: activeEditField === 'email' }">
                 <div class="setting-main">
                   <div class="setting-copy">
-                    <p class="setting-label">Email</p>
+                    <p class="setting-label">{{ i18n.t('profile.label.email') }}</p>
                   </div>
 
                   <Transition name="setting-swap" mode="out-in">
                     <div v-if="activeEditField !== 'email'" key="email-display" class="setting-display">
                       <p class="setting-value sensitive">{{ displayedEmail }}</p>
-                      <p class="setting-hint">This email is linked to your account.</p>
+                      <p class="setting-hint">{{ i18n.t('profile.hint.email_linked') }}</p>
                     </div>
 
                     <div v-else key="email-edit" class="setting-edit">
-                      <p class="setting-hint">This email is linked to your account.</p>
+                      <p class="setting-hint">{{ i18n.t('profile.hint.email_linked') }}</p>
                       <input
                         v-model="editDraft.email"
                         type="email"
                         class="setting-input"
-                        placeholder="your@email.com"
+                        :placeholder="i18n.t('profile.placeholder.email')"
                         autocomplete="email"
                         @keyup.esc="cancelEdit"
                       />
@@ -512,7 +515,7 @@ onMounted(() => {
                         v-model="editDraft.confirmEmail"
                         type="email"
                         class="setting-input"
-                        placeholder="Please confirm your new email address."
+                        :placeholder="i18n.t('profile.placeholder.confirm_email')"
                         autocomplete="email"
                         @keyup.enter="saveField('email')"
                         @keyup.esc="cancelEdit"
@@ -525,10 +528,10 @@ onMounted(() => {
                           :disabled="!isEmailConfirmationMatched || isSaving"
                           @click="saveField('email')"
                         >
-                          Save
+                          {{ i18n.t('profile.save') }}
                         </button>
                         <button type="button" class="action-btn cancel-btn" :disabled="isSaving" @click="cancelEdit">
-                          Cancel
+                          {{ i18n.t('buttons.cancel') }}
                         </button>
                       </div>
 
@@ -541,7 +544,7 @@ onMounted(() => {
                   <button
                     type="button"
                     class="icon-btn"
-                    :aria-label="isEmailVisible ? 'Hide email' : 'Show email'"
+                    :aria-label="isEmailVisible ? i18n.t('profile.aria.hide_email') : i18n.t('profile.aria.show_email')"
                     :aria-pressed="isEmailVisible"
                     @click="toggleEmailVisibility"
                   >
@@ -557,7 +560,7 @@ onMounted(() => {
                     </svg>
                   </button>
 
-                  <button type="button" class="icon-btn" aria-label="Edit email" @click="startEdit('email')">
+                    <button type="button" class="icon-btn" :aria-label="i18n.t('profile.aria.edit_email')" @click="startEdit('email')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M12 20h9"/>
                       <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>
@@ -569,53 +572,53 @@ onMounted(() => {
               <div class="setting-row" :class="{ editing: activeEditField === 'password' }">
                 <div class="setting-main">
                   <div class="setting-copy">
-                    <p class="setting-label">Password</p>
+                    <p class="setting-label">{{ i18n.t('profile.label.password') }}</p>
                   </div>
 
                   <Transition name="setting-swap" mode="out-in">
                     <div v-if="activeEditField !== 'password'" key="password-display" class="setting-display">
                       <p class="setting-value sensitive">{{ displayedPassword }}</p>
-                      <p class="setting-hint">Improve your security with a strong password.</p>
+                      <p class="setting-hint">{{ i18n.t('profile.hint.password_strength') }}</p>
                     </div>
 
                     <div v-else key="password-edit" class="setting-edit password-edit">
                       <div class="field-stack">
-                        <label class="input-label" for="current-password">For security, please enter your password to continue.</label>
+                        <label class="input-label" for="current-password">{{ i18n.t('profile.label.enter_current_password') }}</label>
                         <div class="password-input-wrapper">
                           <input
                             id="current-password"
                             v-model="editDraft.currentPassword"
                             type="password"
                             class="setting-input"
-                            placeholder="Current password"
+                            :placeholder="i18n.t('profile.placeholder.current_password')"
                             autocomplete="current-password"
                           />
                         </div>
                       </div>
 
                       <div class="field-stack">
-                        <label class="input-label" for="new-password">New password</label>
+                        <label class="input-label" for="new-password">{{ i18n.t('profile.new_password') }}</label>
                         <div class="password-input-wrapper">
                           <input
                             id="new-password"
                             v-model="editDraft.newPassword"
                             type="password"
                             class="setting-input"
-                            placeholder="At least 8 characters"
+                            :placeholder="i18n.t('profile.placeholder.new_password')"
                             autocomplete="new-password"
                           />
                         </div>
                       </div>
 
                       <div class="field-stack">
-                        <label class="input-label" for="confirm-password">Confirm new password</label>
+                        <label class="input-label" for="confirm-password">{{ i18n.t('profile.confirm_new_password') }}</label>
                         <div class="password-input-wrapper">
                           <input
                             id="confirm-password"
                             v-model="editDraft.confirmPassword"
                             type="password"
                             class="setting-input"
-                            placeholder="Repeat your new password"
+                            :placeholder="i18n.t('profile.placeholder.confirm_password')"
                             autocomplete="new-password"
                             @keyup.enter="saveField('password')"
                             @keyup.esc="cancelEdit"
@@ -625,10 +628,10 @@ onMounted(() => {
 
                       <div class="edit-actions">
                         <button type="button" class="action-btn save-btn" :disabled="isSaving" @click="saveField('password')">
-                          Save
+                          {{ i18n.t('profile.save') }}
                         </button>
                         <button type="button" class="action-btn cancel-btn" :disabled="isSaving" @click="cancelEdit">
-                          Cancel
+                          {{ i18n.t('buttons.cancel') }}
                         </button>
                       </div>
 
@@ -638,7 +641,7 @@ onMounted(() => {
                 </div>
 
                 <div v-if="activeEditField !== 'password'" class="setting-actions">
-                  <button type="button" class="icon-btn" aria-label="Edit password" @click="startEdit('password')">
+                    <button type="button" class="icon-btn" :aria-label="i18n.t('profile.aria.edit_password')" @click="startEdit('password')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M12 20h9"/>
                       <path d= "M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>
@@ -650,24 +653,24 @@ onMounted(() => {
               <div class="setting-row danger-row" :class="{ editing: activeEditField === 'delete-account' }">
                 <div class="setting-main">
                   <div class="setting-copy">
-                    <p class="setting-label">Delete account</p>
+                    <p class="setting-label">{{ i18n.t('profile.label.delete_account') }}</p>
                   </div>
 
                   <Transition name="setting-swap" mode="out-in">
                     <div v-if="activeEditField !== 'delete-account'" key="delete-account-display" class="setting-display">
-                      <p class="setting-value">Permanently remove your account.</p>
-                      <p class="setting-hint">This action cannot be undone.</p>
+                      <p class="setting-value">{{ i18n.t('profile.delete_account_notice') }}</p>
+                      <p class="setting-hint">{{ i18n.t('profile.delete_account_hint') }}</p>
                     </div>
 
                     <div v-else key="delete-account-edit" class="setting-edit danger-edit">
-                      <p class="setting-hint">Confirm your password to permanently delete your account.</p>
+                      <p class="setting-hint">{{ i18n.t('profile.delete_account_confirm_hint') }}</p>
 
                       <div class="password-input-wrapper">
                         <input
                           v-model="editDraft.deleteAccountPassword"
                           type="password"
                           class="setting-input"
-                          placeholder="Current password"
+                          :placeholder="i18n.t('profile.placeholder.current_password')"
                           autocomplete="current-password"
                           @keyup.enter="saveField('delete-account')"
                           @keyup.esc="cancelEdit"
@@ -676,10 +679,10 @@ onMounted(() => {
 
                       <div class="edit-actions">
                         <button type="button" class="action-btn danger-btn" :disabled="isSaving" @click="saveField('delete-account')">
-                          Delete account
+                          {{ i18n.t('profile.delete_account_action') }}
                         </button>
                         <button type="button" class="action-btn cancel-btn" :disabled="isSaving" @click="cancelEdit">
-                          Cancel
+                          {{ i18n.t('buttons.cancel') }}
                         </button>
                       </div>
 
@@ -690,7 +693,7 @@ onMounted(() => {
 
                 <div v-if="activeEditField !== 'delete-account'" class="setting-actions">
                   <button type="button" class="action-btn danger-btn compact-danger-btn" @click="startEdit('delete-account')">
-                    Delete
+                    {{ i18n.t('buttons.delete') }}
                   </button>
                 </div>
               </div>
@@ -702,7 +705,7 @@ onMounted(() => {
 
     <footer class="footer">
       <div class="footer-container">
-        <span class="footer-text">&copy; 2025 Game Prices</span>
+        <span class="footer-text">{{ i18n.t('footer.brand') }}</span>
       </div>
     </footer>
   </div>

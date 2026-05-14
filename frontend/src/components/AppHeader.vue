@@ -3,12 +3,13 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useI18nStore } from '../stores/i18n'
 import { formatDateTime } from '../composables/useDateTimeFormat'
 
 const props = defineProps({
   activePage: { type: String, default: '' },
   selectedTheme: { type: String, default: 'light' },
-  selectedLanguage: { type: String, default: 'ENG' }
+  selectedLanguage: { type: String, default: 'LV' }
 })
 
 const emit = defineEmits([
@@ -208,7 +209,10 @@ function handleAuthMenuAction() {
   goToLogin()
 }
 
+const i18n = useI18nStore()
+
 function changeLanguage(l) {
+  i18n.setLanguage(l)
   emit('update:selectedLanguage', l)
 }
 
@@ -286,29 +290,29 @@ function formatNotificationSummary(notification) {
       <div class="header-spacer"></div>
 
       <div class="center-content">
-        <div class="logo" @click="goToHome">
+          <div class="logo" @click="goToHome">
           <svg class="logo-icon" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
             <path fill="currentColor" d="M64 24A40 40 0 1 0 64 104A40 40 0 1 0 64 24ZM44 52L84 52A12 12 0 0 1 84 76L44 76A12 12 0 0 1 44 52ZM52 60A4 4 0 1 0 52 68A4 4 0 1 0 52 60ZM76 60A4 4 0 1 0 76 68A4 4 0 1 0 76 60Z"/>
           </svg>
-          <span class="logo-text">Game Prices</span>
+          <span class="logo-text">{{ i18n.t('logo') }}</span>
         </div>
 
         <nav class="nav-menu desktop-nav">
-          <button class="nav-btn" :class="{ active: activePage === 'games' }" @click="goToGames">Games</button>
-          <button class="nav-btn" :class="{ active: activePage === 'about' }" @click="goToAbout">About us</button>
+          <button class="nav-btn" :class="{ active: activePage === 'games' }" @click="goToGames">{{ i18n.t('games') }}</button>
+          <button class="nav-btn" :class="{ active: activePage === 'about' }" @click="goToAbout">{{ i18n.t('about') }}</button>
         </nav>
       </div>
 
       <div class="header-right desktop-profile">
         <template v-if="!isLoggedIn">
-          <button class="auth-btn login-btn" @click="goToLogin">Log In</button>
-          <button class="auth-btn signup-btn" @click="goToRegister">Sign Up</button>
+          <button class="auth-btn login-btn" @click="goToLogin">{{ i18n.t('log_in') }}</button>
+          <button class="auth-btn signup-btn" @click="goToRegister">{{ i18n.t('sign_up') }}</button>
         </template>
 
-        <button v-if="isAdmin" class="auth-btn login-btn" @click="goToAdminConsole">Console</button>
+        <button v-if="isAdmin" class="auth-btn login-btn" @click="goToAdminConsole">{{ i18n.t('console') }}</button>
 
         <div v-if="isLoggedIn" class="notifications-wrapper" ref="notificationsWrapperRef">
-          <button class="icon-btn notifications-btn" :class="{ active: isNotificationsOpen }" @click="toggleNotificationsMenu" aria-label="Notifications">
+          <button class="icon-btn notifications-btn" :class="{ active: isNotificationsOpen }" @click="toggleNotificationsMenu" :aria-label="i18n.t('notifications')">
             <svg class="icon notifications-main-icon" width="22" height="22" viewBox="0 0 24 24" focusable="false" aria-hidden="true" role="presentation" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/>
               <path d="M9.26 21a2 2 0 0 0 3.48 0"/>
@@ -318,7 +322,7 @@ function formatNotificationSummary(notification) {
 
           <div class="notifications-dropdown" :class="{ 'notifications-dropdown-open': isNotificationsOpen }">
             <div class="notifications-header">
-              <button class="notifications-clear-btn" :disabled="unreadCount === 0 || isNotificationsMarking" @click="markAllNotificationsAsRead" aria-label="Mark all read">
+              <button class="notifications-clear-btn" :disabled="unreadCount === 0 || isNotificationsMarking" @click="markAllNotificationsAsRead" :aria-label="i18n.t('mark_all_read')">
                 <svg class="notifications-clear-icon" width="800" height="800" viewBox="0 0 64 64" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg">
                   <title/>
                   <path d="M52.43 57.43H11.57a5.5 5.5 0 0 1-5.5-5.5V22.1a5.52 5.52 0 0 1 3.08-4.93l20.43-10a5.55 5.55 0 0 1 4.84 0l20.43 10a5.52 5.52 0 0 1 3.08 4.93v29.83a5.5 5.5 0 0 1-5.5 5.5M32 9.57a2.46 2.46 0 0 0-1.1.25l-20.43 10a2.52 2.52 0 0 0-1.4 2.24v29.87a2.5 2.5 0 0 0 2.5 2.5h40.86a2.5 2.5 0 0 0 2.5-2.5V22.1a2.52 2.52 0 0 0-1.4-2.24L33.1 9.82a2.46 2.46 0 0 0-1.1-.25"/>
@@ -326,12 +330,12 @@ function formatNotificationSummary(notification) {
                 </svg>
               </button>
 
-              <p class="notifications-title">Notifications</p>
+              <p class="notifications-title">{{ i18n.t('notifications') }}</p>
             </div>
 
-            <div v-if="isNotificationsLoading" class="notifications-state">Loading notifications...</div>
+            <div v-if="isNotificationsLoading" class="notifications-state">{{ i18n.t('loading_notifications') }}</div>
             <div v-else-if="visibleNotifications.length === 0" class="notifications-state empty">
-              No notifications yet
+              {{ i18n.t('no_notifications') }}
             </div>
 
             <div v-else class="notifications-list">
@@ -370,7 +374,7 @@ function formatNotificationSummary(notification) {
                 <circle cx="12" cy="12" r="3"/>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09A1.65 1.65 0 0 0 19.4 15z"/>
               </svg>
-              <span>Settings</span>
+              <span>{{ i18n.t('settings') }}</span>
             </button>
 
             <div class="profile-menu-divider"></div>
@@ -384,11 +388,11 @@ function formatNotificationSummary(notification) {
                 <line x1="2" y1="12" x2="22" y2="12"/>
                 <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
               </svg>
-              <span>Language</span>
+              <span>{{ i18n.t('language') }}</span>
             </div>
             <div class="setting-options">
-              <button
-                v-for="lang in ['ENG', 'LV']"
+                <button
+                  v-for="lang in ['LV', 'ENG']"
                 :key="lang"
                 class="setting-btn"
                 :class="{ active: selectedLanguage === lang }"
@@ -413,8 +417,8 @@ function formatNotificationSummary(notification) {
               <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
               <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
             </svg>
-            <span>Dark Theme</span>
-            <span class="theme-status">{{ selectedTheme === 'dark' ? 'On' : 'Off' }}</span>
+            <span>{{ i18n.t('dark_theme') }}</span>
+            <span class="theme-status">{{ selectedTheme === 'dark' ? i18n.t('on') : i18n.t('off') }}</span>
           </button>
 
           <div class="profile-menu-divider"></div>
@@ -429,14 +433,14 @@ function formatNotificationSummary(notification) {
               <polyline points="16 17 21 12 16 7"/>
               <line x1="21" y1="12" x2="9" y2="12"/>
             </svg>
-            <span>{{ isLoggedIn ? 'Log out' : 'Log in' }}</span>
+            <span>{{ isLoggedIn ? i18n.t('log_out') : i18n.t('log_in') }}</span>
           </button>
           </div>
         </div>
       </div>
 
       <!-- Mobile menu button -->
-      <button class="mobile-menu-btn" @click="toggleMobileMenu" :aria-label="isMobileMenuOpen ? 'Close menu' : 'Open menu'">
+      <button class="mobile-menu-btn" @click="toggleMobileMenu" :aria-label="isMobileMenuOpen ? i18n.t('close_menu') : i18n.t('open_menu')">
         <svg v-if="!isMobileMenuOpen" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="3" y1="6" x2="21" y2="6"/>
           <line x1="3" y1="12" x2="21" y2="12"/>
@@ -452,19 +456,19 @@ function formatNotificationSummary(notification) {
     <!-- Mobile menu -->
     <div class="mobile-menu" :class="{ 'mobile-menu-open': isMobileMenuOpen }">
       <nav class="mobile-nav">
-        <button class="mobile-nav-btn" :class="{ active: activePage === 'games' }" @click="goToGames">Games</button>
-        <button class="mobile-nav-btn" :class="{ active: activePage === 'about' }" @click="goToAbout">About us</button>
+        <button class="mobile-nav-btn" :class="{ active: activePage === 'games' }" @click="goToGames">{{ i18n.t('games') }}</button>
+        <button class="mobile-nav-btn" :class="{ active: activePage === 'about' }" @click="goToAbout">{{ i18n.t('about') }}</button>
 
         <div class="mobile-divider"></div>
 
         <template v-if="!isLoggedIn">
-          <button class="mobile-auth-btn mobile-login-btn" @click="goToLogin">Log In</button>
-          <button class="mobile-auth-btn mobile-signup-btn" @click="goToRegister">Sign Up</button>
+          <button class="mobile-auth-btn mobile-login-btn" @click="goToLogin">{{ i18n.t('log_in') }}</button>
+          <button class="mobile-auth-btn mobile-signup-btn" @click="goToRegister">{{ i18n.t('sign_up') }}</button>
         </template>
 
 
         <button v-if="isLoggedIn" class="mobile-nav-btn" @click="goToProfile">
-          <span>Settings</span>
+          <span>{{ i18n.t('settings') }}</span>
           <svg class="mobile-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"/>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09A1.65 1.65 0 0 0 19.4 15z"/>
@@ -472,10 +476,10 @@ function formatNotificationSummary(notification) {
         </button>
 
         <div class="mobile-setting">
-          <span class="mobile-setting-label">Language</span>
+          <span class="mobile-setting-label">{{ i18n.t('language') }}</span>
           <div class="mobile-setting-options">
             <button
-              v-for="lang in ['ENG', 'LV']"
+              v-for="lang in ['LV', 'ENG']"
               :key="lang"
               class="mobile-setting-btn"
               :class="{ active: selectedLanguage === lang }"
@@ -485,8 +489,8 @@ function formatNotificationSummary(notification) {
         </div>
 
         <button class="mobile-nav-btn" @click="toggleTheme">
-          <span>Dark theme</span>
-          <span class="theme-status-mobile">{{ selectedTheme === 'dark' ? 'On' : 'Off' }}</span>
+          <span>{{ i18n.t('dark_theme') }}</span>
+          <span class="theme-status-mobile">{{ selectedTheme === 'dark' ? i18n.t('on') : i18n.t('off') }}</span>
         </button>
 
         <div class="mobile-divider"></div>
@@ -496,7 +500,7 @@ function formatNotificationSummary(notification) {
           :class="{ 'logout-mobile': isLoggedIn }"
           @click="handleAuthMenuAction"
         >
-          <span>{{ isLoggedIn ? 'Log out' : 'Log in' }}</span>
+          <span>{{ isLoggedIn ? i18n.t('log_out') : i18n.t('log_in') }}</span>
           <svg class="mobile-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
             <polyline points="16 17 21 12 16 7"/>

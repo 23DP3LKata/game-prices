@@ -1,18 +1,21 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 import { Chart, registerables } from 'chart.js'
 import AppHeader from '../components/AppHeader.vue'
 import { useThemePreference } from '../composables/useThemePreference'
 import { formatDateOnly } from '../composables/useDateTimeFormat'
+import { useI18nStore } from '../stores/i18n'
 
 Chart.register(...registerables)
 
 const route = useRoute()
 const router = useRouter()
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '')
-const selectedLanguage = ref('ENG')
+const selectedLanguage = ref('LV')
 const selectedTheme = useThemePreference()
+const i18n = useI18nStore()
 
 provide('theme', selectedTheme)
 
@@ -28,6 +31,7 @@ const chartCanvas = ref(null)
 const chartInstance = ref(null)
 const isLoading = ref(true)
 const loadError = ref('')
+const wishlistAdded = ref(false)
 const game = ref({
   title: '',
   genre: '',
@@ -108,7 +112,7 @@ function formatPrice(value) {
 
 function formatReleaseYear(value) {
   if (!value) {
-    return 'n/a'
+    return i18n.t('na')
   }
 
   const parsedDate = new Date(value)
@@ -121,7 +125,7 @@ function formatReleaseYear(value) {
 
 function formatPlaytime(minValue, maxValue) {
   if (!Number.isFinite(minValue) && !Number.isFinite(maxValue)) {
-    return 'n/a'
+    return i18n.t('na')
   }
 
   const formatHours = (minutes) => `${Math.max(1, Math.round(minutes / 60))}h`
@@ -139,7 +143,7 @@ function formatPlaytime(minValue, maxValue) {
 
 function formatDate(value) {
   if (!value) {
-    return 'n/a'
+    return i18n.t('na')
   }
 
   const formatted = formatDateOnly(value, undefined, selectedLanguage.value)
@@ -223,16 +227,16 @@ async function fetchGameData(slug) {
     const data = await response.json().catch(() => null)
 
     if (response.status === 404) {
-      throw new Error('Game not found.')
+      throw new Error(i18n.t('game.errors.not_found'))
     }
 
     if (!response.ok) {
-      throw new Error(data?.message || 'Unable to load game data right now.')
+      throw new Error(data?.message || i18n.t('game.errors.load_failed'))
     }
 
     const payload = data?.game ?? {}
     game.value = {
-      title: payload.name ?? 'Untitled game',
+      title: payload.name ?? i18n.t('game.untitled'),
       genre: payload.genre ?? '',
       developer: payload.developer ?? '',
       release_date: payload.releaseDate ?? '',
@@ -246,9 +250,12 @@ async function fetchGameData(slug) {
       description: payload.description ?? '',
     }
 
+    // initialize wishlist state if backend provides it
+    wishlistAdded.value = Boolean(data?.game?.is_wishlisted ?? data?.game?.wishlisted ?? data?.is_wishlisted ?? data?.wishlisted ?? false)
+
     const rawPrices = Array.isArray(data?.prices) ? data.prices : []
     stores.value = rawPrices.map((item) => ({
-      store_name: item?.store?.name || item?.store?.code || 'Unknown',
+      store_name: item?.store?.name || item?.store?.code || i18n.t('game.unknown_store'),
       store_slug: String(item?.store?.code || item?.store?.name || 'store').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
       base_price_eur: Number(item?.originalPrice ?? item?.currentPrice ?? 0),
       current_price_eur: Number(item?.currentPrice ?? 0),
@@ -270,7 +277,7 @@ async function fetchGameData(slug) {
     await nextTick()
     buildChart()
   } catch (err) {
-    loadError.value = err instanceof Error ? err.message : 'Unable to load game data right now.'
+    loadError.value = err instanceof Error ? err.message : i18n.t('game.errors.load_failed')
     game.value = {
       title: '',
       genre: '',
@@ -294,6 +301,41 @@ async function fetchGameData(slug) {
     }
   } finally {
     isLoading.value = false
+  }
+}
+
+const authStore = useAuthStore()
+
+async function toggleWishlist() {
+  const slug = getRouteSlug()
+
+  if (!authStore.isLoggedIn) {
+    router.push('/login')
+    return
+  }
+
+  try {
+    const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/wishlist/${encodeURIComponent(slug)}` : `/api/wishlist/${encodeURIComponent(slug)}`, {
+      method: 'POST',
+      headers: { Accept: 'application/json' },
+      credentials: 'include',
+    })
+
+    if (response.status === 401) {
+      router.push('/login')
+      return
+    }
+
+    if (!response.ok) {
+      const json = await response.json().catch(() => null)
+      console.error('Wishlist error', json)
+      return
+    }
+
+    // Toggle local state on success (backend toggles)
+    wishlistAdded.value = !wishlistAdded.value
+  } catch (err) {
+    console.error('Wishlist network error', err)
   }
 }
 
@@ -429,7 +471,7 @@ onMounted(async () => {
   const slug = getRouteSlug()
 
   if (typeof slug !== 'string' || slug.trim() === '') {
-    loadError.value = 'Missing game slug.'
+    loadError.value = i18n.t('game.errors.missing_slug')
     isLoading.value = false
     return
   }
@@ -470,30 +512,44 @@ onBeforeUnmount(() => {
 
       <div v-else-if="loadError" class="empty-state">
         <div class="skeleton-row"></div>
-        <button type="button" class="store-button primary" @click="router.push('/games')">Back to games</button>
+        <button type="button" class="store-button primary" @click="router.push('/games')">{{ i18n.t('back_to_games') }}</button>
       </div>
 
       <template v-else>
         <section class="hero-card">
-          <img v-if="game.cover_image" :src="game.cover_image" :alt="game.title" class="hero-image" />
+          <template v-if="game.cover_image">
+            <img :src="game.cover_image" :alt="game.title" class="hero-image" />
+
+            <button
+              type="button"
+              class="wishlist-toggle"
+              :class="{ active: wishlistAdded }"
+              @click="toggleWishlist"
+              :aria-pressed="wishlistAdded"
+              :title="wishlistAdded ? i18n.t('game.remove_wishlist') : i18n.t('game.add_wishlist')"
+            >
+              <span class="heart">{{ wishlistAdded ? '♥' : '♡' }}</span>
+            </button>
+
+            <div class="hero-content">
+              <h1 class="game-title">{{ game?.title || i18n.t('game.untitled') }}</h1>
+              <p class="hero-meta">
+                <span>{{ formatPlaytime(game?.playtime_min, game?.playtime_max) }}</span>
+                <span>{{ game?.developer || i18n.t('na') }}</span>
+                <span>{{ formatReleaseYear(game?.release_date) }}</span>
+              </p>
+            </div>
+          </template>
+
           <div v-else class="hero-skeleton">
             <div class="skeleton-line skeleton-title"></div>
             <div class="skeleton-line skeleton-subtitle"></div>
-          </div>
-
-          <div class="hero-content" v-if="game.cover_image">
-            <h1 class="game-title">{{ game?.title || 'Untitled game' }}</h1>
-            <p class="hero-meta">
-              <span>{{ formatPlaytime(game?.playtime_min, game?.playtime_max) }}</span>
-              <span>{{ game?.developer || 'n/a' }}</span>
-              <span>{{ formatReleaseYear(game?.release_date) }}</span>
-            </p>
           </div>
         </section>
 
         <section class="details-grid">
           <article class="card description-card">
-            <span class="section-label">Overview</span>
+            <span class="section-label">{{ i18n.t('overview') }}</span>
             <p v-if="game?.description" class="description-text">{{ game.description }}</p>
             <div v-else class="skeleton-blocks">
               <div class="skeleton-line"></div>
@@ -512,18 +568,18 @@ onBeforeUnmount(() => {
           </article>
 
           <aside class="card facts-card">
-            <span class="section-label">Details</span>
+            <span class="section-label">{{ i18n.t('details') }}</span>
 
             <div class="fact-row">
-              <span class="fact-key">Developer</span>
-              <span class="fact-value">{{ game?.developer || 'n/a' }}</span>
+              <span class="fact-key">{{ i18n.t('game.developer') }}</span>
+              <span class="fact-value">{{ game?.developer || i18n.t('na') }}</span>
             </div>
             <div class="fact-row">
-              <span class="fact-key">Release date</span>
+              <span class="fact-key">{{ i18n.t('game.release_date') }}</span>
               <span class="fact-value">{{ formatDate(game?.release_date) }}</span>
             </div>
             <div class="fact-row">
-              <span class="fact-key">Platforms</span>
+              <span class="fact-key">{{ i18n.t('game.platforms') }}</span>
               <span class="fact-value platform-value">
                 <span v-if="game?.platforms?.length" class="platform-list">
                   <span v-for="(platform, index) in game.platforms" :key="platform" class="platform-item">
@@ -531,16 +587,16 @@ onBeforeUnmount(() => {
                     {{ platform }}
                   </span>
                 </span>
-                <span v-else>n/a</span>
+                <span v-else>{{ i18n.t('na') }}</span>
               </span>
             </div>
             <div class="fact-row">
-              <span class="fact-key">Age rating</span>
-              <span class="fact-value">{{ game?.age_rating || 'n/a' }}</span>
+              <span class="fact-key">{{ i18n.t('game.age_rating') }}</span>
+              <span class="fact-value">{{ game?.age_rating || i18n.t('na') }}</span>
             </div>
             <div class="fact-row">
-              <span class="fact-key">Languages</span>
-              <span class="fact-value">{{ game?.languages?.length ? game.languages.join(', ') : 'n/a' }}</span>
+              <span class="fact-key">{{ i18n.t('game.languages') }}</span>
+              <span class="fact-value">{{ game?.languages?.length ? game.languages.join(', ') : i18n.t('na') }}</span>
             </div>
           </aside>
         </section>
@@ -548,11 +604,11 @@ onBeforeUnmount(() => {
         <section class="card stores-card">
           <div class="section-head">
             <div>
-              <span class="section-label">Stores</span>
-              <h2 class="section-title">Where to buy</h2>
+              <span class="section-label">{{ i18n.t('game.stores') }}</span>
+              <h2 class="section-title">{{ i18n.t('where_to_buy') }}</h2>
             </div>
             <div class="price-highlight" v-if="bestStorePrice">
-              <span>Best current price</span>
+              <span>{{ i18n.t('best_current_price') }}</span>
               <strong>{{ formatPrice(bestStorePrice.current_price_eur) }}</strong>
             </div>
           </div>
@@ -561,10 +617,10 @@ onBeforeUnmount(() => {
             <table class="stores-table">
               <thead>
                 <tr>
-                  <th>Store</th>
-                  <th>Base price</th>
-                  <th>Discount</th>
-                  <th>Final price</th>
+                  <th>{{ i18n.t('game.store') }}</th>
+                  <th>{{ i18n.t('game.base_price') }}</th>
+                  <th>{{ i18n.t('game.discount') }}</th>
+                  <th>{{ i18n.t('game.final_price') }}</th>
                   <th></th>
                 </tr>
               </thead>
@@ -586,7 +642,7 @@ onBeforeUnmount(() => {
                   <td>{{ formatPrice(store.base_price_eur) }}</td>
                   <td>
                     <span class="discount-pill" :class="getDiscountTone(store.discount_percent)">
-                      {{ store.discount_percent > 0 ? `-${store.discount_percent}%` : '0%' }}
+                      {{ store.discount_percent > 0 ? `-${store.discount_percent}%` : i18n.t('game.no_discount') }}
                     </span>
                   </td>
                   <td class="final-price">{{ formatPrice(store.current_price_eur) }}</td>
@@ -597,7 +653,7 @@ onBeforeUnmount(() => {
                       :class="{ primary: bestStorePrice && Math.abs(store.current_price_eur - bestStorePrice.current_price_eur) < 0.0001 }"
                       @click="openStore(store.url)"
                     >
-                      Visit
+                      {{ i18n.t('buttons.visit') }}
                     </button>
                   </td>
                 </tr>
@@ -615,10 +671,10 @@ onBeforeUnmount(() => {
         <section class="card chart-card">
           <div class="chart-head">
             <div>
-              <span class="section-label">History</span>
+              <span class="section-label">{{ i18n.t('game.history') }}</span>
               <div class="chart-pricing">
-                <strong>{{ displayedCurrentPrice !== null ? formatPrice(displayedCurrentPrice) : 'n/a' }}</strong>
-                <span v-if="minAllTimePrice !== null">All time low: {{ formatPrice(minAllTimePrice) }}</span>
+                <strong>{{ displayedCurrentPrice !== null ? formatPrice(displayedCurrentPrice) : i18n.t('na') }}</strong>
+                <span v-if="minAllTimePrice !== null">{{ i18n.t('game.all_time_low') }}: {{ formatPrice(minAllTimePrice) }}</span>
               </div>
             </div>
 
@@ -651,7 +707,7 @@ onBeforeUnmount(() => {
 
     <footer class="footer">
       <div class="footer-container">
-        <span class="footer-text">&copy; 2025 Game Prices</span>
+        <span class="footer-text">{{ i18n.t('footer.brand') }}</span>
       </div>
     </footer>
   </div>
@@ -735,15 +791,50 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
-.hero-image {
+  .hero-image {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 9;
+  max-height: 420px;
   object-fit: cover;
-  object-position: center;
+  object-position: center center;
   image-rendering: auto;
   transform: translateZ(0);
 }
+
+  .wishlist-toggle {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 3;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.9);
+    color: #ef4444;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.18);
+    transition: background-color 0.15s ease, transform 0.12s ease;
+  }
+
+  .wishlist-toggle:hover {
+    transform: translateY(-2px);
+  }
+
+  .wishlist-toggle.active {
+    background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+    color: #ffffff;
+  }
+
+  .wishlist-toggle .heart {
+    line-height: 1;
+    pointer-events: none;
+  }
 
 .hero-skeleton {
   min-height: 340px;

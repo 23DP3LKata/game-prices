@@ -2,9 +2,12 @@
 import { ref, provide } from 'vue'
 import AppHeader from '../components/AppHeader.vue'
 import { useThemePreference } from '../composables/useThemePreference'
+import { useI18nStore } from '../stores/i18n'
 
-const selectedLanguage = ref('ENG')
+const selectedLanguage = ref('LV')
 const selectedTheme = useThemePreference()
+
+const i18n = useI18nStore()
 
 provide('theme', selectedTheme)
 </script>
@@ -19,12 +22,12 @@ provide('theme', selectedTheme)
 
     <main class="main-content">
       <div class="hero-section">
-        <h1 class="hero-title">Find the best game deals in one place</h1>
-        <p class="hero-subtitle">Game Prices automatically collects prices from leading digital stores, compares them, visualizes price history, and helps you find the best deals without wasting time.</p>
+        <h1 class="hero-title">{{ i18n.t('home.hero_title') }}</h1>
+        <p class="hero-subtitle">{{ i18n.t('home.hero_subtitle') }}</p>
         
         <div class="cta-buttons">
-          <button class="cta-primary">Get Started</button>
-          <button class="cta-secondary">Learn More</button>
+          <button class="cta-primary">{{ i18n.t('home.cta_get_started') }}</button>
+          <button class="cta-secondary">{{ i18n.t('home.cta_learn_more') }}</button>
         </div>
 
         <div class="feature-grid">
@@ -35,8 +38,8 @@ provide('theme', selectedTheme)
                 <line x1="7" y1="7" x2="7.01" y2="7"/>
               </svg>
             </div>
-            <h3>Price Comparison</h3>
-            <p>We provide real-time price comparison from major stores so you always know where the best deal is.</p>
+            <h3>{{ i18n.t('home.feature_price_title') }}</h3>
+            <p>{{ i18n.t('home.feature_price_desc') }}</p>
           </div>
 
           <div class="feature-item">
@@ -45,8 +48,8 @@ provide('theme', selectedTheme)
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
               </svg>
             </div>
-            <h3>Price History & Analytics</h3>
-            <p>Track detailed price history to understand trends and choose the perfect moment to buy.</p>
+            <h3>{{ i18n.t('home.feature_history_title') }}</h3>
+            <p>{{ i18n.t('home.feature_history_desc') }}</p>
           </div>
 
           <div class="feature-item">
@@ -55,8 +58,8 @@ provide('theme', selectedTheme)
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
               </svg>
             </div>
-            <h3>Wishlist & Notifications</h3>
-            <p>Save your favorite games to a wishlist and get instant notifications when prices drop.</p>
+            <h3>{{ i18n.t('home.feature_wishlist_title') }}</h3>
+            <p>{{ i18n.t('home.feature_wishlist_desc') }}</p>
           </div>
         </div>
       </div>
@@ -64,7 +67,7 @@ provide('theme', selectedTheme)
 
     <footer class="footer">
       <div class="footer-container">
-        <span class="footer-text">&copy; 2025 Game Prices</span>
+        <span class="footer-text">{{ i18n.t('footer.brand') }}</span>
       </div>
     </footer>
   </div>

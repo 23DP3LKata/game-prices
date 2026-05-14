@@ -1,13 +1,15 @@
 <script setup>
-import { reactive, ref, provide } from 'vue'
+import { computed, provide, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import { useThemePreference } from '../composables/useThemePreference'
+import { useI18nStore } from '../stores/i18n'
 
 const router = useRouter()
 
-const selectedLanguage = ref('ENG')
+const selectedLanguage = ref('LV')
 const selectedTheme = useThemePreference()
+const i18n = useI18nStore()
 
 provide('theme', selectedTheme)
 
@@ -38,9 +40,10 @@ const fieldFocused = reactive({
 
 let nicknameCheckTimeout = null
 
-const nicknameHint = 'This is the name people will know you by. You can always change it later.'
-const emailHint = 'We will use this email to send your verification link.'
-const passwordHint = 'Use at least 8 characters, uppercase letter, number, special character.'
+const nicknameHint = i18n.t('register.hint.nickname')
+const emailHint = i18n.t('register.hint.email')
+const passwordHint = i18n.t('register.hint.password')
+const confirmBodyText = computed(() => i18n.t('register.confirm_body').replace('{{email}}', registeredEmail.value))
 
 const passwordPattern = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/
 
@@ -64,11 +67,11 @@ function validateNickname(value) {
   }
 
   if (trimmedValue.length < 4 || trimmedValue.length > 100) {
-    return 'Usernames must be between 4 and 100 characters.'
+    return i18n.t('register.errors.nickname_length')
   }
 
   if (!/^[A-Za-z0-9]+$/.test(trimmedValue)) {
-    return 'Usernames must only contain alphanumeric characters.'
+    return i18n.t('register.errors.nickname_format')
   }
 
   return ''
@@ -101,12 +104,12 @@ async function checkNicknameAvailability(value) {
     const data = await response.json().catch(() => null)
 
     if (!response.ok || data?.available === false) {
-      fieldErrors.nickname = 'This username is already taken.'
+      fieldErrors.nickname = i18n.t('register.errors.nickname_taken')
       return
     }
 
     fieldErrors.nickname = ''
-  } catch (err) {
+  } catch {
     fieldErrors.nickname = ''
   }
 }
@@ -119,11 +122,11 @@ function validateEmail(value) {
   }
 
   if (/\s/.test(trimmedValue)) {
-    return 'Please enter a valid email.'
+    return i18n.t('messages.valid_email')
   }
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)) {
-    return 'Please enter a valid email.'
+    return i18n.t('messages.valid_email')
   }
 
   return ''
@@ -135,7 +138,7 @@ function validatePassword(value) {
   }
 
   if (!passwordPattern.test(value)) {
-    return 'Use at least 8 characters, uppercase letter, number, special character.'
+    return i18n.t('register.hint.password')
   }
 
   return ''
@@ -153,6 +156,7 @@ function handleFieldFocus(field) {
 
 function handleFieldBlur(field, validator, value) {
   fieldFocused[field] = false
+
   if (field !== 'nickname') {
     fieldErrors[field] = validator(value)
   }
@@ -171,12 +175,12 @@ function handleFieldInput(field, validator, value) {
 
 function getErrorMessage(payload) {
   if (!payload) {
-    return 'Registration failed.'
+    return i18n.t('register.errors.failed')
   }
 
   if (payload.errors) {
     const firstFieldErrors = Object.values(payload.errors).find(
-      (fieldErrors) => Array.isArray(fieldErrors) && fieldErrors.length > 0,
+      (errors) => Array.isArray(errors) && errors.length > 0,
     )
 
     if (firstFieldErrors) {
@@ -184,7 +188,7 @@ function getErrorMessage(payload) {
     }
   }
 
-  return payload.message || 'Registration failed.'
+  return payload.message || i18n.t('register.errors.failed')
 }
 
 async function handleRegister() {
@@ -195,7 +199,7 @@ async function handleRegister() {
   const trimmedEmail = email.value.trim()
 
   if (!trimmedNickname || !trimmedEmail || !password.value || !passwordConfirm.value) {
-    errorMessage.value = 'Please fill in all fields.'
+    errorMessage.value = i18n.t('messages.fill_all_fields')
     return
   }
 
@@ -212,12 +216,12 @@ async function handleRegister() {
   }
 
   if (password.value !== passwordConfirm.value) {
-    errorMessage.value = 'Passwords do not match.'
+    errorMessage.value = i18n.t('messages.passwords_no_match')
     return
   }
 
   if (!passwordPattern.test(password.value)) {
-    errorMessage.value = 'Password must be at least 8 characters and include one uppercase letter, one number, and one special character.'
+    errorMessage.value = i18n.t('register.hint.password')
     return
   }
 
@@ -259,9 +263,7 @@ async function handleRegister() {
     registeredEmail.value = trimmedEmail
     verifyDialogOpen.value = true
   } catch (err) {
-    errorMessage.value = err instanceof Error
-      ? err.message
-      : 'Something went wrong. Please try again.'
+    errorMessage.value = err instanceof Error ? err.message : i18n.t('messages.something_went_wrong')
   } finally {
     isLoading.value = false
   }
@@ -293,8 +295,8 @@ async function goToLogin() {
         <section class="form-panel">
           <form class="register-card" novalidate @submit.prevent="handleRegister">
             <header class="page-header compact-header">
-              <h2>Sign up</h2>
-              <p class="subtitle">Sign up to start tracking game prices</p>
+              <h2>{{ i18n.t('register.title') }}</h2>
+              <label for="email">{{ i18n.t('register.email') }}</label>
             </header>
 
             <div v-if="errorMessage" class="error-banner" role="alert">
@@ -307,7 +309,7 @@ async function goToLogin() {
             </div>
 
             <div class="form-group">
-              <label for="nickname">Username</label>
+              <label for="nickname">{{ i18n.t('register.nickname') }}</label>
               <input
                 id="nickname"
                 v-model="nickname"
@@ -315,7 +317,6 @@ async function goToLogin() {
                 autocomplete="username"
                 :aria-invalid="Boolean(fieldErrors.nickname)"
                 @focus="handleFieldFocus('nickname')"
-                @blur="fieldFocused.nickname = false"
                 @input="handleFieldInput('nickname', validateNickname, nickname)"
               />
 
@@ -326,7 +327,7 @@ async function goToLogin() {
             </div>
 
             <div class="form-group">
-              <label for="email">Email</label>
+              <label for="email">{{ i18n.t('register.email') }}</label>
               <input
                 id="email"
                 v-model="email"
@@ -347,7 +348,7 @@ async function goToLogin() {
             </div>
 
             <div class="form-group">
-              <label for="password">Password</label>
+              <label for="password">{{ i18n.t('register.password') }}</label>
               <div class="password-input-wrapper">
                 <input
                   id="password"
@@ -362,7 +363,7 @@ async function goToLogin() {
                 <button
                   type="button"
                   class="password-toggle"
-                  :aria-label="showPassword ? 'Hide password' : 'Show password'"
+                  :aria-label="showPassword ? i18n.t('password.hide') : i18n.t('password.show')"
                   :aria-pressed="showPassword"
                   @click="showPassword = !showPassword"
                 >
@@ -386,7 +387,7 @@ async function goToLogin() {
             </div>
 
             <div class="form-group">
-              <label for="password-confirm">Confirm Password</label>
+              <label for="password-confirm">{{ i18n.t('register.password_confirm') }}</label>
               <div class="password-input-wrapper">
                 <input
                   id="password-confirm"
@@ -397,7 +398,7 @@ async function goToLogin() {
                 <button
                   type="button"
                   class="password-toggle"
-                  :aria-label="showPasswordConfirm ? 'Hide password confirmation' : 'Show password confirmation'"
+                  :aria-label="showPasswordConfirm ? i18n.t('password.hide_confirmation') : i18n.t('password.show_confirmation')"
                   :aria-pressed="showPasswordConfirm"
                   @click="showPasswordConfirm = !showPasswordConfirm"
                 >
@@ -416,12 +417,12 @@ async function goToLogin() {
             </div>
 
             <button type="submit" class="register-btn" :disabled="isLoading">
-              <span v-if="!isLoading">Sign up</span>
+              <span v-if="!isLoading">{{ i18n.t('register.button') }}</span>
               <span v-else class="spinner"></span>
             </button>
 
             <button type="button" class="login-link-btn" @click="$router.push('/login')">
-              Have an account? Log In
+              {{ i18n.t('register.have_account') }}
             </button>
           </form>
         </section>
@@ -430,15 +431,12 @@ async function goToLogin() {
 
     <div v-if="verifyDialogOpen" class="modal-backdrop" @click.self="goToLogin">
       <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="verify-title">
-        <h2 id="verify-title">Confirm your email</h2>
-        <p class="modal-subtitle">
-          We sent a verification email to <strong>{{ registeredEmail }}</strong>.
-          Please open the message and click the link. Login will be available only after confirmation.
-        </p>
+        <h2 id="verify-title">{{ i18n.t('register.confirm_title') }}</h2>
+        <p class="modal-subtitle">{{ confirmBodyText }}</p>
 
         <div class="modal-actions">
           <button type="button" class="register-btn" @click="goToLogin">
-            Go to login
+            {{ i18n.t('register.confirm_action') }}
           </button>
         </div>
       </div>
@@ -446,7 +444,7 @@ async function goToLogin() {
 
     <footer class="footer">
       <div class="footer-container">
-        <span class="footer-text">&copy; 2025 Game Prices</span>
+        <span class="footer-text">{{ i18n.t('footer.brand') }}</span>
       </div>
     </footer>
   </div>

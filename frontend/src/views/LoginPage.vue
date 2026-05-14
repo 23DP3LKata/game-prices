@@ -4,13 +4,15 @@ import { useRouter, useRoute } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import { useAuthStore } from '../stores/auth'
 import { useThemePreference } from '../composables/useThemePreference'
+import { useI18nStore } from '../stores/i18n'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 
-const selectedLanguage = ref('ENG')
+const selectedLanguage = ref('LV')
 const selectedTheme = useThemePreference()
+const i18n = useI18nStore()
 
 provide('theme', selectedTheme)
 
@@ -31,15 +33,15 @@ const forgotSuccess = ref('')
 const verifyStatus = computed(() => String(route.query.verify || ''))
 const verifyMessage = computed(() => {
   if (verifyStatus.value === 'sent') {
-    return 'Account created. Please check your email and confirm it before login.'
+    return i18n.t('login.verify.sent')
   }
 
   if (verifyStatus.value === 'verified') {
-    return 'Email confirmed. You can now log in.'
+    return i18n.t('login.verify.verified')
   }
 
   if (verifyStatus.value === 'already-verified') {
-    return 'Email is already confirmed. You can log in now.'
+    return i18n.t('login.verify.already_verified')
   }
 
   return ''
@@ -47,11 +49,33 @@ const verifyMessage = computed(() => {
 
 const verifyError = computed(() => {
   if (verifyStatus.value === 'invalid') {
-    return 'Verification link is invalid or expired. Please request a new verification email.'
+    return i18n.t('login.verify.invalid')
   }
 
   return ''
 })
+
+function validateEmail(value) {
+  const trimmedValue = value.trim()
+
+  if (!trimmedValue) {
+    return ''
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)) {
+    return i18n.t('messages.valid_email')
+  }
+
+  return ''
+}
+
+function validatePassword(value) {
+  if (!value) {
+    return ''
+  }
+
+  return ''
+}
 
 function getApiUrl(path) {
   return apiBaseUrl ? `${apiBaseUrl}${path}` : `/api${path}`
@@ -60,8 +84,7 @@ function getApiUrl(path) {
 async function handleLogin() {
   errorMessage.value = ''
 
-  if (!email.value || !password.value) {
-    errorMessage.value = 'Please fill in all fields.'
+  if (!email.value.trim() || !password.value) {
     return
   }
 
@@ -85,13 +108,18 @@ async function handleLogin() {
     const data = await response.json().catch(() => null)
 
     if (!response.ok) {
-      throw new Error(data?.message || 'Login failed.')
+      if (response.status === 401 || response.status === 422) {
+        errorMessage.value = i18n.t('login.errors.invalid_credentials')
+      } else {
+        errorMessage.value = data?.message || i18n.t('login.errors.failed')
+      }
+      return
     }
 
     authStore.setUser(data.user)
     await router.push('/profile')
   } catch (err) {
-    errorMessage.value = err.message || 'Something went wrong. Please try again.'
+    errorMessage.value = i18n.t('messages.something_went_wrong')
   } finally {
     isLoading.value = false
   }
@@ -116,7 +144,7 @@ async function sendForgotPassword() {
   forgotSuccess.value = ''
 
   if (!forgotEmail.value.trim()) {
-    forgotError.value = 'Please enter your email.'
+    forgotError.value = i18n.t('login.forgot.errors.email_required')
     return
   }
 
@@ -137,14 +165,14 @@ async function sendForgotPassword() {
     const data = await response.json().catch(() => null)
 
     if (!response.ok) {
-      throw new Error(data?.message || 'Failed to send reset link.')
+      throw new Error(data?.message || i18n.t('login.forgot.errors.failed'))
     }
 
-    forgotSuccess.value = data?.message || 'Password reset link sent.'
+    forgotSuccess.value = data?.message || i18n.t('login.forgot.success')
   } catch (err) {
     forgotError.value = err instanceof Error
       ? err.message
-      : 'Something went wrong. Please try again.'
+      : i18n.t('messages.something_went_wrong')
   } finally {
     forgotLoading.value = false
   }
@@ -161,99 +189,99 @@ async function sendForgotPassword() {
 
     <main class="main-content">
       <div class="content-wrapper">
-        <header class="page-header">
-          <h1>Log In</h1>
-          <p class="subtitle">Welcome back to Game Prices</p>
-        </header>
+        <section class="form-panel">
+          <form class="login-card" @submit.prevent="handleLogin">
+            <header class="page-header compact-header">
+              <h2>{{ i18n.t('login.title') }}</h2>
+              <p class="subtitle">{{ i18n.t('login.subtitle') }}</p>
+            </header>
 
-        <div v-if="verifyMessage" class="info-banner" role="status">
-          {{ verifyMessage }}
-        </div>
+            <div v-if="verifyMessage" class="info-banner" role="status">
+              {{ verifyMessage }}
+            </div>
 
-        <div v-if="verifyError" class="error-banner" role="alert">
-          <span>{{ verifyError }}</span>
-        </div>
+            <div v-if="verifyError" class="error-banner" role="alert">
+              <span>{{ verifyError }}</span>
+            </div>
 
-        <form class="login-card" @submit.prevent="handleLogin">
-          <div v-if="errorMessage" class="error-banner">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-            <span>{{ errorMessage }}</span>
-          </div>
+            <div v-if="errorMessage" class="error-banner">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span>{{ errorMessage }}</span>
+            </div>
 
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input
-              id="email"
-              v-model="email"
-              type="email"
-              placeholder="your@email.com"
-              autocomplete="email"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="password">Password</label>
-            <div class="password-input-wrapper">
+            <div class="form-group">
+              <label for="email">{{ i18n.t('login.email') }}</label>
               <input
-                id="password"
-                v-model="password"
-                :type="showPassword ? 'text' : 'password'"
-                placeholder="Enter your password"
-                autocomplete="current-password"
+                id="email"
+                v-model="email"
+                type="email"
+                autocomplete="email"
               />
-              <button
-                type="button"
-                class="password-toggle"
-                :aria-label="showPassword ? 'Hide password' : 'Show password'"
-                :aria-pressed="showPassword"
-                @click="showPassword = !showPassword"
-              >
-                <svg v-if="showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/>
-                  <circle cx="12" cy="12" r="2.75"/>
-                </svg>
-                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M3 3l18 18"/>
-                  <path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6.4 0 10 6 10 6a17.6 17.6 0 0 1-4.1 4.7"/>
-                  <path d="M6.7 6.7C4.2 8.3 2.6 11 2 12c0 0 3.6 6 10 6 1.6 0 3-.4 4.2-1"/>
-                  <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
-                </svg>
+            </div>
+
+            <div class="form-group">
+              <label for="password">{{ i18n.t('login.password') }}</label>
+              <div class="password-input-wrapper">
+                <input
+                  id="password"
+                  v-model="password"
+                  :type="showPassword ? 'text' : 'password'"
+                  autocomplete="current-password"
+                />
+                <button
+                  type="button"
+                  class="password-toggle"
+                  :aria-label="showPassword ? i18n.t('password.hide') : i18n.t('password.show')"
+                  :aria-pressed="showPassword"
+                  @click="showPassword = !showPassword"
+                >
+                  <svg v-if="showPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/>
+                    <circle cx="12" cy="12" r="2.75"/>
+                  </svg>
+                  <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 3l18 18"/>
+                    <path d="M10.6 6.2A10.7 10.7 0 0 1 12 6c6.4 0 10 6 10 6a17.6 17.6 0 0 1-4.1 4.7"/>
+                    <path d="M6.7 6.7C4.2 8.3 2.6 11 2 12c0 0 3.6 6 10 6 1.6 0 3-.4 4.2-1"/>
+                    <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-options">
+              <label class="remember-label">
+                <input v-model="rememberMe" type="checkbox" />
+                <span class="checkmark"></span>
+                <span>{{ i18n.t('login.remember') }}</span>
+              </label>
+              <button type="button" class="forgot-link" @click="openForgotPassword">
+                {{ i18n.t('login.forgot') }}
               </button>
             </div>
-          </div>
 
-          <div class="form-options">
-            <label class="remember-label">
-              <input v-model="rememberMe" type="checkbox" />
-              <span class="checkmark"></span>
-              <span>Remember me</span>
-            </label>
-            <button type="button" class="forgot-link" @click="openForgotPassword">
-              Forgot password?
+            <button type="submit" class="login-btn" :disabled="isLoading || !email.trim() || !password">
+              <span v-if="!isLoading">{{ i18n.t('login.button') }}</span>
+              <span v-else class="spinner"></span>
             </button>
-          </div>
 
-          <button type="submit" class="login-btn" :disabled="isLoading">
-            <span v-if="!isLoading">Log In</span>
-            <span v-else class="spinner"></span>
-          </button>
-
-          <p class="register-link">
-            Don't have an account?
-            <router-link to="/register">Sign Up</router-link>
-          </p>
-        </form>
+            <p class="register-link">
+              {{ i18n.t('login.no_account') }}
+              <router-link to="/register">{{ i18n.t('sign_up') }}</router-link>
+            </p>
+          </form>
+        </section>
       </div>
     </main>
 
     <div v-if="forgotOpen" class="modal-backdrop" @click.self="closeForgotPassword">
       <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="forgot-title">
-        <h2 id="forgot-title">Reset password</h2>
-        <p class="modal-subtitle">Enter your email and we will send a reset link.</p>
+        <h2 id="forgot-title">{{ i18n.t('login.forgot.title') }}</h2>
+        <p class="modal-subtitle">{{ i18n.t('login.forgot.subtitle') }}</p>
 
         <div v-if="forgotError" class="error-banner modal-banner">
           <span>{{ forgotError }}</span>
@@ -264,20 +292,19 @@ async function sendForgotPassword() {
         </div>
 
         <div class="form-group">
-          <label for="forgot-email">Email</label>
+          <label for="forgot-email">{{ i18n.t('login.email') }}</label>
           <input
             id="forgot-email"
             v-model="forgotEmail"
             type="email"
-            placeholder="your@email.com"
             autocomplete="email"
           />
         </div>
 
         <div class="modal-actions">
-          <button type="button" class="secondary-btn" @click="closeForgotPassword">Close</button>
+          <button type="button" class="secondary-btn" @click="closeForgotPassword">{{ i18n.t('buttons.close') }}</button>
           <button type="button" class="login-btn" :disabled="forgotLoading" @click="sendForgotPassword">
-            <span v-if="!forgotLoading">Send link</span>
+            <span v-if="!forgotLoading">{{ i18n.t('login.forgot.send') }}</span>
             <span v-else class="spinner"></span>
           </button>
         </div>
@@ -286,7 +313,7 @@ async function sendForgotPassword() {
 
     <footer class="footer">
       <div class="footer-container">
-        <span class="footer-text">&copy; 2025 Game Prices</span>
+        <span class="footer-text">{{ i18n.t('footer.brand') }}</span>
       </div>
     </footer>
   </div>
@@ -308,8 +335,8 @@ async function sendForgotPassword() {
   --text-secondary: #86868b;
   --border-color: #d2d2d7;
   --hover-bg: #f5f5f7;
-  --accent-color: #0071e3;
-  --accent-hover: #0077ed;
+  --accent-color: #7c3aed;
+  --accent-hover: #6d28d9;
   --input-bg: #ffffff;
   --error-bg: #fef2f2;
   --error-color: #dc3545;
@@ -326,8 +353,8 @@ async function sendForgotPassword() {
   --text-secondary: #a6aab3;
   --border-color: #545a65;
   --hover-bg: #2f333b;
-  --accent-color: #2997ff;
-  --accent-hover: #40a9ff;
+  --accent-color: #a78bfa;
+  --accent-hover: #8b5cf6;
   --input-bg: #2a2f37;
   --error-bg: #442d2d;
   --error-color: #ff8b8b;
@@ -351,20 +378,33 @@ async function sendForgotPassword() {
 }
 
 .content-wrapper {
-  max-width: 420px;
-  width: 100%;
+  width: min(480px, 100%);
+}
+
+.form-panel {
+  padding: 0;
+}
+
+.login-card {
+  height: 100%;
+  border-radius: 12px;
+  padding: 2rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  box-shadow: none;
+  backdrop-filter: none;
 }
 
 .page-header {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   text-align: center;
 }
 
-.page-header h1 {
-  font-size: 2.5rem;
+.compact-header h2 {
+  font-size: 2rem;
   font-weight: 600;
   line-height: 1.1;
-  letter-spacing: -1px;
+  letter-spacing: -0.5px;
   color: var(--text-primary);
   margin-bottom: 0.5rem;
 }
@@ -425,7 +465,7 @@ async function sendForgotPassword() {
 
 .form-group input {
   width: 100%;
-  padding: 0.625rem 0.875rem;
+  padding: 0.5rem 0.875rem;
   font-size: 0.9375rem;
   border: 1px solid var(--border-color);
   border-radius: 8px;
@@ -451,7 +491,7 @@ async function sendForgotPassword() {
 }
 
 .password-input-wrapper input {
-  padding-right: 3rem;
+  padding-right: 3.2rem;
 }
 
 .password-toggle {
@@ -475,7 +515,7 @@ async function sendForgotPassword() {
 
 .password-toggle:hover {
   color: var(--text-primary);
-  background: rgba(134, 134, 139, 0.08);
+  background: rgba(134, 134, 139, 0.12);
 }
 
 .password-toggle:focus-visible {
@@ -559,7 +599,7 @@ async function sendForgotPassword() {
 
 .login-btn {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.625rem;
   font-size: 0.9375rem;
   font-weight: 500;
   border: none;
@@ -572,10 +612,16 @@ async function sendForgotPassword() {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
+  min-height: 40px;
+  margin-top: 0.5rem;
+  box-shadow: none;
 }
 
 .login-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.login-btn:active:not(:disabled) {
   background: var(--accent-hover);
 }
 
@@ -601,13 +647,13 @@ async function sendForgotPassword() {
   text-align: center;
   font-size: 0.875rem;
   color: var(--text-secondary);
-  margin-top: 1.25rem;
+  margin-top: 1rem;
 }
 
 .register-link a {
   color: var(--accent-color);
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .register-link a:hover {
@@ -663,12 +709,20 @@ async function sendForgotPassword() {
 }
 
 .secondary-btn {
-  padding: 0.75rem 1rem;
+  padding: 0.625rem 1rem;
   border: 1px solid var(--border-color);
   border-radius: 8px;
   background: transparent;
   color: var(--text-primary);
   cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.secondary-btn:hover {
+  background: var(--hover-bg);
+  color: var(--text-primary);
 }
 
 .footer-container {

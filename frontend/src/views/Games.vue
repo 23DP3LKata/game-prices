@@ -4,10 +4,12 @@ import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import { formatDateOnly } from '../composables/useDateTimeFormat'
 import { useThemePreference } from '../composables/useThemePreference'
+import { useI18nStore } from '../stores/i18n'
 
 const router = useRouter()
-const selectedLanguage = ref('ENG')
+const selectedLanguage = ref('LV')
 const selectedTheme = useThemePreference()
+const i18n = useI18nStore()
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim().replace(/\/$/, '')
 const isLoading = ref(false)
 const loadError = ref('')
@@ -23,29 +25,29 @@ provide('theme', selectedTheme)
 const games = ref([])
 
 const storeOptions = [
-  { code: 'steam', label: 'Steam' },
-  { code: 'epic', label: 'Epic Games Store' },
+  { code: 'steam', label: i18n.t('games.filter.store.steam') },
+  { code: 'epic', label: i18n.t('games.filter.store.epic') },
 ]
 
 const priceOptions = [
-  { value: '5', label: 'Below 5 €' },
-  { value: '10', label: 'Below 10 €' },
-  { value: '30', label: 'Below 30 €' },
+  { value: '5', label: i18n.t('games.filter.price.below5') },
+  { value: '10', label: i18n.t('games.filter.price.below10') },
+  { value: '30', label: i18n.t('games.filter.price.below30') },
 ]
 
 const discountOptions = [
-  { value: '25', label: 'At least 25% off' },
-  { value: '50', label: 'At least 50% off' },
-  { value: '75', label: 'At least 75% off' },
-  { value: '90', label: 'At least 90% off' },
+  { value: '25', label: i18n.t('games.filter.discount.atleast25') },
+  { value: '50', label: i18n.t('games.filter.discount.atleast50') },
+  { value: '75', label: i18n.t('games.filter.discount.atleast75') },
+  { value: '90', label: i18n.t('games.filter.discount.atleast90') },
 ]
 
 const tableHeaders = [
-  { key: 'name', label: 'Game', className: 'col-game', sortable: true },
-  { key: 'genre', label: 'Genre', className: 'col-genre', sortable: false },
-  { key: 'releaseDate', label: 'Release', className: 'col-release', sortable: true },
-  { key: 'bestPrice', label: 'Price', className: 'col-price', sortable: true },
-  { key: 'bestDiscount', label: 'Discount', className: 'col-discount', sortable: true },
+  { key: 'name', label: i18n.t('games.table.name'), className: 'col-game', sortable: true },
+  { key: 'genre', label: i18n.t('games.table.genre'), className: 'col-genre', sortable: false },
+  { key: 'releaseDate', label: i18n.t('games.table.release'), className: 'col-release', sortable: true },
+  { key: 'bestPrice', label: i18n.t('games.table.price'), className: 'col-price', sortable: true },
+  { key: 'bestDiscount', label: i18n.t('games.table.discount'), className: 'col-discount', sortable: true },
 ]
 
 const hasActiveFilters = computed(() =>
@@ -196,7 +198,7 @@ function getSortIndicator(field) {
 
 function formatPrice(value) {
   if (value === null || value === undefined || value === '') {
-    return 'n/a'
+    return i18n.t('na')
   }
 
   return `€${Number(value).toFixed(2)}`
@@ -216,12 +218,12 @@ async function fetchGames() {
     const data = await response.json().catch(() => null)
 
     if (!response.ok) {
-      throw new Error(data?.message || 'Unable to load games right now.')
+      throw new Error(data?.message || i18n.t('games.errors.load_failed'))
     }
 
     games.value = Array.isArray(data?.games) ? data.games : []
   } catch (err) {
-    loadError.value = err instanceof Error ? err.message : 'Unable to load games right now.'
+    loadError.value = err instanceof Error ? err.message : i18n.t('games.errors.load_failed')
     games.value = []
   } finally {
     isLoading.value = false
@@ -257,18 +259,18 @@ onMounted(() => {
               id="game-search"
               v-model="searchQuery"
               type="search"
-              placeholder="Search games"
+              :placeholder="i18n.t('games.search_placeholder')"
               autocomplete="off"
             />
           </label>
         </div>
 
         <div class="layout-shell">
-          <aside class="filters-panel" aria-label="Game filters">
+          <aside class="filters-panel" :aria-label="i18n.t('games.filters')">
 
 
             <section class="filter-group">
-              <h3>Store</h3>
+              <h3>{{ i18n.t('games.filter_group.store') }}</h3>
               <label
                 v-for="store in storeOptions"
                 :key="store.code"
@@ -285,7 +287,7 @@ onMounted(() => {
             </section>
 
             <section class="filter-group">
-              <h3>Price</h3>
+              <h3>{{ i18n.t('games.filter_group.price') }}</h3>
               <button
                 v-for="option in priceOptions"
                 :key="option.value"
@@ -300,7 +302,7 @@ onMounted(() => {
             </section>
 
             <section class="filter-group">
-              <h3>Discount</h3>
+              <h3>{{ i18n.t('games.filter_group.discount') }}</h3>
               <button
                 v-for="option in discountOptions"
                 :key="option.value"
@@ -320,14 +322,14 @@ onMounted(() => {
               :disabled="!hasActiveFilters"
               @click="resetFilters"
             >
-              Reset
+              {{ i18n.t('games.reset_filters') }}
             </button>
           </aside>
 
           <section class="results-panel">
             <div class="results-summary">
-              <span>{{ visibleGames.length }} games shown</span>
-              <span v-if="games.length > 0">{{ games.length }} total</span>
+              <span>{{ visibleGames.length }} {{ i18n.t('games.shown') }}</span>
+              <span v-if="games.length > 0">{{ games.length }} {{ i18n.t('games.total') }}</span>
             </div>
 
             <div class="table-container">
@@ -374,9 +376,9 @@ onMounted(() => {
                           </div>
                         </div>
                       </td>
-                        <td class="cell-genre">{{ game.genre || 'Unknown' }}</td>
-                        <td class="cell-release">{{ game.releaseDate ? formatDateOnly(game.releaseDate, undefined, selectedLanguage) : 'n/a' }}</td>
-                        <td class="cell-price">{{ game.bestPrice !== null && game.bestPrice !== undefined ? formatPrice(game.bestPrice) : 'n/a' }}</td>
+                        <td class="cell-genre">{{ game.genre || i18n.t('game.unknown_store') }}</td>
+                        <td class="cell-release">{{ game.releaseDate ? formatDateOnly(game.releaseDate, undefined, selectedLanguage) : i18n.t('na') }}</td>
+                        <td class="cell-price">{{ game.bestPrice !== null && game.bestPrice !== undefined ? formatPrice(game.bestPrice) : i18n.t('na') }}</td>
                         <td class="cell-discount">
                           <span
                             class="discount-pill"
@@ -386,7 +388,7 @@ onMounted(() => {
                               neutral: !Number(game.bestDiscount) || Number(game.bestDiscount) < 10,
                             }"
                           >
-                            {{ game.bestDiscount !== null && game.bestDiscount !== undefined ? `${game.bestDiscount}%` : '—' }}
+                            {{ game.bestDiscount !== null && game.bestDiscount !== undefined ? `${game.bestDiscount}%` : i18n.t('game.no_discount') }}
                           </span>
                         </td>
                     </tr>
@@ -395,7 +397,7 @@ onMounted(() => {
                   <tr v-if="isLoading">
                     <td colspan="5" class="empty-state">
                       <div class="empty-content">
-                        <p>Loading games...</p>
+                        <p>{{ i18n.t('games.loading') }}</p>
                       </div>
                     </td>
                   </tr>
@@ -416,7 +418,7 @@ onMounted(() => {
                           <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
                           <line x1="12" y1="22.08" x2="12" y2="12" />
                         </svg>
-                        <p>No games available yet</p>
+                        <p>{{ i18n.t('games.empty.none') }}</p>
                       </div>
                     </td>
                   </tr>
@@ -427,7 +429,7 @@ onMounted(() => {
                         <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                           <path d="M20 20V14M17 17H23M4 20V4m0 0 4 4m-4-4-4 4" />
                         </svg>
-                        <p>{{ searchQuery.trim() ? 'No games match your search and filters' : 'No games match the selected filters' }}</p>
+                        <p>{{ searchQuery.trim() ? i18n.t('games.empty.search') : i18n.t('games.empty.filters') }}</p>
                       </div>
                     </td>
                   </tr>
@@ -441,7 +443,7 @@ onMounted(() => {
 
     <footer class="footer">
       <div class="footer-container">
-        <span class="footer-text">&copy; 2025 Game Prices</span>
+        <span class="footer-text">{{ i18n.t('footer.brand') }}</span>
       </div>
     </footer>
   </div>
