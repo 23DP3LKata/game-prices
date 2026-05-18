@@ -356,10 +356,6 @@ async function submitActionDialog() {
   const mode = actionDialogMode.value
   const trimmedNickname = actionNickname.value.trim()
 
-  if (mode === 'rename' && (trimmedNickname === '' || trimmedNickname === user.nickname)) {
-    actionError.value = i18n.t('admin.errors.rename_user')
-    return
-  }
 
   actionLoading.value = true
   actionError.value = ''
@@ -451,7 +447,6 @@ async function submitActionDialog() {
           ? 'admin.success.unblocked'
           : 'admin.success.blocked'
 
-    setStatus('success', data?.message || i18n.t(successKey).replace('{{name}}', fallbackName))
     closeActionDialog()
   } catch (err) {
     actionError.value = err instanceof Error ? err.message : i18n.t('admin.errors.sync_failed')
