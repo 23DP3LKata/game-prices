@@ -10,12 +10,13 @@ import { useI18nStore } from '../stores/i18n'
 const router = useRouter()
 const authStore = useAuthStore()
 const { request } = useProfileApi()
+const i18n = useI18nStore()
 
 const selectedLanguage = ref('LV')
 const selectedTheme = useThemePreference()
 
 const profileData = ref({
-  nickname: 'User',
+  nickname: i18n.t('profile.default_user'),
   email: '',
 })
 
@@ -53,8 +54,6 @@ const editDraft = ref({
 
 provide('theme', selectedTheme)
 
-const i18n = useI18nStore()
-
 const displayedEmail = computed(() => {
   if (!profileData.value.email) {
     return i18n.t('profile.email_not_set')
@@ -79,7 +78,7 @@ const passwordPattern = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/
 function syncProfileDataFromStore() {
   profileData.value = {
     ...profileData.value,
-    nickname: authStore.user?.nickname ?? 'User',
+    nickname: authStore.user?.nickname ?? i18n.t('profile.default_user'),
     email: authStore.user?.email ?? '',
   }
 }
