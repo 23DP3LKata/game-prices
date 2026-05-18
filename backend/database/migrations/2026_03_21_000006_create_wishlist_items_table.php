@@ -12,16 +12,8 @@ return new class extends Migration
             $table->increments('id');
 
             $table->unsignedInteger('user_id');
-            $table->foreign('user_id')
-                ->references('id')
-                ->on('users')
-                ->cascadeOnDelete();
 
             $table->unsignedInteger('game_id');
-            $table->foreign('game_id')
-                ->references('id')
-                ->on('games')
-                ->cascadeOnDelete();
 
             $table->boolean('notifications_enabled')->default(true);
             $table->decimal('last_notified_price', 10, 2)->nullable();
