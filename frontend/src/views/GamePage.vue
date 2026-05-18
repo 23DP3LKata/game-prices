@@ -58,11 +58,25 @@ const platformPalette = ['#a78bfa', '#7c3aed', '#c4b5fd', '#8b5cf6', '#ddd6fe']
 
 const currentHistory = computed(() => priceHistory.value[selectedPeriod.value] ?? [])
 const allTimeHistory = computed(() => priceHistory.value.all ?? [])
+const pricedStores = computed(() => {
+  return stores.value.filter((store) => Number.isFinite(store.current_price_eur))
+})
 const sortedStores = computed(() => {
-  return [...stores.value].sort((left, right) => left.current_price_eur - right.current_price_eur)
+  return [...stores.value].sort((left, right) => {
+    const leftPrice = Number.isFinite(left.current_price_eur) ? left.current_price_eur : Number.POSITIVE_INFINITY
+    const rightPrice = Number.isFinite(right.current_price_eur) ? right.current_price_eur : Number.POSITIVE_INFINITY
+
+    return leftPrice - rightPrice
+  })
 })
 
-const bestStorePrice = computed(() => sortedStores.value[0] ?? null)
+const bestStorePrice = computed(() => {
+  if (pricedStores.value.length === 0) {
+    return null
+  }
+
+  return [...pricedStores.value].sort((left, right) => left.current_price_eur - right.current_price_eur)[0] ?? null
+})
 
 const minAllTimePrice = computed(() => {
   const values = allTimeHistory.value.map((point) => point.price).filter((price) => Number.isFinite(price))
@@ -107,7 +121,17 @@ const overviewTags = computed(() => {
 })
 
 function formatPrice(value) {
-  return currencyFormatter.format(Number(value) || 0)
+  if (value === null || value === undefined || value === '') {
+    return i18n.t('na')
+  }
+
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return i18n.t('na')
+  }
+
+  return currencyFormatter.format(numericValue)
 }
 
 function formatReleaseYear(value) {
@@ -213,6 +237,27 @@ function getRouteSlug() {
   return Array.isArray(slug) ? slug[0] : slug
 }
 
+async function fetchWishlistStatus(slug) {
+  try {
+    const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/wishlist/${encodeURIComponent(slug)}/status` : `/api/wishlist/${encodeURIComponent(slug)}/status`, {
+      headers: {
+        Accept: 'application/json',
+      },
+      credentials: 'include',
+    })
+
+    if (response.status === 401) {
+      wishlistAdded.value = false
+      return
+    }
+
+    const data = await response.json().catch(() => null)
+    wishlistAdded.value = Boolean(data?.isWishlisted)
+  } catch {
+    wishlistAdded.value = false
+  }
+}
+
 async function fetchGameData(slug) {
   isLoading.value = true
   loadError.value = ''
@@ -250,18 +295,17 @@ async function fetchGameData(slug) {
       description: payload.description ?? '',
     }
 
-    // initialize wishlist state if backend provides it
-    wishlistAdded.value = Boolean(data?.game?.is_wishlisted ?? data?.game?.wishlisted ?? data?.is_wishlisted ?? data?.wishlisted ?? false)
+    await fetchWishlistStatus(slug)
 
     const rawPrices = Array.isArray(data?.prices) ? data.prices : []
     stores.value = rawPrices.map((item) => ({
       store_name: item?.store?.name || item?.store?.code || i18n.t('game.unknown_store'),
       store_slug: String(item?.store?.code || item?.store?.name || 'store').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
-      base_price_eur: Number(item?.originalPrice ?? item?.currentPrice ?? 0),
-      current_price_eur: Number(item?.currentPrice ?? 0),
-      discount_percent: Number(item?.discountPercent ?? 0),
+      base_price_eur: item?.originalPrice !== null && item?.originalPrice !== undefined ? Number(item.originalPrice) : null,
+      current_price_eur: item?.currentPrice !== null && item?.currentPrice !== undefined ? Number(item.currentPrice) : null,
+      discount_percent: item?.discountPercent !== null && item?.discountPercent !== undefined ? Number(item.discountPercent) : null,
       url: item?.storeUrl || '',
-    })).filter((item) => Number.isFinite(item.current_price_eur))
+    }))
 
     const rawHistory = Array.isArray(data?.priceHistory) ? data.priceHistory : []
     const normalizedHistory = rawHistory
@@ -315,8 +359,11 @@ async function toggleWishlist() {
   }
 
   try {
-    const response = await fetch(apiBaseUrl ? `${apiBaseUrl}/wishlist/${encodeURIComponent(slug)}` : `/api/wishlist/${encodeURIComponent(slug)}`, {
-      method: 'POST',
+    const url = apiBaseUrl ? `${apiBaseUrl}/wishlist/${encodeURIComponent(slug)}` : `/api/wishlist/${encodeURIComponent(slug)}`
+    const method = wishlistAdded.value ? 'DELETE' : 'POST'
+
+    const response = await fetch(url, {
+      method,
       headers: { Accept: 'application/json' },
       credentials: 'include',
     })
@@ -332,8 +379,8 @@ async function toggleWishlist() {
       return
     }
 
-    // Toggle local state on success (backend toggles)
-    wishlistAdded.value = !wishlistAdded.value
+    // Reflect backend state: POST => added, DELETE => removed
+    wishlistAdded.value = method === 'POST'
   } catch (err) {
     console.error('Wishlist network error', err)
   }
@@ -628,7 +675,7 @@ onBeforeUnmount(() => {
                 <tr
                   v-for="store in sortedStores"
                   :key="store.store_slug"
-                  :class="{ 'best-row': bestStorePrice && Math.abs(store.current_price_eur - bestStorePrice.current_price_eur) < 0.0001 }"
+                  :class="{ 'best-row': bestStorePrice && Number.isFinite(store.current_price_eur) && Math.abs(store.current_price_eur - bestStorePrice.current_price_eur) < 0.0001 }"
                 >
                   <td>
                     <div class="store-cell">
@@ -650,7 +697,7 @@ onBeforeUnmount(() => {
                     <button
                       type="button"
                       class="store-button"
-                      :class="{ primary: bestStorePrice && Math.abs(store.current_price_eur - bestStorePrice.current_price_eur) < 0.0001 }"
+                      :class="{ primary: bestStorePrice && Number.isFinite(store.current_price_eur) && Math.abs(store.current_price_eur - bestStorePrice.current_price_eur) < 0.0001 }"
                       @click="openStore(store.url)"
                     >
                       {{ i18n.t('buttons.visit') }}
