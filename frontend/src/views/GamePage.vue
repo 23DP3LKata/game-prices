@@ -54,8 +54,6 @@ const priceHistory = ref({
   all: [],
 })
 
-const platformPalette = ['#a78bfa', '#7c3aed', '#c4b5fd', '#8b5cf6', '#ddd6fe']
-
 const currentHistory = computed(() => priceHistory.value[selectedPeriod.value] ?? [])
 const allTimeHistory = computed(() => priceHistory.value.all ?? [])
 const pricedStores = computed(() => {
@@ -172,10 +170,6 @@ function formatDate(value) {
 
   const formatted = formatDateOnly(value, undefined, selectedLanguage.value)
   return formatted || String(value)
-}
-
-function getPlatformColor(index) {
-  return platformPalette[index % platformPalette.length]
 }
 
 function getStoreInitial(storeName) {
@@ -604,14 +598,6 @@ onBeforeUnmount(() => {
               <div class="skeleton-line short"></div>
             </div>
 
-            <div class="tag-list" v-if="overviewTags.length">
-              <span v-for="tag in overviewTags" :key="tag" class="tag-pill">{{ tag }}</span>
-            </div>
-            <div v-else class="tag-list tag-list-empty">
-              <span class="tag-pill skeleton-tag"></span>
-              <span class="tag-pill skeleton-tag"></span>
-              <span class="tag-pill skeleton-tag"></span>
-            </div>
           </article>
 
           <aside class="card facts-card">
@@ -626,24 +612,8 @@ onBeforeUnmount(() => {
               <span class="fact-value">{{ formatDate(game?.release_date) }}</span>
             </div>
             <div class="fact-row">
-              <span class="fact-key">{{ i18n.t('game.platforms') }}</span>
-              <span class="fact-value platform-value">
-                <span v-if="game?.platforms?.length" class="platform-list">
-                  <span v-for="(platform, index) in game.platforms" :key="platform" class="platform-item">
-                    <span class="platform-dot" :style="{ backgroundColor: getPlatformColor(index) }"></span>
-                    {{ platform }}
-                  </span>
-                </span>
-                <span v-else>{{ i18n.t('na') }}</span>
-              </span>
-            </div>
-            <div class="fact-row">
-              <span class="fact-key">{{ i18n.t('game.age_rating') }}</span>
-              <span class="fact-value">{{ game?.age_rating || i18n.t('na') }}</span>
-            </div>
-            <div class="fact-row">
-              <span class="fact-key">{{ i18n.t('game.languages') }}</span>
-              <span class="fact-value">{{ game?.languages?.length ? game.languages.join(', ') : i18n.t('na') }}</span>
+              <span class="fact-key">{{ i18n.t('game.genre') }}</span>
+              <span class="fact-value">{{ genreList.length ? genreList.join(', ') : i18n.t('na') }}</span>
             </div>
           </aside>
         </section>
@@ -953,13 +923,6 @@ onBeforeUnmount(() => {
   line-height: 1.75;
 }
 
-.tag-list {
-  margin-top: 18px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
 .tag-pill {
   display: inline-flex;
   align-items: center;
@@ -971,11 +934,6 @@ onBeforeUnmount(() => {
   line-height: 1;
 }
 
-.tag-list-empty .tag-pill,
-.skeleton-tag {
-  width: 72px;
-  height: 30px;
-}
 
 .facts-card {
   display: flex;

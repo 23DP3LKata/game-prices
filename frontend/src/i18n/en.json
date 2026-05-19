@@ -277,6 +277,7 @@
   "game.remove_wishlist": "Remove from wishlist",
   "game.add_wishlist": "Add to wishlist",
   "game.developer": "Developer",
+  "game.genre": "Genre",
   "game.release_date": "Release date",
   "game.platforms": "Platforms",
   "game.age_rating": "Age rating",
