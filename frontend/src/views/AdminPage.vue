@@ -536,7 +536,7 @@ onBeforeUnmount(() => {
         </div>
 
         <div v-if="actionDialogRequireInput()" class="form-group">
-          <label for="admin-action-nickname">{{ i18n.t('admin.nickname') }}</label>
+          <label for="admin-action-nickname">{{ i18n.t('admin.username') }}</label>
           <input
             id="admin-action-nickname"
             v-model="actionNickname"

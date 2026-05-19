@@ -718,6 +718,8 @@ async function sendForgotPassword() {
   transition: background-color 0.2s ease, color 0.2s ease;
   font-size: 0.9375rem;
   font-weight: 500;
+  min-height: 40px;
+  margin-top: 0.5rem;
 }
 
 .secondary-btn:hover {
