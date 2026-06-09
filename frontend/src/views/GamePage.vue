@@ -557,68 +557,7 @@ onBeforeUnmount(() => {
       </div>
 
       <template v-else>
-        <section class="hero-card">
-          <template v-if="game.cover_image">
-            <img :src="game.cover_image" :alt="game.title" class="hero-image" />
-
-            <button
-              type="button"
-              class="wishlist-toggle"
-              :class="{ active: wishlistAdded }"
-              @click="toggleWishlist"
-              :aria-pressed="wishlistAdded"
-              :title="wishlistAdded ? i18n.t('game.remove_wishlist') : i18n.t('game.add_wishlist')"
-            >
-              <span class="heart">{{ wishlistAdded ? '♥' : '♡' }}</span>
-            </button>
-
-            <div class="hero-content">
-              <h1 class="game-title">{{ game?.title || i18n.t('game.untitled') }}</h1>
-              <p class="hero-meta">
-                <span>{{ formatPlaytime(game?.playtime_min, game?.playtime_max) }}</span>
-                <span>{{ game?.developer || i18n.t('na') }}</span>
-                <span>{{ formatReleaseYear(game?.release_date) }}</span>
-              </p>
-            </div>
-          </template>
-
-          <div v-else class="hero-skeleton">
-            <div class="skeleton-line skeleton-title"></div>
-            <div class="skeleton-line skeleton-subtitle"></div>
-          </div>
-        </section>
-
-        <section class="details-grid">
-          <article class="card description-card">
-            <span class="section-label">{{ i18n.t('overview') }}</span>
-            <p v-if="game?.description" class="description-text">{{ game.description }}</p>
-            <div v-else class="skeleton-blocks">
-              <div class="skeleton-line"></div>
-              <div class="skeleton-line"></div>
-              <div class="skeleton-line short"></div>
-            </div>
-
-          </article>
-
-          <aside class="card facts-card">
-            <span class="section-label">{{ i18n.t('details') }}</span>
-
-            <div class="fact-row">
-              <span class="fact-key">{{ i18n.t('game.developer') }}</span>
-              <span class="fact-value">{{ game?.developer || i18n.t('na') }}</span>
-            </div>
-            <div class="fact-row">
-              <span class="fact-key">{{ i18n.t('game.release_date') }}</span>
-              <span class="fact-value">{{ formatDate(game?.release_date) }}</span>
-            </div>
-            <div class="fact-row">
-              <span class="fact-key">{{ i18n.t('game.genre') }}</span>
-              <span class="fact-value">{{ genreList.length ? genreList.join(', ') : i18n.t('na') }}</span>
-            </div>
-          </aside>
-        </section>
-
-        <section class="card stores-card">
+        <section class="card stores-card stores-panel">
           <div class="section-head">
             <div>
               <span class="section-label">{{ i18n.t('game.stores') }}</span>
@@ -685,7 +624,7 @@ onBeforeUnmount(() => {
           </div>
         </section>
 
-        <section class="card chart-card">
+        <section class="card chart-card chart-panel">
           <div class="chart-head">
             <div>
               <span class="section-label">{{ i18n.t('game.history') }}</span>
@@ -719,12 +658,73 @@ onBeforeUnmount(() => {
             </div>
           </div>
         </section>
+
+        <aside class="right-rail">
+          <section class="card hero-card hero-panel">
+            <template v-if="game.cover_image">
+              <div class="hero-media">
+                <img :src="game.cover_image" :alt="game.title" class="hero-image" />
+
+                <button
+                  type="button"
+                  class="wishlist-toggle"
+                  :class="{ active: wishlistAdded }"
+                  @click="toggleWishlist"
+                  :aria-pressed="wishlistAdded"
+                  :title="wishlistAdded ? i18n.t('game.remove_wishlist') : i18n.t('game.add_wishlist')"
+                >
+                  <span class="heart">{{ wishlistAdded ? '♥' : '♡' }}</span>
+                </button>
+              </div>
+
+              <div class="hero-content">
+                <h1 class="game-title">{{ game?.title || i18n.t('game.untitled') }}</h1>
+                <p class="hero-meta">
+                  <span>{{ game?.developer || i18n.t('na') }}</span>
+                  <span>{{ formatReleaseYear(game?.release_date) }}</span>
+                </p>
+              </div>
+            </template>
+
+            <div v-else class="hero-skeleton">
+              <div class="skeleton-line skeleton-title"></div>
+              <div class="skeleton-line skeleton-subtitle"></div>
+            </div>
+          </section>
+
+          <article class="card description-card description-panel">
+            <span class="section-label">{{ i18n.t('overview') }}</span>
+            <p v-if="game?.description" class="description-text">{{ game.description }}</p>
+            <div v-else class="skeleton-blocks">
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line short"></div>
+            </div>
+          </article>
+
+          <aside class="card facts-card details-panel">
+            <span class="section-label">{{ i18n.t('details') }}</span>
+
+            <div class="fact-row">
+              <span class="fact-key">{{ i18n.t('game.developer') }}</span>
+              <span class="fact-value">{{ game?.developer || i18n.t('na') }}</span>
+            </div>
+            <div class="fact-row">
+              <span class="fact-key">{{ i18n.t('game.release_date') }}</span>
+              <span class="fact-value">{{ formatDate(game?.release_date) }}</span>
+            </div>
+            <div class="fact-row">
+              <span class="fact-key">{{ i18n.t('game.genre') }}</span>
+              <span class="fact-value">{{ genreList.length ? genreList.join(', ') : i18n.t('na') }}</span>
+            </div>
+          </aside>
+        </aside>
       </template>
     </main>
 
     <footer class="footer">
       <div class="footer-container">
-        <span class="footer-text">{{ i18n.t('footer.brand') }}</span>
+        <span class="footer-text">Game Prices</span>
       </div>
     </footer>
   </div>
@@ -791,8 +791,11 @@ onBeforeUnmount(() => {
   width: min(1180px, 100%);
   margin: 0 auto;
   padding: 24px 20px 48px;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1.35fr) minmax(240px, 280px);
+  grid-template-areas:
+    'stores stores sidebar'
+    'chart chart sidebar';
   gap: 24px;
 }
 
@@ -806,45 +809,65 @@ onBeforeUnmount(() => {
 .hero-card {
   position: relative;
   overflow: hidden;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
 }
 
-  .hero-image {
+.right-rail {
+  grid-area: sidebar;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-self: start;
+}
+
+.hero-media {
+  position: relative;
+  padding: 0;
+  display: block;
+  line-height: 0;
+  background:
+    radial-gradient(circle at top, rgba(167, 139, 250, 0.2), transparent 58%),
+    linear-gradient(180deg, color-mix(in srgb, var(--card-bg) 92%, var(--accent) 8%), var(--card-bg));
+}
+
+.hero-image {
   display: block;
   width: 100%;
-  aspect-ratio: 16 / 9;
-  max-height: 420px;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
   object-position: center center;
   image-rendering: auto;
   transform: translateZ(0);
+  background: transparent;
 }
 
-  .wishlist-toggle {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    z-index: 3;
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    border: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.9);
-    color: #ef4444;
-    font-size: 20px;
-    cursor: pointer;
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.18);
-    transition: background-color 0.15s ease, transform 0.12s ease;
-  }
+.wishlist-toggle {
+  position: absolute;
+  top: auto;
+  right: 16px;
+  bottom: 16px;
+  z-index: 3;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.92);
+  color: #ef4444;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.18);
+  transition: background-color 0.15s ease, transform 0.12s ease;
+}
 
   .wishlist-toggle:hover {
     transform: translateY(-2px);
   }
 
   .wishlist-toggle.active {
-    background: linear-gradient(90deg, var(--accent), var(--accent-strong));
+    background: var(--accent);
     color: #ffffff;
   }
 
@@ -869,42 +892,53 @@ onBeforeUnmount(() => {
   padding: 24px;
 }
 
+.stores-card {
+  grid-area: stores;
+}
+
+.chart-card {
+  grid-area: chart;
+}
+
+.description-panel {
+  grid-area: description;
+}
+
+.details-panel {
+  grid-area: details;
+}
+
 .game-title {
   margin: 0;
-  font-size: 34px;
+  font-size: 20px;
   line-height: 1.1;
-  color: #ffffff;
+  color: var(--text-primary);
   letter-spacing: -0.03em;
 }
 
 .hero-content {
-  position: absolute;
-  left: 24px;
-  right: 24px;
-  bottom: 20px;
-  z-index: 1;
+  padding: 14px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .hero-meta {
-  margin-top: 12px;
   display: flex;
   gap: 14px;
   flex-wrap: wrap;
-  color: rgba(255, 255, 255, 0.86);
+  color: var(--text-secondary);
   font-size: 13px;
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.45);
 }
 
 .hero-meta span:not(:last-child)::after {
   content: '•';
   margin-left: 14px;
-  color: rgba(255, 255, 255, 0.6);
+  color: color-mix(in srgb, var(--text-secondary) 70%, transparent);
 }
 
 .details-grid {
-  display: grid;
-  grid-template-columns: 1fr 280px;
-  gap: 1.5rem;
+  display: contents;
 }
 
 .section-label {
@@ -942,14 +976,6 @@ onBeforeUnmount(() => {
 }
 
 .fact-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding-bottom: 12px;
-  border-bottom: 0.5px solid var(--card-border);
-}
-
-.fact-row:last-child {
   border-bottom: none;
   padding-bottom: 0;
 }
@@ -958,6 +984,10 @@ onBeforeUnmount(() => {
   color: var(--text-secondary);
   font-size: 13px;
   flex: 0 0 auto;
+}
+
+.fact-key::after {
+  content: ': ';
 }
 
 .fact-value {
@@ -1217,6 +1247,11 @@ onBeforeUnmount(() => {
   gap: 12px;
 }
 
+.empty-state,
+.loading-state {
+  grid-column: 1 / -1;
+}
+
 .skeleton-line,
 .skeleton-row,
 .skeleton-chart,
@@ -1294,8 +1329,26 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 960px) {
-  .details-grid {
+  .page-shell {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      'stores'
+      'chart'
+      'sidebar';
+  }
+
+  .stores-card,
+  .chart-card,
+  .right-rail {
+    grid-area: auto;
+  }
+
+  .right-rail {
+    flex-direction: column;
+  }
+
+  .hero-image {
+    height: clamp(220px, 56vw, 320px);
   }
 
   .section-head,
@@ -1322,17 +1375,19 @@ onBeforeUnmount(() => {
   }
 
   .hero-image {
-    aspect-ratio: 16 / 10;
+    height: auto;
   }
 
   .game-title {
-    font-size: 28px;
+    font-size: 24px;
   }
 
   .hero-content {
-    left: 14px;
-    right: 14px;
-    bottom: 12px;
+    padding: 16px 16px 18px;
+  }
+
+  .right-rail {
+    gap: 16px;
   }
 
   .hero-meta {
