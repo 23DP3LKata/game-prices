@@ -290,12 +290,12 @@ function formatNotificationSummary(notification) {
       <div class="header-spacer"></div>
 
       <div class="center-content">
-          <div class="logo" @click="goToHome">
+          <button type="button" class="logo" @click="goToHome" aria-label="Game Prices home">
           <svg class="logo-icon" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
             <path fill="currentColor" d="M64 24A40 40 0 1 0 64 104A40 40 0 1 0 64 24ZM44 52L84 52A12 12 0 0 1 84 76L44 76A12 12 0 0 1 44 52ZM52 60A4 4 0 1 0 52 68A4 4 0 1 0 52 60ZM76 60A4 4 0 1 0 76 68A4 4 0 1 0 76 60Z"/>
           </svg>
           <span class="logo-text">Game Prices</span>
-        </div>
+          </button>
 
         <nav class="nav-menu desktop-nav">
           <button class="nav-btn" :class="{ active: activePage === 'games' }" @click="goToGames">{{ i18n.t('games') }}</button>
@@ -550,6 +550,8 @@ function formatNotificationSummary(notification) {
 }
 
 .logo {
+  border: none;
+  background: transparent;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -559,6 +561,19 @@ function formatNotificationSummary(notification) {
 
 .logo:hover {
   opacity: 0.7;
+}
+
+.logo:focus-visible,
+.nav-btn:focus-visible,
+.auth-btn:focus-visible,
+.icon-btn:focus-visible,
+.mobile-menu-btn:focus-visible,
+.profile-menu-item:focus-visible,
+.mobile-nav-btn:focus-visible,
+.mobile-setting-btn:focus-visible,
+.notifications-clear-btn:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent-color) 65%, #ffffff);
+  outline-offset: 3px;
 }
 
 .logo-icon {

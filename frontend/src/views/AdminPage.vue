@@ -1193,7 +1193,6 @@ onBeforeUnmount(() => {
   border-radius: 8px;
   background: var(--bg-primary);
   color: var(--text-primary);
-  outline: none;
   transition: border-color 0.2s ease;
   font-family: inherit;
   box-sizing: border-box;
@@ -1438,13 +1437,18 @@ onBeforeUnmount(() => {
   color: var(--text-primary);
   font: inherit;
   font-size: 0.875rem;
-  outline: none;
   transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .filter-input:focus,
 .filter-select:focus {
   border-color: var(--accent-color);
+}
+
+.filter-input:focus-visible,
+.filter-select:focus-visible {
+  outline: 3px solid var(--focus-ring-color);
+  outline-offset: 3px;
 }
 
 .filter-select {

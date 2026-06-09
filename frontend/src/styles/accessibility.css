@@ -1,0 +1,23 @@
+/* Global focus styles for keyboard accessibility */
+:root {
+  --focus-ring-color: rgba(0, 113, 227, 0.85);
+}
+
+/* Use focus-visible for keyboard-only focus rings; hide focus for non-keyboard interactions */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus-ring-color);
+  outline-offset: 3px;
+}
+
+/* Ensure anchor and button defaults support focus */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  box-shadow: none;
+}

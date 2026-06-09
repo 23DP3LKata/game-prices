@@ -542,7 +542,11 @@ onMounted(() => {
   background: transparent;
   color: var(--text-primary);
   font-size: 0.9rem;
-  outline: none;
+}
+
+.search-shell input:focus-visible {
+  outline: 3px solid var(--focus-ring-color);
+  outline-offset: 3px;
 }
 
 .search-shell input::placeholder {

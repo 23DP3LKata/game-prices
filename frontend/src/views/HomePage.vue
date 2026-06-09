@@ -1,15 +1,25 @@
 <script setup>
 import { ref, provide } from 'vue'
+import { useRouter } from 'vue-router'
 import AppHeader from '../components/AppHeader.vue'
 import { useThemePreference } from '../composables/useThemePreference'
 import { useI18nStore } from '../stores/i18n'
 
 const selectedLanguage = ref('LV')
 const selectedTheme = useThemePreference()
+const router = useRouter()
 
 const i18n = useI18nStore()
 
 provide('theme', selectedTheme)
+
+function goToGames() {
+  router.push('/games')
+}
+
+function goToAbout() {
+  router.push('/about')
+}
 </script>
 
 <template>
@@ -26,8 +36,8 @@ provide('theme', selectedTheme)
         <p class="hero-subtitle">{{ i18n.t('home.hero_subtitle') }}</p>
         
         <div class="cta-buttons">
-          <button class="cta-primary">{{ i18n.t('home.cta_get_started') }}</button>
-          <button class="cta-secondary">{{ i18n.t('home.cta_learn_more') }}</button>
+          <button class="cta-primary" type="button" @click="goToGames">{{ i18n.t('home.cta_get_started') }}</button>
+          <button class="cta-secondary" type="button" @click="goToAbout">{{ i18n.t('home.cta_learn_more') }}</button>
         </div>
 
         <div class="feature-grid">
@@ -162,6 +172,12 @@ provide('theme', selectedTheme)
 
 .cta-primary:hover {
   opacity: 0.8;
+}
+
+.cta-primary:focus-visible,
+.cta-secondary:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent-color) 65%, #ffffff);
+  outline-offset: 3px;
 }
 
 .cta-secondary {

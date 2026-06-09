@@ -1203,9 +1203,13 @@ onMounted(() => {
   color: var(--text-primary);
   font-size: 0.9rem;
   font-family: inherit;
-  outline: none;
   box-sizing: border-box;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.setting-input:focus-visible {
+  outline: 3px solid var(--focus-ring-color);
+  outline-offset: 3px;
 }
 
 .setting-input::placeholder {

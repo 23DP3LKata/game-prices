@@ -410,7 +410,6 @@ async function goToLogin() {
   border-radius: 8px;
   background: var(--input-bg);
   color: var(--text-primary);
-  outline: none;
   transition: border-color 0.2s ease;
   font-family: inherit;
   box-sizing: border-box;
@@ -418,6 +417,11 @@ async function goToLogin() {
 
 .form-group input:focus {
   border-color: var(--accent-color);
+}
+
+.form-group input:focus-visible {
+  outline: 3px solid var(--focus-ring-color);
+  outline-offset: 3px;
 }
 
 .form-group input[aria-invalid='true'] {
