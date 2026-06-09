@@ -1,0 +1,21 @@
+{
+  "name": "Game Prices",
+  "short_name": "GamePrices",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0071e3",
+  "description": "Find best game deals and view price history.",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "128x128",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48 72x72 96x96 128x128",
+      "type": "image/x-icon"
+    }
+  ]
+}

@@ -14,3 +14,15 @@ await useAuthStore(pinia).bootstrap()
 app.use(router)
 
 app.mount('#app')
+
+if ('serviceWorker' in navigator) {
+	window.addEventListener('load', () => {
+		if (import.meta.env && import.meta.env.PROD) {
+			navigator.serviceWorker.register('/sw.js').then(() => {
+				console.log('Service worker registered');
+			}).catch((err) => {
+				console.warn('Service worker registration failed:', err);
+			});
+		}
+	});
+}
