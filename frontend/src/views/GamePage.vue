@@ -617,6 +617,46 @@ onBeforeUnmount(() => {
             </table>
           </div>
 
+          <div v-if="stores?.length" class="store-cards-mobile">
+            <article
+              v-for="store in sortedStores"
+              :key="`${store.store_slug}-mobile`"
+              class="store-card-mobile"
+              :class="{ best: bestStorePrice && Number.isFinite(store.current_price_eur) && Math.abs(store.current_price_eur - bestStorePrice.current_price_eur) < 0.0001 }"
+            >
+              <div class="store-card-top">
+                <span class="store-icon">{{ getStoreInitial(store.store_name) }}</span>
+                <div class="store-card-title">
+                  <div class="store-name">{{ store.store_name }}</div>
+                  <div class="store-subtitle">{{ store.store_slug }}</div>
+                </div>
+                <span class="discount-pill" :class="getDiscountTone(store.discount_percent)">
+                  {{ store.discount_percent > 0 ? `-${store.discount_percent}%` : i18n.t('game.no_discount') }}
+                </span>
+              </div>
+
+              <div class="store-card-meta">
+                <div class="store-card-price">
+                  <span>{{ i18n.t('game.base_price') }}</span>
+                  <strong>{{ formatPrice(store.base_price_eur) }}</strong>
+                </div>
+                <div class="store-card-price final">
+                  <span>{{ i18n.t('game.final_price') }}</span>
+                  <strong>{{ formatPrice(store.current_price_eur) }}</strong>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                class="store-button mobile-store-button"
+                :class="{ primary: bestStorePrice && Number.isFinite(store.current_price_eur) && Math.abs(store.current_price_eur - bestStorePrice.current_price_eur) < 0.0001 }"
+                @click="openStore(store.url)"
+              >
+                {{ i18n.t('buttons.visit') }}
+              </button>
+            </article>
+          </div>
+
           <div v-else class="empty-state">
             <div class="skeleton-row"></div>
             <div class="skeleton-row"></div>
@@ -976,8 +1016,16 @@ onBeforeUnmount(() => {
 }
 
 .fact-row {
-  border-bottom: none;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.fact-row:last-child {
   padding-bottom: 0;
+  border-bottom: none;
 }
 
 .fact-key {
@@ -994,6 +1042,8 @@ onBeforeUnmount(() => {
   color: var(--text-primary);
   font-size: 13px;
   text-align: right;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .platform-value {
@@ -1054,6 +1104,10 @@ onBeforeUnmount(() => {
   overflow: auto;
   border-radius: 18px;
   border: 0.5px solid var(--card-border);
+}
+
+.store-cards-mobile {
+  display: none;
 }
 
 .stores-table {
@@ -1177,6 +1231,13 @@ onBeforeUnmount(() => {
 
 .store-button.primary:hover {
   background: var(--accent-strong);
+}
+
+.store-button:focus-visible,
+.period-button:focus-visible,
+.wishlist-toggle:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 65%, #ffffff);
+  outline-offset: 3px;
 }
 
 .chart-pricing {
@@ -1332,9 +1393,9 @@ onBeforeUnmount(() => {
   .page-shell {
     grid-template-columns: 1fr;
     grid-template-areas:
+      'sidebar'
       'stores'
-      'chart'
-      'sidebar';
+      'chart';
   }
 
   .stores-card,
@@ -1347,8 +1408,12 @@ onBeforeUnmount(() => {
     flex-direction: column;
   }
 
+  .hero-media {
+    min-height: 240px;
+  }
+
   .hero-image {
-    height: clamp(220px, 56vw, 320px);
+    height: clamp(240px, 68vw, 360px);
   }
 
   .section-head,
@@ -1374,16 +1439,20 @@ onBeforeUnmount(() => {
     min-height: 230px;
   }
 
+  .hero-media {
+    min-height: 220px;
+  }
+
   .hero-image {
-    height: auto;
+    height: clamp(220px, 78vw, 320px);
   }
 
   .game-title {
-    font-size: 24px;
+    font-size: 22px;
   }
 
   .hero-content {
-    padding: 16px 16px 18px;
+    padding: 14px 14px 16px;
   }
 
   .right-rail {
@@ -1394,8 +1463,112 @@ onBeforeUnmount(() => {
     gap: 10px;
   }
 
+  .section-head,
+  .chart-head {
+    gap: 10px;
+  }
+
+  .section-title {
+    font-size: 18px;
+  }
+
+  .price-highlight strong {
+    font-size: 16px;
+  }
+
+  .chart-pricing strong {
+    font-size: 24px;
+  }
+
+  .period-switcher {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .period-button {
+    flex: 1 1 0;
+    padding: 8px 6px;
+    min-width: 0;
+  }
+
+  .chart-canvas-wrap {
+    height: 180px;
+  }
+
+  .table-wrap {
+    display: none;
+  }
+
   .stores-table {
-    min-width: 640px;
+    display: none;
+  }
+
+  .store-cards-mobile {
+    display: grid;
+    gap: 12px;
+    margin-top: 18px;
+  }
+
+  .store-card-mobile {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    background: var(--card-bg);
+  }
+
+  .store-card-mobile.best {
+    border-color: color-mix(in srgb, var(--accent) 35%, var(--card-border));
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  }
+
+  .store-card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .store-card-title {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .store-card-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .store-card-price {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--muted-bg);
+    min-width: 0;
+  }
+
+  .store-card-price span {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .store-card-price strong {
+    font-size: 15px;
+    color: var(--text-primary);
+  }
+
+  .store-card-price.final {
+    background: color-mix(in srgb, var(--accent) 8%, var(--muted-bg));
+  }
+
+  .mobile-store-button {
+    width: 100%;
   }
 
   .stores-table th,
@@ -1405,6 +1578,44 @@ onBeforeUnmount(() => {
 
   .store-action-cell {
     width: 78px;
+  }
+
+  .store-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+    flex-shrink: 0;
+  }
+
+  .store-name {
+    font-size: 13px;
+  }
+
+  .store-subtitle {
+    font-size: 11px;
+  }
+
+  .fact-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 10px 0;
+  }
+
+  .fact-value {
+    text-align: left;
+  }
+
+  .fact-key::after {
+    content: '';
+  }
+
+  .wishlist-toggle {
+    width: 42px;
+    height: 42px;
+    right: 12px;
+    bottom: 12px;
+    border-radius: 11px;
   }
 
   .footer {
