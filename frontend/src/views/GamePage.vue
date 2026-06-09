@@ -426,15 +426,15 @@ function buildChart() {
         datasets: [
           {
             data: history.map((point) => point.price),
-            borderColor: '#a78bfa',
+            borderColor: '#0071e3',
             backgroundColor: gradient,
             borderWidth: 2,
             fill: true,
             tension: 0.35,
             pointRadius: 4,
             pointHoverRadius: 5,
-            pointBackgroundColor: '#a78bfa',
-            pointBorderColor: '#a78bfa',
+            pointBackgroundColor: '#0071e3',
+            pointBorderColor: '#0071e3',
             pointBorderWidth: 0,
           },
         ],
@@ -742,7 +742,7 @@ onBeforeUnmount(() => {
   --text-secondary: #6b7280;
   --border-color: rgba(15, 23, 42, 0.08);
   --hover-bg: rgba(99, 102, 241, 0.05);
-  --accent-color: #a78bfa;
+  --accent-color: #0071e3;
   --page-bg: #f4f4f5;
   --card-bg: #ffffff;
   --card-border: rgba(15, 23, 42, 0.08);
@@ -754,8 +754,8 @@ onBeforeUnmount(() => {
   --skeleton-bg: #e5e7eb;
   --footer-bg: #ececf0;
   --footer-border: rgba(24, 24, 27, 0.08);
-  --accent: #a78bfa;
-  --accent-strong: #7c3aed;
+  --accent: #0071e3;
+  --accent-strong: #005bb5;
 
   min-height: 100vh;
   display: flex;
@@ -772,7 +772,7 @@ onBeforeUnmount(() => {
   --text-secondary: #a1a1aa;
   --border-color: rgba(255, 255, 255, 0.08);
   --hover-bg: rgba(255, 255, 255, 0.03);
-  --accent-color: #8b5cf6;
+  --accent-color: #2997ff;
   --page-bg: #111218;
   --card-bg: #18181b;
   --card-border: rgba(255, 255, 255, 0.08);

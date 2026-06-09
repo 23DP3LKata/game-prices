@@ -949,9 +949,9 @@ onMounted(() => {
   --text-secondary: #86868b;
   --border-color: #d2d2d7;
   --hover-bg: #f5f5f7;
-  --accent-color: #7c3aed;
-  --accent-hover: #6d28d9;
-  --accent-soft: rgba(124, 58, 237, 0.1);
+  --accent-color: #0071e3;
+  --accent-hover: #005bb5;
+  --accent-soft: rgba(0, 113, 227, 0.1);
   --input-bg: #ffffff;
   --status-info-bg: rgba(124, 58, 237, 0.08);
   --status-info-text: #5b21b6;
@@ -971,9 +971,9 @@ onMounted(() => {
   --text-secondary: #a6aab3;
   --border-color: #545a65;
   --hover-bg: #2f333b;
-  --accent-color: #a78bfa;
-  --accent-hover: #8b5cf6;
-  --accent-soft: rgba(167, 139, 250, 0.14);
+  --accent-color: #2997ff;
+  --accent-hover: #0071e3;
+  --accent-soft: rgba(0, 113, 227, 0.14);
   --input-bg: #2a2f37;
   --status-info-bg: rgba(167, 139, 250, 0.14);
   --status-info-text: #e9d5ff;

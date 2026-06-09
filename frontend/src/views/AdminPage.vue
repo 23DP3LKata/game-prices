@@ -1144,13 +1144,13 @@ onBeforeUnmount(() => {
   border-radius: 18px;
   padding: 1.5rem;
   box-shadow: none;
-  --accent-color: rgb(124, 58, 237);
-  --accent-hover: rgb(109, 40, 217);
+  --accent-color: #0071e3;
+  --accent-hover: #005bb5;
 }
 
 .admin-page.dark .action-modal-card {
-  --accent-color: #a78bfa;
-  --accent-hover: #8b5cf6;
+  --accent-color: #2997ff;
+  --accent-hover: #0071e3;
 }
 
 .modal-card h2 {
