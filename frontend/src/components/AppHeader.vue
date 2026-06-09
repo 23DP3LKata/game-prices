@@ -128,6 +128,34 @@ async function markAllNotificationsAsRead() {
   }
 }
 
+async function handleNotificationClick(notification) {
+  if (!notification) return
+
+  await markNotificationAsRead(notification.id)
+
+  isNotificationsOpen.value = false
+
+  const slug = notification.game?.slug || (notification.data && (notification.data.slug || notification.data.game_slug)) || notification.slug || notification.gameSlug
+
+  if (slug) {
+    router.push({ name: 'game', params: { slug } })
+    return
+  }
+
+  const url = notification.url || (notification.data && notification.data.url)
+  if (url) {
+    try {
+      if (url.startsWith('/')) {
+        router.push(url)
+      } else {
+        window.location.href = url
+      }
+    } catch (e) {
+      window.location.href = url
+    }
+  }
+}
+
 function toggleProfileMenu() {
   isNotificationsOpen.value = false
   isProfileMenuOpen.value = !isProfileMenuOpen.value
@@ -344,7 +372,7 @@ function formatNotificationSummary(notification) {
                 :key="notification.id"
                 class="notification-item"
                 :class="{ unread: !notification.readAt }"
-                @click="markNotificationAsRead(notification.id)"
+                @click="handleNotificationClick(notification)"
               >
                 <div class="notification-dot" v-if="!notification.readAt"></div>
                 <div class="notification-content">
