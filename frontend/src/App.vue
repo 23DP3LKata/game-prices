@@ -36,4 +36,12 @@ body {
   padding: 0;
   overflow-x: hidden;
 }
+
+.footer-text {
+  text-decoration: none;
+}
+
+.footer-text:hover {
+  opacity: 0.75;
+}
 </style>

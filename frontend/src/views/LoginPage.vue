@@ -313,7 +313,7 @@ async function sendForgotPassword() {
 
     <footer class="footer">
       <div class="footer-container">
-        <span class="footer-text">Game Prices</span>
+        <a class="footer-text" href="https://github.com/23DP3LKata/game-prices">© Game Prices</a>
       </div>
     </footer>
   </div>
