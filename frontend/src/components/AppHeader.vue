@@ -294,7 +294,7 @@ function formatNotificationSummary(notification) {
           <svg class="logo-icon" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
             <path fill="currentColor" d="M64 24A40 40 0 1 0 64 104A40 40 0 1 0 64 24ZM44 52L84 52A12 12 0 0 1 84 76L44 76A12 12 0 0 1 44 52ZM52 60A4 4 0 1 0 52 68A4 4 0 1 0 52 60ZM76 60A4 4 0 1 0 76 68A4 4 0 1 0 76 60Z"/>
           </svg>
-          <span class="logo-text">{{ i18n.t('logo') }}</span>
+          <span class="logo-text">Game Prices</span>
         </div>
 
         <nav class="nav-menu desktop-nav">

@@ -313,7 +313,7 @@ async function sendForgotPassword() {
 
     <footer class="footer">
       <div class="footer-container">
-        <span class="footer-text">{{ i18n.t('footer.brand') }}</span>
+        <span class="footer-text">Game Prices</span>
       </div>
     </footer>
   </div>
