@@ -33,7 +33,7 @@ const fieldFocused = reactive({
   password: false,
 })
 
-const passwordHint = i18n.t('register.hint.password')
+const passwordHint = computed(() => i18n.t('register.hint.password'))
 const passwordPattern = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/
 
 function getApiUrl(path) {

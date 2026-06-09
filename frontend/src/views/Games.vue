@@ -24,31 +24,31 @@ provide('theme', selectedTheme)
 
 const games = ref([])
 
-const storeOptions = [
+const storeOptions = computed(() => [
   { code: 'steam', label: i18n.t('games.filter.store.steam') },
   { code: 'epic', label: i18n.t('games.filter.store.epic') },
-]
+])
 
-const priceOptions = [
+const priceOptions = computed(() => [
   { value: '5', label: i18n.t('games.filter.price.below5') },
   { value: '10', label: i18n.t('games.filter.price.below10') },
   { value: '30', label: i18n.t('games.filter.price.below30') },
-]
+])
 
-const discountOptions = [
+const discountOptions = computed(() => [
   { value: '25', label: i18n.t('games.filter.discount.atleast25') },
   { value: '50', label: i18n.t('games.filter.discount.atleast50') },
   { value: '75', label: i18n.t('games.filter.discount.atleast75') },
   { value: '90', label: i18n.t('games.filter.discount.atleast90') },
-]
+])
 
-const tableHeaders = [
+const tableHeaders = computed(() => [
   { key: 'name', label: i18n.t('games.table.name'), className: 'col-game', sortable: true },
   { key: 'genre', label: i18n.t('games.table.genre'), className: 'col-genre', sortable: false },
   { key: 'releaseDate', label: i18n.t('games.table.release'), className: 'col-release', sortable: true },
   { key: 'bestPrice', label: i18n.t('games.table.price'), className: 'col-price', sortable: true },
   { key: 'bestDiscount', label: i18n.t('games.table.discount'), className: 'col-discount', sortable: true },
-]
+])
 
 const hasActiveFilters = computed(() =>
   searchQuery.value.trim() !== '' ||

@@ -40,9 +40,9 @@ const fieldFocused = reactive({
 
 let nicknameCheckTimeout = null
 
-const nicknameHint = i18n.t('register.hint.nickname')
-const emailHint = i18n.t('register.hint.email')
-const passwordHint = i18n.t('register.hint.password')
+const nicknameHint = computed(() => i18n.t('register.hint.nickname'))
+const emailHint = computed(() => i18n.t('register.hint.email'))
+const passwordHint = computed(() => i18n.t('register.hint.password'))
 const confirmBodyText = computed(() => i18n.t('register.confirm_body').replace('{{email}}', registeredEmail.value))
 
 const passwordPattern = /^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/
