@@ -461,20 +461,6 @@ function formatNotificationSummary(notification) {
 
         <div class="mobile-divider"></div>
 
-        <template v-if="!isLoggedIn">
-          <button class="mobile-auth-btn mobile-login-btn" @click="goToLogin">{{ i18n.t('log_in') }}</button>
-          <button class="mobile-auth-btn mobile-signup-btn" @click="goToRegister">{{ i18n.t('sign_up') }}</button>
-        </template>
-
-
-        <button v-if="isLoggedIn" class="mobile-nav-btn" @click="goToProfile">
-          <span>{{ i18n.t('settings') }}</span>
-          <svg class="mobile-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09A1.65 1.65 0 0 0 19.4 15z"/>
-          </svg>
-        </button>
-
         <div class="mobile-setting">
           <span class="mobile-setting-label">{{ i18n.t('language') }}</span>
           <div class="mobile-setting-options">
@@ -493,9 +479,17 @@ function formatNotificationSummary(notification) {
           <span class="theme-status-mobile">{{ selectedTheme === 'dark' ? i18n.t('on') : i18n.t('off') }}</span>
         </button>
 
-        <div class="mobile-divider"></div>
+        <button v-if="!isLoggedIn" class="mobile-nav-btn" @click="goToLogin">
+          <span>{{ i18n.t('log_in') }}</span>
+          <svg class="mobile-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </button>
 
         <button
+          v-if="isLoggedIn"
           class="mobile-nav-btn"
           :class="{ 'logout-mobile': isLoggedIn }"
           @click="handleAuthMenuAction"
