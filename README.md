@@ -1,49 +1,191 @@
-# Tiešsaistes spēļu cenu salīdzināšanas un vēstures uzskaites sistēma
+# Game Prices
 
-## Projekta apraksts
-Šī projekta mērķis ir izstrādāt tiešsaistes platformu, kas lietotājiem ļauj vienuviet
-apskatīt, analizēt un salīdzināt datorspēļu cenas vairākos populāros digitālajos veikalos.
-Sistēma nodrošina arī cenu vēstures uzskaiti, ļaujot lietotājiem pieņemt finansiāli izdevīgākus
-lēmumus, iegādājoties spēles.
+**Game Prices** ir pilna steka tīmekļa lietotne, kas ļauj lietotājiem sekot līdzi videospēļu cenām dažādos tiešsaistes veikalos, salīdzināt piedāvājumus, veidot vēlmju sarakstu un saņemt paziņojumus par cenu izmaiņām.
 
-Pašlaik spēlētājiem bieži ir manuāli jāapmeklē vairākas vietnes, lai salīdzinātu cenas un
-atrastu atlaides. Izstrādājamā sistēma automatizē šo procesu, apkopojot datus no dažādiem
-avotiem un attēlojot tos lietotājam pārskatāmā formā.
+## Funkcionalitāte
 
-## Mērķauditorija
-- Aktīvi datorspēļu spēlētāji
-- Lietotāji, kuri spēles iegādājas neregulāri
-- Personas, kas vēlas sekot cenu izmaiņām un atlaidēm
+### Lietotājiem
 
-## Galvenās funkcijas
-- Spēļu meklēšana pēc nosaukuma, žanra vai veikala
-- Cenu salīdzināšana starp vairākiem digitālajiem veikaliem
-- Spēļu cenu vēstures attēlošana grafiku veidā
-- Vēlmju saraksta izveide un pārvaldība
-- Automātiski paziņojumi par cenu samazinājumiem
-- Lietotāju reģistrācija, pieteikšanās un profila pārvaldība
-- Administratora iespējas pārvaldīt lietotāju un spēļu datus
-- Automātiska datu sinhronizācija ar ārējiem avotiem
+* Spēļu meklēšana un pārlūkošana
+* Cenu salīdzināšana starp dažādiem veikaliem
+* Aktuālo un minimālo cenu apskate
+* Personīgais vēlmju saraksts (Wishlist)
+* Paziņojumi par cenu samazināšanos
+* Reģistrācija un autorizācija
+* E-pasta verifikācija
+* Paroles atjaunošana
+* Lietotāja profila pārvaldība
 
-## Izmantotie datu avoti
-Sistēma iegūst informāciju no publiskiem API:
-- IsThereAnyDeal
+### Administratoriem
 
-## Datu bāzes struktūra
-Sistēmā tiek glabāta informācija par:
-- Lietotājiem
-- Spēlēm
-- Veikaliem
-- Cenu vēsturi
-- Vēlmju sarakstiem
-- Paziņojumiem
-- Administratora datiem
+* Manuāla cenu sinhronizācija
+* Sinhronizācijas žurnālu apskate
+* Administrēšanas panelis
+* Lietotāju pārvaldība
 
-Datu modelēšanai tiek izmantots entītiju–relāciju (ER) modelis pēc Pitera Čena metodoloģijas,
-kas nodrošina strukturētu un loģisku datu organizāciju.
+### Automatizācija
 
-## Projekta ieguvumi
-- Samazina laiku, kas nepieciešams cenu meklēšanai
-- Nodrošina pārskatāmu cenu dinamiku
-- Palīdz pieņemt ekonomiski izdevīgākus pirkumu lēmumus
-- Apvieno vairākus informācijas avotus vienā platformā
+* Automātiska cenu atjaunošana ik pēc 12 stundām
+* Laravel Scheduler uzdevumi
+* Automātiski e-pasta paziņojumi
+
+## Izmantotās tehnoloģijas
+
+### Frontend
+
+* Vue.js 3
+* Vue Router
+* Vite
+* Axios
+* JavaScript
+* HTML5
+* CSS3
+
+### Backend
+
+* Laravel 12
+* PHP 8.4
+* REST API
+* Laravel Scheduler
+* Laravel Mail
+
+### Datubāze
+
+* MySQL 8
+
+### Servera infrastruktūra
+
+* Ubuntu Server 24.04
+* Nginx
+* PHP-FPM
+* Cron
+* SSL/TLS (Let's Encrypt)
+
+### E-pastu serviss
+
+* Mailtrap SMTP
+
+## Sistēmas arhitektūra
+
+```text
+Vue.js Frontend
+        ↓
+ Laravel REST API
+        ↓
+    MySQL
+```
+
+Lietotāja saskarne ir izstrādāta ar Vue.js, savukārt servera daļa un API ir veidota ar Laravel. Datu glabāšanai tiek izmantota MySQL datubāze.
+
+## Projekta struktūra
+
+```text
+game-prices/
+├── backend/      # Laravel API
+├── frontend/     # Vue.js lietotne
+└── README.md
+```
+
+## Galvenās iespējas
+
+### Spēļu cenu uzraudzība
+
+Lietotāji var apskatīt dažādu spēļu cenas vairākos digitālajos veikalos vienuviet.
+
+### Vēlmju saraksts
+
+Katrs lietotājs var pievienot interesējošās spēles vēlmju sarakstam un sekot cenu izmaiņām.
+
+### Paziņojumu sistēma
+
+Sistēma automātiski nosūta e-pasta paziņojumus, ja spēles cena samazinās.
+
+## Uzstādīšana
+
+### Backend
+
+```bash
+cd backend
+
+composer install
+
+cp .env.example .env
+
+php artisan key:generate
+
+php artisan migrate
+
+php artisan optimize
+```
+
+### Frontend
+
+```bash
+cd frontend
+
+npm install
+
+npm run build
+```
+
+## Palaišana izstrādes režīmā
+
+Backend:
+
+```bash
+php artisan serve
+```
+
+Frontend:
+
+```bash
+npm run dev
+```
+
+## Produkcijas vide
+
+Projekts ir izvietots uz VPS servera ar šādu konfigurāciju:
+
+* Ubuntu 24.04
+* Nginx
+* PHP 8.4
+* MySQL 8
+* Let's Encrypt SSL sertifikāti
+* Cron uzdevumi
+* Laravel Scheduler
+
+## Automātiskie uzdevumi
+
+Cenu sinhronizācija tiek veikta automātiski ik pēc 12 stundām:
+
+```bash
+php artisan itad:sync-prices
+```
+
+Laravel Scheduler tiek izpildīts katru minūti ar Cron palīdzību.
+
+## Drošība
+
+* HTTPS šifrēšana
+* Paroļu šifrēšana
+* CSRF aizsardzība
+* E-pasta verifikācija
+* Drošas lietotāju sesijas
+* Datu validācija
+* Aizsargāti API maršruti
+
+## Nākotnes uzlabojumi
+
+* Papildu spēļu veikalu integrācijas
+* Paplašināta statistika
+* Push paziņojumi
+* Mobilā lietotne
+* Papildu valodu atbalsts
+
+## Autors
+
+Projekts izstrādāts kā pilna steka tīmekļa lietotne, izmantojot Laravel un Vue.js tehnoloģijas.
+
+## Licence
+
+Projekts paredzēts mācību, demonstrācijas un portfolio vajadzībām.
