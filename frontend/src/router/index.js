@@ -48,9 +48,10 @@ const router = createRouter({
       component: RegisterPage
     },
     {
-      path: '/reset-password',
+      path: '/reset-password/:token',
       name: 'reset-password',
-      component: ResetPasswordPage
+      component: ResetPasswordPage,
+      props: true
     },
     {
       path: '/admin',
