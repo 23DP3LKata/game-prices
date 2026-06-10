@@ -22,15 +22,11 @@ avotiem un attēlojot tos lietotājam pārskatāmā formā.
 - Vēlmju saraksta izveide un pārvaldība
 - Automātiski paziņojumi par cenu samazinājumiem
 - Lietotāju reģistrācija, pieteikšanās un profila pārvaldība
-- Valūtas un reģiona maiņa
 - Administratora iespējas pārvaldīt lietotāju un spēļu datus
 - Automātiska datu sinhronizācija ar ārējiem avotiem
 
 ## Izmantotie datu avoti
 Sistēma iegūst informāciju no publiskiem API:
-- Steam
-- Epic Games Store
-- GG.deals
 - IsThereAnyDeal
 
 ## Datu bāzes struktūra
